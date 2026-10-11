@@ -1,8 +1,10 @@
 package village.app
 
 import androidx.compose.ui.graphics.toPixelMap
+import village.compiler.PlayerCompiler
 import village.compiler.PlayerPipeline
 import village.preview.PreviewEngine
+import java.io.File
 import java.util.concurrent.TimeUnit
 
 /**
@@ -11,8 +13,15 @@ import java.util.concurrent.TimeUnit
  */
 fun selfTest(): Int {
     println("Compose Village self-test")
-    println("  java.home = ${System.getProperty("java.home")}")
-    val result = PlayerPipeline().run(Samples.BAKERY)
+    val javaHome = File(System.getProperty("java.home"))
+    val compiler = PlayerCompiler()
+    println("  java.home = $javaHome")
+    println("  compiler JDK home = ${compiler.jdkHome}")
+    if (compiler.jdkHome.canonicalFile != javaHome.canonicalFile || !File(compiler.jdkHome, "lib/modules").isFile) {
+        println("FAIL: the compiler does not read JDK classes from the runtime the game runs on")
+        return 7
+    }
+    val result = PlayerPipeline(compiler).run(Samples.BAKERY)
     if (!result.success) {
         result.diagnostics.forEach { println("  $it") }
         println("FAIL: the sample did not compile")

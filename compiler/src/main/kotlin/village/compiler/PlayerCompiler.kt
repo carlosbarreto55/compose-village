@@ -46,6 +46,12 @@ class PlayerCompiler(
     private val scratchRoot: File = Files.createTempDirectory("village-compile").toFile(),
     keepEnvironmentAlive: Boolean = true,
     private val composeOptions: Map<String, String> = mapOf("sourceInformation" to "true"),
+    /**
+     * Where the compiler reads JDK classes from (its `jrt` image): the runtime the game runs on,
+     * which inside a jpackage bundle is the bundled runtime. Explicit so that a `JAVA_HOME` or a
+     * system JDK can never change what player code compiles against.
+     */
+    val jdkHome: File = File(System.getProperty("java.home")),
 ) {
     private val attemptCounter = AtomicInteger()
 
@@ -74,6 +80,7 @@ class PlayerCompiler(
                 noStdlib = true // the stdlib is on `classpath`, taken from the host
                 noReflect = true
                 jvmTarget = "17"
+                jdkHome = this@PlayerCompiler.jdkHome.absolutePath
                 moduleName = "player"
                 pluginClasspaths = arrayOf(composePluginJar.absolutePath)
                 pluginOptions = composeOptions.map { (k, v) ->

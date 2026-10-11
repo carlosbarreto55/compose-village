@@ -25,7 +25,11 @@ compose.desktop {
             targetFormats(TargetFormat.Dmg)
             packageName = "ComposeVillage"
             packageVersion = "1.0.0"
-            modules("java.management", "jdk.unsupported", "java.instrument", "jdk.management")
+            // `suggestRuntimeModules` (jdeps) also lists java.scripting and jdk.compiler: the embedded
+            // compiler jar references them (JSR-223 engine, javac bridge), but the player pipeline never
+            // runs that code. The bundled --selftest passes without them, and they would add ~14 MB.
+            // java.management + jdk.management: the guard's per-thread allocation counter.
+            modules("java.instrument", "java.management", "jdk.management", "jdk.unsupported")
         }
     }
 }

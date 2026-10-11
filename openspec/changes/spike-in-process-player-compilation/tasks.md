@@ -66,10 +66,10 @@
 
 ## 8. Packaging
 
-- [ ] 8.1 Run `suggestRuntimeModules`; set `nativeDistributions.modules` accordingly
-- [ ] 8.2 Build `createDistributable` and `packageDmg`; record `.app` and DMG sizes, plus size without compiler jars for the delta
-- [ ] 8.3 Launch the bundled app with `--selftest` and record the result; verify the compiler uses the bundled runtime as JDK home
-- [ ] 8.4 Commit section 8 with a conventional commit (`type(scope): summary`) and a descriptive body listing what the section added, e.g. `build(packaging): bundle the embedded compiler in the macOS distributable`
+- [x] 8.1 Run `suggestRuntimeModules`; set `nativeDistributions.modules` accordingly
+- [x] 8.2 Build `createDistributable` and `packageDmg`; record `.app` and DMG sizes, plus size without compiler jars for the delta
+- [x] 8.3 Launch the bundled app with `--selftest` and record the result; verify the compiler uses the bundled runtime as JDK home
+- [x] 8.4 Commit section 8 with a conventional commit (`type(scope): summary`) and a descriptive body listing what the section added, e.g. `build(packaging): bundle the embedded compiler in the macOS distributable`
 
 ## 9. Report and recommendation
 
