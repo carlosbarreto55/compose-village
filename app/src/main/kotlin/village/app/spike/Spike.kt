@@ -35,15 +35,17 @@ internal class Options(
     }
 }
 
-private val SECTIONS = listOf("latency", "diagnostics", "sandbox", "crashes", "runaways", "heatmap", "window", "memory")
+private val SECTIONS = listOf("latency", "outofprocess", "diagnostics", "sandbox", "crashes", "runaways", "heatmap", "window", "memory")
 
 fun main(args: Array<String>) {
     val options = Options.parse(args)
     val report = Report(options.outDir)
     fun runs(section: String) = options.only == null || section in options.only
 
-    // Latency first: it only spawns child JVMs. Memory last: it starts from a JVM the other checks warmed up.
+    // Latency first: it only spawns child JVMs. Out-of-process next: its in-process half needs a JVM
+    // that has not compiled yet. Memory last: it starts from a JVM the other checks warmed up.
     if (runs("latency")) latency(report, options)
+    if (runs("outofprocess")) outOfProcess(report, options)
     val pipeline = PlayerPipeline(checkInstrumented = true)
     if (runs("diagnostics")) diagnostics(report, pipeline)
     if (runs("sandbox")) sandbox(report, pipeline)

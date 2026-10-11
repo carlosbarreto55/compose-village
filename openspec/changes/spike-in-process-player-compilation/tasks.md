@@ -59,10 +59,10 @@
 
 ## 7. Out-of-process comparison
 
-- [ ] 7.1 Implement `CompileServer` main (same classpath/pipeline) with a length-prefixed stdin/stdout protocol returning diagnostics + PNG frame
-- [ ] 7.2 Harness client: measure spawn time, warm compile round-trip, per-frame render+PNG transfer latency, helper RSS
-- [ ] 7.3 Side-by-side table in the report: latency, frame cost, memory, failure isolation (OOM, wedged thread, `System.exit` survivability)
-- [ ] 7.4 Commit section 7 with a conventional commit (`type(scope): summary`) and a descriptive body listing what the section added, e.g. `feat(compile-server): add out-of-process compile server and comparison benchmarks`
+- [x] 7.1 Implement `CompileServer` main (same classpath/pipeline) with a length-prefixed stdin/stdout protocol returning diagnostics + PNG frame
+- [x] 7.2 Harness client: measure spawn time, warm compile round-trip, per-frame render+PNG transfer latency, helper RSS
+- [x] 7.3 Side-by-side table in the report: latency, frame cost, memory, failure isolation (OOM, wedged thread, `System.exit` survivability)
+- [x] 7.4 Commit section 7 with a conventional commit (`type(scope): summary`) and a descriptive body listing what the section added, e.g. `feat(compile-server): add out-of-process compile server and comparison benchmarks`
 
 ## 8. Packaging
 

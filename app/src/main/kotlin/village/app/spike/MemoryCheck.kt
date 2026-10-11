@@ -159,9 +159,9 @@ private fun Double.fmt(unit: String, signed: Boolean = false): String {
     return if (unit.isEmpty()) number else "$number $unit"
 }
 
-/** Resident set size of this process via `ps` (macOS/Linux), or null where unavailable. */
-private fun rssMb(): Double? = runCatching {
-    val p = ProcessBuilder("ps", "-o", "rss=", "-p", ProcessHandle.current().pid().toString()).redirectErrorStream(true).start()
+/** Resident set size of process [pid] (default: this one) via `ps` (macOS/Linux), or null where unavailable. */
+internal fun rssMb(pid: Long = ProcessHandle.current().pid()): Double? = runCatching {
+    val p = ProcessBuilder("ps", "-o", "rss=", "-p", pid.toString()).redirectErrorStream(true).start()
     p.outputStream.close()
     val kb = p.inputStream.use { it.bufferedReader().readText() }.trim().toLong()
     p.waitFor()
