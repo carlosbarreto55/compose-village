@@ -47,15 +47,15 @@
 
 ## 6. Headless spike harness (`./gradlew :app:spike`)
 
-- [ ] 6.1 Harness skeleton writing `docs/spike/report.md` and CSVs, with PASS/FAIL per success criterion; fold the throwaway `:app:smoke` checks (`Smoke.kt`, `SmokeSandbox.kt`) into it and remove them
-- [ ] 6.2 Latency: cold compile (fresh JVM run), first-after-warm-up, 30+ warm runs median/p95 for a ~30-line composable; variants keepalive on/off and full/trimmed classpath
-- [ ] 6.3 Diagnostics tests: known-bad sources assert exact line/column; contract diagnostics for missing/non-composable/parameterized entry
-- [ ] 6.4 Crash tests: throw in composition, in `onClick` (synthetic click), in `LaunchedEffect` after `delay`; assert host survives and line is correct; recompile-after-crash recovers
-- [ ] 6.5 Runaway tests: `while(true){}`, nested loop with `catch (Throwable)`, unbounded list growth, unbounded recursion; assert abort time and continued operation
-- [ ] 6.6 Sandbox tests: `File`, `java.nio.file`, `URL`, `Class.forName`, `java.lang.reflect`, `Runtime.exec`, `System.exit`, `exitProcess`, `Thread.sleep`, `File::readText` reference, `runBlocking`, `Dispatchers.IO`, a player class in a reserved package (`village.api.Guard` shadowing); plus an allowed-code test (data classes, collections, state, effects, Material3, `println`)
-- [ ] 6.7 Memory test: 150 compile→guard→load→render→close cycles; per-cycle heap-after-GC, Metaspace, loaded/unloaded classes, open FDs, RSS, loader-collected flag; growth summary cycle 20 vs 150
-- [ ] 6.8 Heatmap probe: counter app with header + counter composables, 5 synthetic clicks, record per-function counts
-- [ ] 6.9 Commit section 6 with a conventional commit (`type(scope): summary`) and a descriptive body listing what the section added, e.g. `test(harness): add headless spike harness with latency, crash, sandbox and memory checks`
+- [x] 6.1 Harness skeleton writing `docs/spike/report.md` and CSVs, with PASS/FAIL per success criterion; fold the throwaway `:app:smoke` checks (`Smoke.kt`, `SmokeSandbox.kt`) into it and remove them
+- [x] 6.2 Latency: cold compile (fresh JVM run), first-after-warm-up, 30+ warm runs median/p95 for a ~30-line composable; variants keepalive on/off and full/trimmed classpath
+- [x] 6.3 Diagnostics tests: known-bad sources assert exact line/column; contract diagnostics for missing/non-composable/parameterized entry
+- [x] 6.4 Crash tests: throw in composition, in `onClick` (synthetic click), in `LaunchedEffect` after `delay`; assert host survives and line is correct; recompile-after-crash recovers
+- [x] 6.5 Runaway tests: `while(true){}`, nested loop with `catch (Throwable)`, unbounded list growth, unbounded recursion; assert abort time and continued operation
+- [x] 6.6 Sandbox tests: `File`, `java.nio.file`, `URL`, `Class.forName`, `java.lang.reflect`, `Runtime.exec`, `System.exit`, `exitProcess`, `Thread.sleep`, `File::readText` reference, `runBlocking`, `Dispatchers.IO`, a player class in a reserved package (`village.api.Guard` shadowing); plus an allowed-code test (data classes, collections, state, effects, Material3, `println`)
+- [x] 6.7 Memory test: 150 compile→guard→load→render→close cycles; per-cycle heap-after-GC, Metaspace, loaded/unloaded classes, open FDs, RSS, loader-collected flag; growth summary cycle 20 vs 150
+- [x] 6.8 Heatmap probe: counter app with header + counter composables, 5 synthetic clicks, record per-function counts
+- [x] 6.9 Commit section 6 with a conventional commit (`type(scope): summary`) and a descriptive body listing what the section added, e.g. `test(harness): add headless spike harness with latency, crash, sandbox and memory checks`
 
 ## 7. Out-of-process comparison
 

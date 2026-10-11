@@ -112,6 +112,9 @@ class PreviewEngine(
     /** Renders now if the scene has pending changes (e.g. after input), then completes with the state. */
     fun renderNow(): CompletableFuture<PreviewState> = session.call { renderPending(); _state.value }
 
+    /** Closes the running attempt's scene without loading another; the preview becomes empty. */
+    fun unload(): CompletableFuture<Unit> = session.call { release(); publish { PreviewState() } }
+
     override fun close() {
         closed = true
         val s = session
