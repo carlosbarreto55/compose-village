@@ -42,6 +42,24 @@ object PlayerClasspath {
         return name.endsWith(".jar") && excludedArtifacts.any { name == "$it.jar" || name.startsWith("$it-") }
     }
 
+    /**
+     * Artifacts a player's Compose code needs at compile time: the stdlib, coroutines, the Compose
+     * runtime/ui/foundation/animation/material3 stack and `host-api`. A latency variant of
+     * [fromHost] (design D3): fewer jars to index, same binaries, so the result still links
+     * against the host's runtime.
+     */
+    private val trimmedArtifacts = listOf(
+        "kotlin-stdlib", "kotlinx-coroutines-core-jvm", "host-api",
+        "runtime-desktop", "runtime-saveable-desktop", "runtime-annotation-jvm",
+        "ui-desktop", "ui-graphics-desktop", "ui-geometry-desktop", "ui-text-desktop", "ui-unit-desktop", "ui-util-desktop",
+        "foundation-desktop", "foundation-layout-desktop", "animation-desktop", "animation-core-desktop",
+        "material3-desktop", "material-ripple-desktop", "collection-jvm",
+    )
+
+    /** The Compose-only subset of [fromHost]; see [trimmedArtifacts]. */
+    fun trimmed(hostClasspath: String = System.getProperty("java.class.path")): List<File> =
+        fromHost(hostClasspath).filter { f -> trimmedArtifacts.any { f.name == "$it.jar" || f.name.startsWith("$it-") } }
+
     /** The Compose compiler plugin jar, located from the class the compiler will load from it. */
     fun composePluginJar(): File = jarOf("androidx.compose.compiler.plugins.kotlin.ComposePluginRegistrar")
 

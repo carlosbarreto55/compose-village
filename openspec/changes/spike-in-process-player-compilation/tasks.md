@@ -7,11 +7,11 @@
 
 ## 2. Compilation pipeline (`compiler` module)
 
-- [ ] 2.1 Smoke test: compile a hello-world `@Composable` with `PlayerCompiler` from a throwaway main and confirm non-empty class output
-- [ ] 2.2 Implement wrapper generation (`__VillageEntry` object implementing `LevelEntry`, configurable entry function name) in `PlayerPipeline`
-- [ ] 2.3 Map raw diagnostics: player-file diagnostics pass through unchanged; wrapper-file errors become CONTRACT diagnostics (missing function, wrong parameters, not `@Composable`)
-- [ ] 2.4 Add the trimmed Compose-only classpath option alongside the host-derived classpath
-- [ ] 2.5 Add per-attempt timings (compile / guard / load) to the pipeline result
+- [x] 2.1 Smoke test: compile a hello-world `@Composable` with `PlayerCompiler` from a throwaway main and confirm non-empty class output
+- [x] 2.2 Implement wrapper generation (`__VillageEntry` object implementing `LevelEntry`, configurable entry function name) in `PlayerPipeline`
+- [x] 2.3 Map raw diagnostics: player-file diagnostics pass through unchanged; wrapper-file errors become CONTRACT diagnostics (missing function, wrong parameters, not `@Composable`)
+- [x] 2.4 Add the trimmed Compose-only classpath option alongside the host-derived classpath
+- [x] 2.5 Add per-attempt timings (compile / guard / load) to the pipeline result
 
 ## 3. Sandbox (`compiler` + `host-api`)
 

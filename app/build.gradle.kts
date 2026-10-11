@@ -31,12 +31,15 @@ compose.desktop {
 }
 
 // Headless spike benchmarks: ./gradlew :app:spike [-Pargs="..."]
-tasks.register<JavaExec>("spike") {
-    group = "spike"
-    mainClass = "village.app.spike.SpikeKt"
-    classpath = sourceSets["main"].runtimeClasspath
-    javaLauncher = javaToolchains.launcherFor { languageVersion = JavaLanguageVersion.of(17) }
-    jvmArgs("-Xmx1g", "-Djava.awt.headless=true", "-XX:+UseG1GC")
-    args((project.findProperty("args") as String?)?.split(" ") ?: emptyList<String>())
-    workingDir = rootProject.projectDir
+// Compile-pipeline smoke check: ./gradlew :app:smoke
+for ((name, main) in listOf("spike" to "village.app.spike.SpikeKt", "smoke" to "village.app.spike.SmokeKt")) {
+    tasks.register<JavaExec>(name) {
+        group = "spike"
+        mainClass = main
+        classpath = sourceSets["main"].runtimeClasspath
+        javaLauncher = javaToolchains.launcherFor { languageVersion = JavaLanguageVersion.of(17) }
+        jvmArgs("-Xmx1g", "-Djava.awt.headless=true", "-XX:+UseG1GC")
+        args((project.findProperty("args") as String?)?.split(" ") ?: emptyList<String>())
+        workingDir = rootProject.projectDir
+    }
 }

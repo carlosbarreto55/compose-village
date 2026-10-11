@@ -2,7 +2,10 @@ package village.compiler
 
 enum class Severity { ERROR, WARNING }
 
-/** A problem to show in the in-game editor. Lines and columns are 1-based, in the player's file. */
+/**
+ * A problem to show in the in-game editor. Lines and columns are 1-based, in the player's file;
+ * line 0 means the message has no location (e.g. an internal compiler failure).
+ */
 data class Diagnostic(
     val severity: Severity,
     val line: Int,
