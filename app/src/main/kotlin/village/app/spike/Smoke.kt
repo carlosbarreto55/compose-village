@@ -32,6 +32,7 @@ fun main() {
     classpathVariants()
     sandbox()
     preview()
+    ui()
     if (failures > 0) { println("$failures smoke check(s) failed"); exitProcess(1) }
 }
 

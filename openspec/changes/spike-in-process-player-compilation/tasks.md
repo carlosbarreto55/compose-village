@@ -38,12 +38,12 @@
 
 ## 5. Spike app window (`app` module)
 
-- [ ] 5.1 Compose Desktop window: code editor (monospace, line numbers), Run button + Cmd+Enter, preview pane showing engine frames
-- [ ] 5.2 Diagnostics list and red line markers; clicking a diagnostic moves the caret to line/column
-- [ ] 5.3 Runtime-error panel, console output panel, compile timings, per-composable recomposition counts
-- [ ] 5.4 Background warm-up compile at startup with a "compiler warming up" indicator
-- [ ] 5.5 `--selftest` flag: compile + render a sample once headlessly, exit 0 on success / non-zero on failure
-- [ ] 5.6 Commit section 5 with a conventional commit (`type(scope): summary`) and a descriptive body listing what the section added, e.g. `feat(app): add spike window with editor, preview, diagnostics and self-test`
+- [x] 5.1 Compose Desktop window: code editor (monospace, line numbers), Run button + Cmd+Enter, preview pane showing engine frames
+- [x] 5.2 Diagnostics list and red line markers; clicking a diagnostic moves the caret to line/column
+- [x] 5.3 Runtime-error panel, console output panel, compile timings, per-composable recomposition counts
+- [x] 5.4 Background warm-up compile at startup with a "compiler warming up" indicator
+- [x] 5.5 `--selftest` flag: compile + render a sample once headlessly, exit 0 on success / non-zero on failure
+- [x] 5.6 Commit section 5 with a conventional commit (`type(scope): summary`) and a descriptive body listing what the section added, e.g. `feat(app): add spike window with editor, preview, diagnostics and self-test`
 
 ## 6. Headless spike harness (`./gradlew :app:spike`)
 
