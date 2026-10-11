@@ -1,0 +1,9 @@
+# Build output
+build/
+.gradle/
+.kotlin/
+
+# Machine-local
+local.properties
+.idea/
+.DS_Store

@@ -1,0 +1,25 @@
+# THE VERSION MATRIX. The embedded compiler, the embedded Compose compiler plugin and the
+# Kotlin Gradle plugin that builds the game MUST be the same Kotlin version: the plugin is
+# compiled against compiler internals and is not binary compatible across Kotlin versions.
+# Compose runtime/UI may be any version the Compose compiler plugin supports (runtime >= 1.x).
+[versions]
+kotlin = "2.4.21"              # kotlin-compiler-embeddable + kotlin-compose-compiler-plugin-embeddable + KGP
+compose-multiplatform = "1.12.1"   # runtime, ui, foundation (desktop)
+compose-material3 = "1.9.0"    # decoupled from CMP since 1.9; 1.9.0 is the pairing CMP 1.12.1 uses
+asm = "9.11"
+coroutines = "1.10.2"
+
+[libraries]
+kotlin-compiler-embeddable = { module = "org.jetbrains.kotlin:kotlin-compiler-embeddable", version.ref = "kotlin" }
+kotlin-compose-plugin-embeddable = { module = "org.jetbrains.kotlin:kotlin-compose-compiler-plugin-embeddable", version.ref = "kotlin" }
+compose-runtime = { module = "org.jetbrains.compose.runtime:runtime", version.ref = "compose-multiplatform" }
+compose-material3 = { module = "org.jetbrains.compose.material3:material3", version.ref = "compose-material3" }
+asm = { module = "org.ow2.asm:asm", version.ref = "asm" }
+asm-tree = { module = "org.ow2.asm:asm-tree", version.ref = "asm" }
+coroutines-swing = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-swing", version.ref = "coroutines" }
+kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
+
+[plugins]
+kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
+kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
+compose-multiplatform = { id = "org.jetbrains.compose", version.ref = "compose-multiplatform" }
