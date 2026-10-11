@@ -34,7 +34,7 @@ compose.desktop {
     }
 }
 
-// Headless spike harness, writes docs/spike/report.md: ./gradlew :app:spike [-Pargs="--only latency,memory --runs 30 --cycles 150"]
+// Headless spike harness, writes docs/spike/results.md: ./gradlew :app:spike [-Pargs="--only latency,memory --runs 30 --cycles 150"]
 tasks.register<JavaExec>("spike") {
     group = "spike"
     mainClass = "village.app.spike.SpikeKt"

@@ -6,7 +6,7 @@ import java.io.File
 import kotlin.system.exitProcess
 
 // The headless spike harness: ./gradlew :app:spike [-Pargs="--only latency,memory --runs 30 --cycles 150"]
-// Writes docs/spike/report.md and CSVs next to it; exits 1 if any check fails.
+// Writes docs/spike/results.md and CSVs next to it (docs/spike/report.md is the written report); exits 1 if any check fails.
 
 internal class Options(
     /** Sections to run, or null for all. */

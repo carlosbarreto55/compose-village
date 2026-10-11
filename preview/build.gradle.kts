@@ -11,4 +11,7 @@ dependencies {
     api(project(":host-api"))
     api(compose.desktop.currentOs)
     api(libs.compose.material3)
+    testImplementation(libs.kotlin.test)
 }
+
+tasks.test { useJUnitPlatform() }

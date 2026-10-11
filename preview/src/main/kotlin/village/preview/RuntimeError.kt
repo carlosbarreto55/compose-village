@@ -44,7 +44,13 @@ data class RuntimeError(
             }
         }
 
+        /**
+         * Skips Kotlin's synthetic `access$...` accessors: they only forward a call (e.g. to a
+         * delegated local `var x by remember { ... }`) and their line table says line 1. An abort
+         * thrown by the entry tick of the method they forward to would otherwise point at line 1.
+         */
         private fun lineOf(t: Throwable, playerFile: String, playerLines: Int): Int? =
-            t.stackTrace.firstOrNull { it.fileName == playerFile && it.lineNumber in 1..playerLines }?.lineNumber
+            t.stackTrace.firstOrNull { it.fileName == playerFile && it.lineNumber in 1..playerLines && !it.methodName.startsWith("access$") }
+                ?.lineNumber
     }
 }

@@ -73,8 +73,8 @@
 
 ## 9. Report and recommendation
 
-- [ ] 9.1 Write the final `docs/spike/report.md`: version matrix, all measurements, PASS/FAIL per success criterion
-- [ ] 9.2 Paper evaluation of server-side compilation, interpreted Compose-like DSL subset, and blocks/fill-in-the-blanks using the measured numbers
-- [ ] 9.3 Recommendation with trade-offs and known limitations (OOM, no `Thread.stop` on JDK 20+, sandbox audit needed), plus answers to the design's open questions
-- [ ] 9.4 State the gated next step: architecture proposal + MVP plan for 5 Main Street levels after the recommendation is accepted
-- [ ] 9.5 Commit section 9 with a conventional commit (`type(scope): summary`) and a descriptive body listing what the section added, e.g. `docs(spike): write spike report and recommendation`
+- [x] 9.1 Write the final `docs/spike/report.md`: version matrix, all measurements, PASS/FAIL per success criterion
+- [x] 9.2 Paper evaluation of server-side compilation, interpreted Compose-like DSL subset, and blocks/fill-in-the-blanks using the measured numbers
+- [x] 9.3 Recommendation with trade-offs and known limitations (OOM, no `Thread.stop` on JDK 20+, sandbox audit needed), plus answers to the design's open questions
+- [x] 9.4 State the gated next step: architecture proposal + MVP plan for 5 Main Street levels after the recommendation is accepted
+- [x] 9.5 Commit section 9 with a conventional commit (`type(scope): summary`) and a descriptive body listing what the section added, e.g. `docs(spike): write spike report and recommendation`
