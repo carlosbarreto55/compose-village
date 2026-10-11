@@ -8,7 +8,7 @@ Each attempt SHALL be loaded by a new child class loader that defines the attemp
 - **THEN** both load successfully in separate class loaders, and the second attempt renders its own version
 
 ### Requirement: Isolated offscreen rendering on a player thread
-The player's `LevelEntry.content` SHALL be composed only inside an offscreen `ImageComposeScene` owned by a preview engine. All scene operations (composition, rendering, input dispatch, effect dispatch) SHALL run on a dedicated player thread, inside guard slices. Rendered frames SHALL be published as images and displayed inside the game window. Frames are rendered only when the scene has invalidations or animations are running.
+The player's `LevelEntry.content` SHALL be composed only inside an offscreen `ImageComposeScene` owned by a preview engine. All scene operations (scene creation, composition, rendering, input dispatch, effect dispatch) SHALL run on a dedicated player thread, inside guard slices. Scene creation is included because `ImageComposeScene` composes its content in its constructor. Rendered frames SHALL be published as images and displayed inside the game window. Frames are rendered only when the scene has invalidations or animations are running.
 
 #### Scenario: Player UI appears in the game window
 - **WHEN** a successful attempt for a ~30-line composable is loaded
@@ -17,6 +17,10 @@ The player's `LevelEntry.content` SHALL be composed only inside an offscreen `Im
 #### Scenario: Game UI stays responsive during player work
 - **WHEN** player code is busy on the player thread
 - **THEN** the game's own UI thread continues to process input and repaint
+
+#### Scenario: Runaway first composition
+- **WHEN** the player's composable loops forever during its first composition
+- **THEN** the slice that creates the scene is aborted within the time budget and the game keeps running
 
 ### Requirement: Input forwarding
 Pointer events on the preview pane SHALL be translated to scene coordinates and dispatched to the player's scene on the player thread, so that clickable player UI responds to the player's mouse. The scene's semantics tree SHALL be accessible to the host (this is the basis for future robot customers).

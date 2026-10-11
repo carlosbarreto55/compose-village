@@ -11,7 +11,7 @@ The source of truth is `gradle/libs.versions.toml`. If the two disagree, the cat
 | Compose Multiplatform | `org.jetbrains.compose` (runtime/ui/foundation desktop) | 1.12.1 |
 | Material3 | `org.jetbrains.compose.material3:material3` | 1.9.0 (the version CMP 1.12.1 maps `compose.material3` to) |
 | Skiko | `org.jetbrains.skiko:skiko-awt-runtime-macos-arm64` | 0.150.1 |
-| ASM | `org.ow2.asm:asm`, `asm-tree` | 9.11 |
+| ASM | `org.ow2.asm:asm`, `asm-tree`, `asm-util` (`CheckClassAdapter`) | 9.11 |
 | JVM | JDK (toolchain + bundled runtime) | 17 |
 
 ## Rules

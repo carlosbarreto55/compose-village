@@ -19,9 +19,9 @@ private val helloWorld = """
     }
 """.trimIndent()
 
-private var failures = 0
+internal var failures = 0
 
-private fun check(name: String, ok: Boolean, details: () -> String) {
+internal fun check(name: String, ok: Boolean, details: () -> String) {
     println("${if (ok) "PASS" else "FAIL"} $name")
     if (!ok) { failures++; println(details().prependIndent("    ")) }
 }
@@ -30,6 +30,7 @@ fun main() {
     rawCompile()
     pipeline()
     classpathVariants()
+    sandbox()
     if (failures > 0) { println("$failures smoke check(s) failed"); exitProcess(1) }
 }
 
@@ -118,7 +119,7 @@ private fun pipeline() {
 }
 
 /** A ~30-line composable touching state, effects, layout and Material3. */
-private val counterApp = """
+internal val counterApp = """
     import androidx.compose.foundation.layout.Arrangement
     import androidx.compose.foundation.layout.Column
     import androidx.compose.foundation.layout.Row

@@ -58,3 +58,7 @@ Compiler errors and warnings reported against the player's file SHALL be surface
 #### Scenario: Entry function is not composable
 - **WHEN** the expected entry function exists but lacks `@Composable`
 - **THEN** a contract diagnostic tells the player the function must be annotated `@Composable`
+
+#### Scenario: Entry function has parameters
+- **WHEN** the expected entry function is declared with parameters, e.g. `@Composable fun PlayerScreen(name: String)`
+- **THEN** a single contract diagnostic at the declaration states the expected signature `@Composable fun PlayerScreen()`

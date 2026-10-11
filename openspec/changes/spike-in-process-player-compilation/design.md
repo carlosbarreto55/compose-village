@@ -26,7 +26,7 @@ Compose Village is a Compose Multiplatform Desktop game that teaches Kotlin and 
 | Compose Multiplatform | `org.jetbrains.compose` (runtime/ui/foundation desktop) | 1.12.1 |
 | Material3 | `org.jetbrains.compose.material3:material3` | 1.9.0 (the version CMP 1.12.1 maps `compose.material3` to) |
 | Skiko | `org.jetbrains.skiko:skiko-awt-runtime-macos-arm64` | 0.150.1 |
-| ASM | `org.ow2.asm:asm`, `asm-tree` | 9.11 |
+| ASM | `org.ow2.asm:asm`, `asm-tree`, `asm-util` (`CheckClassAdapter`) | 9.11 |
 | JVM | JDK (toolchain + bundled runtime) | 17 |
 
 ## Goals / Non-Goals
@@ -60,12 +60,18 @@ Each attempt writes sources and classes into a unique scratch directory. The cla
 ### D3. Compile classpath derived from the host runtime classpath
 The player compiles against the jars the game is running: `java.class.path` minus tooling jars (compiler, plugin, daemon, build-tools, ASM, app/compiler/preview modules). This guarantees binary compatibility with the Compose runtime that renders the result, and it also works inside a jpackage bundle. The Compose plugin jar is located through the code source of `ComposePluginRegistrar`. A trimmed Compose-only classpath is benchmarked as a latency variant.
 
+Tooling jars are recognised by their file name (`name.jar` or `name-<version or hash>.jar`), not by their path, because a jpackage bundle puts all jars in one directory and may add a hash suffix.
+
 ### D4. Generated wrapper implementing `LevelEntry`; no reflection on composables
 `host-api` defines `interface LevelEntry { val content: @Composable () -> Unit }` and is compiled with the same Compose plugin, so the lambda's JVM shape matches. Each attempt gets a generated file with a reserved-name object (e.g. `__VillageEntry`) whose `content` calls the level's entry composable. Because the wrapper is a separate file, the player's line numbers need no remapping. Wrapper-file diagnostics are rewritten into "contract" messages.
+
+Calling a non-composable function from the wrapper's composable lambda compiles without error, so the "must be `@Composable`" contract check reads the compiled entry function's signature (a composable takes a `Composer` parameter). When compilation fails there are no classes, and the check falls back to the annotation in the source.
 - *Alternative:* splicing the wrapper into the player file would shift line numbers and complicate error mapping.
 
 ### D5. Per-attempt child class loader with a class-level allow-list
 `PlayerClassLoader(classes, parent = host loader)` defines classes from memory. It delegates to the parent only for allow-listed packages and classes, and it returns no resources. The previous attempt's loader is dropped when the next attempt loads. A weak reference per loader is used to prove collection.
+
+The loader also lets through two groups of classes that player bytecode may not name: the classes the JVM resolves on the player's behalf when linking allowed `invokedynamic` call sites (`LambdaMetafactory`, `StringConcatFactory`, `MethodHandles$Lookup` and the `MethodType`/`MethodHandle`/`CallSite` types), and the guard classes the instrumentation calls. It never defines player classes in reserved packages (see D6).
 
 ### D6. Sandbox = ASM bytecode verification + instrumentation (not import checks, not SecurityManager)
 `SecurityManager` is deprecated for removal, and import checks are bypassed by fully qualified names. After compiling, ASM scans all type, field, method, `invokedynamic` and handle references against `SandboxPolicy`. The policy is package allow-lists with member-level exceptions, e.g. `java.lang.System` allows only `nanoTime`, `currentTimeMillis` and `arraycopy`, and `java.lang.Class` allows only harmless members. Violations become SANDBOX diagnostics at the source line from the line number table.
@@ -74,14 +80,22 @@ The same pass instruments the code:
 - `Guard.tick()` at each method entry and before each backward jump. These are stack-neutral insertions, so existing stack map frames stay valid and frames are not recomputed.
 - `System.out`/`System.err` field reads are rewritten to `village.api.Console` streams.
 
+Details settled during implementation:
+- **Reserved packages.** Player classes in `village/`, `kotlin/`, `kotlinx/`, `androidx/`, `java/`, `javax/`, `jdk/`, `sun/`, `com/sun/` or `org/jetbrains/` are rejected. Otherwise a player's own `village.api.Guard` with an empty `tick()` would shadow the host's, because the child loader defines its own classes first, and the instrumentation would be switched off.
+- **Member names.** Member rules match Kotlin's default-argument bridges (`runBlocking$default`) by their base name. Members such as `wait`/`notify`/`notifyAll` and `printStackTrace` are denied whatever the owner, because a call names the receiver's static type (`myObject.wait()` has the player's class as owner).
+- **Line attribution.** Compiler-generated code with no line numbers, such as the class generated for `File::readText`, is attributed to the first in-file line that references it.
+- **Verification cost.** `CheckClassAdapter` data-flow verification of instrumented classes is optional and used by the harness and tests. The JVM's own verifier still checks every class when it loads.
+
 ### D7. Runaway control via cooperative ticks inside host slices
 All player execution happens on one player thread inside `Guard.beginSlice()`/`endSlice()`. This covers composition, rendering, input and dispatched effect tasks, because the player dispatcher wraps each task in a slice. Every 1024 ticks, `tick()` checks wall time (default 1 s) and the thread's allocated bytes (`com.sun.management.ThreadMXBean`). A violation, or an external `Guard.abort`, throws `PlayerAbort`. `PlayerAbort` extends `Error` so that `catch (e: Exception)` does not swallow it, and the abort stays sticky until the next slice. A hard watchdog on the host side covers code wedged in uninstrumented library code: it abandons the thread and restarts the engine.
 - *Alternative:* a watchdog thread plus `Thread.stop`. `Thread.stop` throws `UnsupportedOperationException` on JDK 20+.
 
+The hard watchdog reads `Guard.sliceElapsedMillis()` from its own thread to detect a stuck slice. `PlayerAbort` records its kind (time, allocation or host) so the host can word the message and the harness can assert on it.
+
 ### D8. Render in an offscreen `ImageComposeScene` on a dedicated thread, not a nested window or panel
 Composing player content directly in the game's composition would let one exception kill the game's Recomposer, and Compose forbids `try`/`catch` around composable calls. A separate `ComposePanel` would run on the AWT EDT, shared with the game.
 
-`ImageComposeScene` instead gives the host synchronous `render()` and `sendPointerEvent()` calls that it can wrap in `try`/`catch` on its own thread. The scene's coroutine context is the player dispatcher plus a `CoroutineExceptionHandler` that captures effect failures. Frames are converted to `ImageBitmap` and shown in the game window. The same scene provides `semanticsOwners`, which robot customers will use, and pixels, which sketch diffing will use.
+`ImageComposeScene` instead gives the host synchronous `render()` and `sendPointerEvent()` calls that it can wrap in `try`/`catch` on its own thread. The scene composes its content in its constructor, so creating the scene is itself a guarded slice on the player thread. Otherwise an infinite loop in the first composition runs with no budget at all; the section 3 smoke check hung exactly this way. The scene's coroutine context is the player dispatcher plus a `CoroutineExceptionHandler` that captures effect failures. Frames are converted to `ImageBitmap` and shown in the game window. The same scene provides `semanticsOwners`, which robot customers will use, and pixels, which sketch diffing will use.
 - *Trade-off:* each frame costs a CPU raster render and a pixel copy. This is acceptable for small phone-sized previews and is measured in the spike.
 
 ### D9. Recomposition counting through `Composer.setTracer`
@@ -112,7 +126,7 @@ This is not applicable for production. The spike is additive and lives in its ow
 
 ## Open Questions
 
-- Does `ImageComposeScene.render()` surface composition exceptions synchronously, or do some arrive only via the coroutine exception handler? The spike verifies this empirically and handles both.
+- Does `ImageComposeScene.render()` surface composition exceptions synchronously, or do some arrive only via the coroutine exception handler? The spike verifies this empirically and handles both. *Partly answered:* an exception in the first composition is thrown synchronously from the `ImageComposeScene` constructor, and Compose also logs "Error was captured in composition". Render, input and effect paths are still to be verified in task 4.4.
 - What is the exact `traceEventStart` info-string format in plugin 2.4.21 (e.g. `"PlayerScreen (Player.kt:12)"`)? Is it present without `sourceInformation=true`?
 - Does `ImageComposeScene` support text input well enough for `TextField` levels, via key events or the semantics `SetText` action? This is only noted in the spike.
 - Is warm latency dominated by classpath indexing? This decides whether a trimmed, curated classpath is the default.

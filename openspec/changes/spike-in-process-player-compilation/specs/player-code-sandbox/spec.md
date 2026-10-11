@@ -1,7 +1,7 @@
 ## ADDED Requirements
 
 ### Requirement: Bytecode allow-list verification
-Before loading, the system SHALL inspect every class compiled from player source and check every referenced type, field owner, method owner, `invokedynamic` bootstrap method and method-handle argument against an allow-list. Allowed by default: the attempt's own classes; `kotlin.*` (except file, thread, process and reflection APIs); core `kotlinx.coroutines` (excluding `runBlocking`, `Dispatchers.*`, `GlobalScope` and thread-pool builders); `androidx.compose.*` (excluding window, AWT, clipboard, URI-handler and resource-loading APIs); `androidx.collection`; a curated subset of `java.lang`, `java.util`, `java.math` and `java.time`; and `village.api` except the `Guard` class. Everything else SHALL be rejected. Source-level import checks SHALL NOT be relied on, because fully qualified names bypass them.
+Before loading, the system SHALL inspect every class compiled from player source and check every referenced type, field owner, method owner, `invokedynamic` bootstrap method and method-handle argument against an allow-list. Allowed by default: the attempt's own classes; `kotlin.*` (except file, thread, process and reflection APIs); core `kotlinx.coroutines` (excluding `runBlocking`, `Dispatchers.*`, `GlobalScope` and thread-pool builders); `androidx.compose.*` (excluding window, AWT, clipboard, URI-handler and resource-loading APIs); `androidx.collection`; a curated subset of `java.lang`, `java.util`, `java.math` and `java.time`; and `village.api` except the `Guard` and `PlayerAbort` classes. Everything else SHALL be rejected. Source-level import checks SHALL NOT be relied on, because fully qualified names bypass them.
 
 #### Scenario: File system access rejected
 - **WHEN** player code references `java.io.File`, `java.nio.file.*` or `kotlin.io` file helpers
@@ -24,18 +24,29 @@ Before loading, the system SHALL inspect every class compiled from player source
 - **THEN** verification passes with no SANDBOX diagnostics
 
 ### Requirement: Line-attributed sandbox violations
-Each sandbox violation SHALL be reported as an editor diagnostic at the player-source line of the offending instruction, derived from the class's line number table. When the instruction comes from inlined library code (line beyond the file's length), the violation SHALL be attributed to the nearest preceding in-file line (the call site).
+Each sandbox violation SHALL be reported as an editor diagnostic at the player-source line of the offending instruction, derived from the class's line number table. When the instruction comes from inlined library code (line beyond the file's length), the violation SHALL be attributed to the nearest preceding in-file line (the call site). When the instruction is in compiler-generated code that carries no line numbers (e.g. the class generated for a callable reference), the violation SHALL be attributed to the first in-file line that references that code.
 
 #### Scenario: Violation reported at the call line
 - **WHEN** line 7 of the player's file calls `java.io.File("x").readText()`
 - **THEN** a SANDBOX diagnostic is reported at line 7
 
+#### Scenario: Violation inside generated code
+- **WHEN** line 5 of the player's file declares `val read: (java.io.File) -> String = java.io.File::readText`
+- **THEN** every SANDBOX diagnostic for it is reported at line 5, and none is reported without a line
+
 ### Requirement: Class-loader allow-list
-The per-attempt class loader SHALL resolve only the attempt's own classes and parent classes permitted by the class-level allow-list, SHALL refuse any other class with a sandbox error, and SHALL expose no resources to player code. This is defense in depth, independent of bytecode verification.
+The per-attempt class loader SHALL resolve only the attempt's own classes and parent classes permitted by the class-level allow-list, SHALL refuse any other class with a sandbox error, and SHALL expose no resources to player code. This is defense in depth, independent of bytecode verification. Classes the JVM resolves through the player's loader to link allowed call sites (the `java.lang.invoke` bootstrap classes behind lambdas and string templates) and the guard classes called by instrumentation SHALL be permitted at the loader level only; player bytecode still cannot reference them.
 
 #### Scenario: Forbidden class cannot be linked
 - **WHEN** a player class that bypassed verification (e.g. in a test that disables it) attempts to link `java.io.File`
 - **THEN** class loading fails with a sandbox error and the host remains running
+
+### Requirement: Reserved packages
+Player classes SHALL NOT be declared in packages that belong to the game or its libraries: `village`, `kotlin`, `kotlinx`, `androidx`, `java`, `javax`, `jdk`, `sun`, `com.sun` and `org.jetbrains`. Such classes SHALL be rejected with a SANDBOX diagnostic, and the per-attempt class loader SHALL never define them, so player code cannot shadow host classes such as `village.api.Guard`.
+
+#### Scenario: Shadowing the guard is rejected
+- **WHEN** a player file declares `package village.api` and an `object Guard` with an empty `tick()`
+- **THEN** the attempt is rejected with a SANDBOX diagnostic at the declaration line, and instrumented ticks keep calling the host's `Guard`
 
 ### Requirement: Runaway-code guard
 The system SHALL instrument player bytecode with a call to `village.api.Guard.tick()` at every method entry and before every backward jump. All player code SHALL execute inside host-opened slices on the player thread, each with a wall-clock budget (default 1 s) and an allocation budget (measured per thread). When a budget is exceeded or the host aborts, `tick()` SHALL throw a `PlayerAbort` error. The abort SHALL be sticky until the next slice begins, so player `catch (Throwable)` blocks cannot swallow it.

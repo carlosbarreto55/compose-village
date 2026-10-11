@@ -8,14 +8,17 @@ package village.api
  *
  * The abort is sticky until the next [beginSlice] so a player `catch (t: Throwable)` inside a
  * loop cannot swallow it: the very next tick throws again.
+ *
+ * Slices are not re-entrant: there is one player thread and it runs one slice at a time.
  */
 object Guard {
     private val threadMx = java.lang.management.ManagementFactory.getThreadMXBean()
         as com.sun.management.ThreadMXBean
+    private val measuresAllocation = threadMx.isThreadAllocatedMemorySupported && threadMx.isThreadAllocatedMemoryEnabled
 
-    @Volatile private var abortReason: String? = null
+    @Volatile private var abort: PlayerAbort? = null
     @Volatile private var sliceThread: Thread? = null
-    private var sliceStartNanos = 0L
+    @Volatile private var sliceStartNanos = 0L
     private var sliceStartAlloc = 0L
     private var counter = 0
 
@@ -23,40 +26,65 @@ object Guard {
     @Volatile var allocBudgetBytes: Long = 512L * 1024 * 1024
 
     fun beginSlice() {
-        abortReason = null
-        sliceThread = Thread.currentThread()
+        abort = null
+        counter = 0
+        sliceStartAlloc = if (measuresAllocation) threadMx.currentThreadAllocatedBytes else 0
         sliceStartNanos = System.nanoTime()
-        sliceStartAlloc = threadMx.getThreadAllocatedBytes(Thread.currentThread().id)
+        sliceThread = Thread.currentThread()
     }
 
     fun endSlice() {
         sliceThread = null
     }
 
+    /** Runs [block] as one slice on the calling thread. */
+    inline fun <T> slice(block: () -> T): T {
+        beginSlice()
+        try {
+            return block()
+        } finally {
+            endSlice()
+        }
+    }
+
+    /**
+     * How long the current slice has been running, or null outside a slice. Read by the host's
+     * hard watchdog, which must catch code wedged where no tick runs (uninstrumented library code).
+     */
+    fun sliceElapsedMillis(): Long? = if (sliceThread == null) null else (System.nanoTime() - sliceStartNanos) / 1_000_000
+
     /** Called from another thread (watchdog/UI) to stop the player's code at its next tick. */
     fun abort(reason: String) {
-        abortReason = reason
+        abort = PlayerAbort(reason, PlayerAbort.Kind.HOST)
     }
 
     @JvmStatic
     fun tick() {
-        abortReason?.let { throw PlayerAbort(it) }
-        // Cheap path: only check the clock every 1024 ticks, and only on the slice thread.
+        abort?.let { throw it }
+        // Cheap path: only check the budgets every 1024 ticks, and only on the slice thread.
         if (++counter and 1023 != 0) return
         val t = sliceThread ?: return
         if (t !== Thread.currentThread()) return
         val elapsedMs = (System.nanoTime() - sliceStartNanos) / 1_000_000
         if (elapsedMs > timeBudgetMillis) {
-            abortReason = "Your code ran for more than ${timeBudgetMillis} ms without finishing. Is there an infinite loop?"
-            throw PlayerAbort(abortReason!!)
+            fail("Your code ran for more than $timeBudgetMillis ms without finishing. Is there an infinite loop?", PlayerAbort.Kind.TIME)
         }
-        val allocated = threadMx.getThreadAllocatedBytes(t.id) - sliceStartAlloc
-        if (allocated > allocBudgetBytes) {
-            abortReason = "Your code allocated more than ${allocBudgetBytes / (1024 * 1024)} MB in one go. Is a list growing forever?"
-            throw PlayerAbort(abortReason!!)
+        if (measuresAllocation) {
+            val allocated = threadMx.currentThreadAllocatedBytes - sliceStartAlloc
+            if (allocated > allocBudgetBytes) {
+                fail("Your code allocated more than ${allocBudgetBytes / (1024 * 1024)} MB in one go. Is a list growing forever?", PlayerAbort.Kind.ALLOCATION)
+            }
         }
+    }
+
+    private fun fail(message: String, kind: PlayerAbort.Kind): Nothing {
+        val e = PlayerAbort(message, kind)
+        abort = e
+        throw e
     }
 }
 
 /** An Error (not Exception) so ordinary `catch (e: Exception)` in player code does not swallow it. */
-class PlayerAbort(message: String) : Error(message)
+class PlayerAbort(message: String, val kind: Kind) : Error(message) {
+    enum class Kind { TIME, ALLOCATION, HOST }
+}

@@ -24,6 +24,9 @@ class PipelineResult(
 class PlayerPipeline(
     private val compiler: PlayerCompiler = PlayerCompiler(),
     private val parentLoader: ClassLoader = LevelEntry::class.java.classLoader,
+    private val guard: BytecodeGuard = BytecodeGuard(),
+    /** Also run ASM's data-flow verifier on instrumented classes. Slow; for tests and the harness. */
+    private val checkInstrumented: Boolean = false,
 ) {
     /**
      * @param source the player's `Player.kt`.
@@ -41,7 +44,20 @@ class PlayerPipeline(
         }
 
         var start = System.nanoTime()
-        val classes = output.classes // TODO(tasks 3.2, 3.3): sandbox verification + instrumentation.
+        val violations = guard.verify(output.classes, PLAYER_FILE, source.lines().size)
+        if (violations.isNotEmpty()) {
+            timings.guardMs = millisSince(start)
+            return PipelineResult(null, (diagnostics + violations).sortedBy { it.line }, timings, null)
+        }
+        val classes = guard.instrument(output.classes)
+        if (checkInstrumented) {
+            val problems = guard.check(classes, PlayerClassLoader(classes, parentLoader))
+            if (problems.isNotEmpty()) {
+                timings.guardMs = millisSince(start)
+                val error = Diagnostic(Severity.ERROR, 0, 0, "Instrumentation produced invalid bytecode:\n${problems.joinToString("\n")}")
+                return PipelineResult(null, diagnostics + error, timings, null)
+            }
+        }
         timings.guardMs = millisSince(start)
 
         start = System.nanoTime()

@@ -31,6 +31,6 @@ Compose Village's core loop (the player writes Kotlin + Compose code and instant
 ## Impact
 
 - **Code**: `host-api` (`LevelEntry`, `Guard`, `Console`), `compiler` (`PlayerCompiler`, `PlayerClasspath`, `SandboxPolicy`, `BytecodeGuard`, `PlayerClassLoader`, `PlayerPipeline`), `preview` (`PreviewEngine`), `app` (spike window, `spike` task, `CompileServer`, `--selftest`). Some scaffold files already exist and are unverified.
-- **Dependencies**: `kotlin-compiler-embeddable` 2.4.21, `kotlin-compose-compiler-plugin-embeddable` 2.4.21, ASM 9.11, Compose Multiplatform 1.12.1, material3 1.9.0. The Kotlin Gradle plugin that builds the game becomes pinned to the embedded compiler version.
+- **Dependencies**: `kotlin-compiler-embeddable` 2.4.21, `kotlin-compose-compiler-plugin-embeddable` 2.4.21, ASM 9.11 (`asm`, `asm-tree`, `asm-util`), Compose Multiplatform 1.12.1, material3 1.9.0. The Kotlin Gradle plugin that builds the game becomes pinned to the embedded compiler version.
 - **Distribution**: about 61 MB of extra uncompressed jars (the compiler is 56.5 MB of it), on top of about 38 MB for Compose and Skiko. The bundled Java runtime must include the modules the compiler needs (e.g. `jdk.unsupported`, `java.management`).
 - **Platform**: macOS arm64 first (JDK 17); Windows and Linux are not verified by this spike.

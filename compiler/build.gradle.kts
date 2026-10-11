@@ -12,4 +12,5 @@ dependencies {
     implementation(libs.kotlin.compose.plugin.embeddable)
     implementation(libs.asm)
     implementation(libs.asm.tree)
+    implementation(libs.asm.util) // CheckClassAdapter, to verify instrumented classes in tests
 }
