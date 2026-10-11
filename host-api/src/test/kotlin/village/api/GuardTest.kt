@@ -76,6 +76,51 @@ class GuardTest {
         }
     }
 
+    @Test fun abandonedThreadStaysAbortedAfterANewSlice() {
+        val wedged = java.util.concurrent.CountDownLatch(1)
+        val resume = java.util.concurrent.CountDownLatch(1)
+        var result: Throwable? = null
+        val old = thread {
+            Guard.beginSlice()
+            wedged.countDown()
+            resume.await() // "stuck in uninstrumented code"
+            result = runCatching { repeat(10_000) { Guard.tick() } }.exceptionOrNull()
+        }
+        wedged.await()
+        assertEquals(old, Guard.sliceOwner())
+        Guard.abandon(old)
+        assertNull(Guard.sliceOwner())
+        Guard.slice {
+            resume.countDown() // the wedged thread wakes up while a new slice runs elsewhere
+            old.join()
+            repeat(10_000) { Guard.tick() } // the new slice is unaffected
+        }
+        assertEquals(PlayerAbort.Kind.HOST, (result as? PlayerAbort)?.kind, "abandoned thread kept running: $result")
+    }
+
+    @Test fun nestedSliceKeepsTheOuterBudget() {
+        Guard.timeBudgetMillis = 100
+        val start = System.nanoTime()
+        val abort = assertFailsWith<PlayerAbort> {
+            Guard.slice {
+                Guard.slice { repeat(10_000) { Guard.tick() } } // e.g. closing the previous scene
+                spin() // the outer slice is still guarded after the inner one ended
+            }
+        }
+        assertEquals(PlayerAbort.Kind.TIME, abort.kind)
+        assertTrue((System.nanoTime() - start) / 1_000_000 < 500)
+        assertNull(Guard.sliceOwner())
+    }
+
+    @Test fun nestedSliceClearsTheAbort() {
+        Guard.timeBudgetMillis = 50
+        Guard.slice {
+            runCatching { spin() } // the outer slice is aborted (sticky)
+            assertFailsWith<PlayerAbort> { Guard.tick() }
+            Guard.slice { repeat(10_000) { Guard.tick() } } // a fresh slice runs cleanup normally
+        }
+    }
+
     @Test fun watchdogSeesTheRunningSlice() {
         assertNull(Guard.sliceElapsedMillis())
         Guard.slice {

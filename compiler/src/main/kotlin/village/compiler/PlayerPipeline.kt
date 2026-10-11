@@ -49,7 +49,7 @@ class PlayerPipeline(
             timings.guardMs = millisSince(start)
             return PipelineResult(null, (diagnostics + violations).sortedBy { it.line }, timings, null)
         }
-        val classes = guard.instrument(output.classes)
+        val classes = guard.instrument(output.classes, hostSourceFile = EntryWrapper.FILE_NAME)
         if (checkInstrumented) {
             val problems = guard.check(classes, PlayerClassLoader(classes, parentLoader))
             if (problems.isNotEmpty()) {

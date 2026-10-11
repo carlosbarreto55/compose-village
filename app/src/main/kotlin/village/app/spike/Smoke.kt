@@ -31,6 +31,7 @@ fun main() {
     pipeline()
     classpathVariants()
     sandbox()
+    preview()
     if (failures > 0) { println("$failures smoke check(s) failed"); exitProcess(1) }
 }
 

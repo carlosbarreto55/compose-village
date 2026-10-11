@@ -26,15 +26,15 @@
 
 ## 4. Preview runtime (`preview` module)
 
-- [ ] 4.1 Create the player thread + coroutine dispatcher that wraps every task in a guard slice
-- [ ] 4.2 Implement `PreviewEngine.load(entry)`: build `ImageComposeScene` inside a guard slice on the player thread (it composes in its constructor), with player dispatcher + `CoroutineExceptionHandler`, render first frame, publish `ImageBitmap`
-- [ ] 4.3 Render loop: render only on `hasInvalidations()` or running animations; publish frames to a host-observable state
-- [ ] 4.4 Crash handling: catch exceptions from `render`/`sendPointerEvent`/effects, close the scene, produce a `RuntimeError` with the first in-file `Player.kt` frame line
-- [ ] 4.5 Hard watchdog: detect a slice stuck past the hard limit, abandon the thread, recreate the engine, report "preview restarted"
-- [ ] 4.6 Pointer forwarding (preview coordinates → scene coordinates) and a semantics helper to find a node by text and synthesize a click
-- [ ] 4.7 Recomposition counter via `Composer.setTracer`, filtered by player thread and player file; record the actual info-string format (design open question)
-- [ ] 4.8 Release previous scene/entry/loader on reload; keep a `WeakReference` per loader for leak checks
-- [ ] 4.9 Commit section 4 with a conventional commit (`type(scope): summary`) and a descriptive body listing what the section added, e.g. `feat(preview): render player entries in an isolated offscreen scene on a guarded thread`
+- [x] 4.1 Create the player thread + coroutine dispatcher that wraps every task in a guard slice
+- [x] 4.2 Implement `PreviewEngine.load(entry)`: build `ImageComposeScene` inside a guard slice on the player thread (it composes in its constructor), with player dispatcher + `CoroutineExceptionHandler`, render first frame, publish `ImageBitmap`
+- [x] 4.3 Render loop: render only on `hasInvalidations()` or running animations; publish frames to a host-observable state
+- [x] 4.4 Crash handling: catch exceptions from `render`/`sendPointerEvent`/effects, close the scene, produce a `RuntimeError` with the first in-file `Player.kt` frame line
+- [x] 4.5 Hard watchdog: detect a slice stuck past the hard limit, abandon the thread, recreate the engine, report "preview restarted"
+- [x] 4.6 Pointer forwarding (preview coordinates → scene coordinates) and a semantics helper to find a node by text and synthesize a click
+- [x] 4.7 Recomposition counter via `Composer.setTracer`, filtered by player thread and player file; record the actual info-string format (design open question)
+- [x] 4.8 Release previous scene/entry/loader on reload; keep a `WeakReference` per loader for leak checks
+- [x] 4.9 Commit section 4 with a conventional commit (`type(scope): summary`) and a descriptive body listing what the section added, e.g. `feat(preview): render player entries in an isolated offscreen scene on a guarded thread`
 
 ## 5. Spike app window (`app` module)
 

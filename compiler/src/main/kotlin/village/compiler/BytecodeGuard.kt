@@ -153,9 +153,17 @@ class BytecodeGuard(private val policy: SandboxPolicy = SandboxPolicy) {
         }
     }
 
-    /** Returns the instrumented classes. Call only on classes that passed [verify]. */
-    fun instrument(classes: Map<String, ByteArray>): Map<String, ByteArray> = classes.mapValues { (_, bytes) ->
+    /**
+     * Returns the instrumented classes. Call only on classes that passed [verify].
+     *
+     * @param hostSourceFile classes compiled from this file (the generated entry wrapper) are left
+     *   as they are: they are the game's code, and they are initialized on a host thread when the
+     *   attempt loads, outside any slice, where a tick could rethrow a stale sticky abort. Matched
+     *   by the SourceFile attribute, which a player's classes cannot change.
+     */
+    fun instrument(classes: Map<String, ByteArray>, hostSourceFile: String? = null): Map<String, ByteArray> = classes.mapValues { (_, bytes) ->
         val node = ClassNode().also { ClassReader(bytes).accept(it, 0) }
+        if (hostSourceFile != null && node.sourceFile == hostSourceFile) return@mapValues bytes
         for (method in node.methods) {
             if (method.instructions.size() == 0) continue // abstract / native
             instrumentMethod(method.instructions)
