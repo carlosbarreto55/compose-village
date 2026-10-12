@@ -8,6 +8,7 @@ import androidx.compose.ui.graphics.toComposeImageBitmap
 import androidx.compose.ui.input.pointer.PointerButton
 import androidx.compose.ui.input.pointer.PointerButtons
 import androidx.compose.ui.input.pointer.PointerEventType
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.SemanticsNode
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.semantics.getOrNull
@@ -23,6 +24,7 @@ import java.lang.ref.WeakReference
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.atomic.AtomicInteger
+import kotlin.math.roundToInt
 
 /** What the game shows for the player's running attempt. Published from the player thread. */
 data class PreviewState(
@@ -52,15 +54,24 @@ data class PreviewState(
  */
 @OptIn(ExperimentalComposeUiApi::class)
 class PreviewEngine(
-    /** Scene size in pixels. */
-    val width: Int = 360,
-    val height: Int = 640,
+    /** Default scene size in pixels, for attempts loaded without a viewport. */
+    width: Int = 360,
+    height: Int = 640,
     val density: Float = 1f,
     /** A slice running this long has not reached a tick for a while: it is wedged in uninstrumented code. */
     private val hardLimitMillis: Long = 3_000,
     private val playerFile: String = "Player.kt",
     private val frameIntervalMillis: Long = 16,
 ) : AutoCloseable {
+    private val defaultWidth = width
+    private val defaultHeight = height
+
+    /** The current scene's size in pixels: the default, or the latest loaded attempt's viewport × [density]. */
+    @Volatile var width = width
+        private set
+    @Volatile var height = height
+        private set
+
     private val _state = MutableStateFlow(PreviewState())
     val state: StateFlow<PreviewState> = _state
 
@@ -87,10 +98,11 @@ class PreviewEngine(
      *
      * @param playerLines line count of the player's file, to ignore stack frames of inlined code.
      * @param loader the attempt's class loader, tracked weakly for leak checks.
+     * @param viewport the size to render the attempt at, e.g. the level's; null keeps the default size.
      */
-    fun load(entry: LevelEntry, playerLines: Int, loader: ClassLoader? = null): CompletableFuture<PreviewState> {
+    fun load(entry: LevelEntry, playerLines: Int, loader: ClassLoader? = null, viewport: Viewport? = null): CompletableFuture<PreviewState> {
         loader?.let { loaderRefs += WeakReference(it) }
-        return session.call { load(entry, playerLines) }
+        return session.call { load(entry, playerLines, viewport) }
     }
 
     /** Forwards a pointer event, in scene pixels, to the player's scene. */
@@ -111,6 +123,12 @@ class PreviewEngine(
 
     /** Renders now if the scene has pending changes (e.g. after input), then completes with the state. */
     fun renderNow(): CompletableFuture<PreviewState> = session.call { renderPending(); _state.value }
+
+    /**
+     * Renders pending changes, then copies the scene's merged semantics tree (design D2). Completes
+     * with null when there is no scene: nothing loaded, or the attempt crashed.
+     */
+    fun snapshot(): CompletableFuture<SemanticsSnapshot?> = session.call { renderPending(); snapshot() }
 
     /** Closes the running attempt's scene without loading another; the preview becomes empty. */
     fun unload(): CompletableFuture<Unit> = session.call { release(); publish { PreviewState() } }
@@ -164,10 +182,12 @@ class PreviewEngine(
 
         // ---- everything below runs on the player thread ----
 
-        fun load(entry: LevelEntry, lines: Int): PreviewState {
+        fun load(entry: LevelEntry, lines: Int, viewport: Viewport?): PreviewState {
             release()
             Console.clear()
             playerLines = lines
+            width = viewport?.let { (it.widthDp * density).roundToInt() } ?: defaultWidth
+            height = viewport?.let { (it.heightDp * density).roundToInt() } ?: defaultHeight
             val trace = RecompositionTracer.Target(player.thread, playerFile)
             RecompositionTracer.target = trace
             publish { PreviewState() }
@@ -241,6 +261,42 @@ class PreviewEngine(
             pointer(PointerEventType.Press, center, Offset.Zero)
             pointer(PointerEventType.Release, center, Offset.Zero)
             return true
+        }
+
+        fun snapshot(): SemanticsSnapshot? {
+            val s = scene ?: return null
+            return try {
+                SemanticsSnapshot(Viewport(width / density, height / density), s.semanticsOwners.map { copy(it.rootSemanticsNode) })
+            } catch (t: Throwable) { // reading semantics can run player code, e.g. a lazy semantics block
+                crash(t)
+                null
+            }
+        }
+
+        private fun copy(node: SemanticsNode): SnapshotNode {
+            val config = node.config
+            val b = node.boundsInRoot
+            return SnapshotNode(
+                texts = config.getOrNull(SemanticsProperties.Text)?.map { it.text }.orEmpty(),
+                contentDescriptions = config.getOrNull(SemanticsProperties.ContentDescription)?.toList().orEmpty(),
+                role = config.getOrNull(SemanticsProperties.Role)?.let(::roleName),
+                bounds = DpBounds(b.left / density, b.top / density, b.right / density, b.bottom / density),
+                children = node.children.map(::copy),
+            )
+        }
+
+        // Role.toString() names ValuePicker "Picker"; levels use the constants' names.
+        private fun roleName(role: Role): String? = when (role) {
+            Role.Button -> "Button"
+            Role.Checkbox -> "Checkbox"
+            Role.Switch -> "Switch"
+            Role.RadioButton -> "RadioButton"
+            Role.Tab -> "Tab"
+            Role.Image -> "Image"
+            Role.DropdownList -> "DropdownList"
+            Role.ValuePicker -> "ValuePicker"
+            Role.Carousel -> "Carousel"
+            else -> null
         }
 
         private fun descendants(node: SemanticsNode): Sequence<SemanticsNode> =
