@@ -4,7 +4,7 @@
 For each failed criterion, the evaluator SHALL generate a short player-facing detail explaining why it failed, from the failure reason alone. The detail SHALL describe nodes using the selector's fields (e.g. `"Rosa's Bakery"`, `a button "Order"`, `an image described as "logo"`) and SHALL NOT include code. The failure reasons and their details SHALL be:
 - **missing**: no visible node matches → "I can't find X on the screen."
 - **hidden**: a matching node exists but is not visible → "X is there, but it has no size or is off the screen."
-- **wrong count**: `exists` with `count` → "I see N of X, but there should be M."
+- **wrong count**: `exists` with `count` → "I see N matches for X, but there should be M."
 - **present**: `absent` → "X should not be on the screen."
 - **reversed**: an order criterion where the two nodes are in the opposite order → for `below`, e.g. "X is above Y."
 - **not in line**: an order criterion where the nodes are present but neither order holds, e.g. side by side for `above` → "X and Y are side by side; X should be under Y."

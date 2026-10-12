@@ -128,12 +128,95 @@ class EvaluatorTest {
         assertFalse(verdict.passed)
         assertEquals(
             listOf(
-                CriterionResult("title", true, null),
-                CriterionResult("subtitle", false, "The sign is missing \"Fresh bread daily\"."),
-                CriterionResult("order", false, "Rosa wants her name on top."),
+                CriterionResult("title", "d", true, null, null),
+                CriterionResult("subtitle", "d", false, "I can't find \"Fresh bread daily\" on the screen.", "The sign is missing \"Fresh bread daily\"."),
+                CriterionResult("order", "d", false, "I can't find \"Fresh bread daily\" on the screen.", "Rosa wants her name on top."),
             ),
             verdict.results,
         )
-        assertTrue(Evaluator.evaluate(criteria, snapshot(title, subtitle)).passed)
+        val solved = Evaluator.evaluate(criteria, snapshot(title, subtitle))
+        assertTrue(solved.passed)
+        assertTrue(solved.results.all { it.detail == null && it.message == null })
+    }
+
+    // ---- generated failure details ----
+
+    private fun detail(c: Criterion, s: SemanticsSnapshot) = Evaluator.evaluate(listOf(c), s).results.single().detail
+
+    @Test fun missingDetail() =
+        assertEquals("I can't find \"Rosa's Bakery\" on the screen.", detail(exists(Selector(text = "Rosa's Bakery")), snapshot(subtitle)))
+
+    @Test fun hiddenDetail() = assertEquals(
+        "\"Rosa's Bakery\" is there, but it has no size or is off the screen.",
+        detail(exists(Selector(text = "Rosa's Bakery")), snapshot(text("Rosa's Bakery", top = 700f))),
+    )
+
+    @Test fun wrongCountDetail() {
+        val buttons = snapshot(*Array(3) { text("B$it", top = it * 30f, role = "Button") })
+        assertEquals("I see 3 matches for a button, but there should be 2.", detail(exists(Selector(role = "Button"), count = 2), buttons))
+    }
+
+    @Test fun presentDetail() = assertEquals(
+        "\"Closed\" should not be on the screen.",
+        detail(Criterion.Absent("c", "d", Selector(text = "Closed")), snapshot(text("Closed", 0f))),
+    )
+
+    private val below = Criterion.Below("order", "d", Selector(text = "Fresh bread daily"), Selector(text = "Rosa's Bakery"))
+
+    @Test fun belowIsAboveSwapped() {
+        assertTrue(passes(below, snapshot(title, subtitle)))
+        assertFalse(passes(below, snapshot(text("Fresh bread daily", 0f), text("Rosa's Bakery", 20f))))
+    }
+
+    @Test fun reversedDetail() = assertEquals(
+        "\"Fresh bread daily\" is above \"Rosa's Bakery\".",
+        detail(below, snapshot(text("Fresh bread daily", 0f), text("Rosa's Bakery", 20f))),
+    )
+
+    @Test fun sideBySideDetail() = assertEquals(
+        "\"Fresh bread daily\" and \"Rosa's Bakery\" are side by side; \"Fresh bread daily\" should be under \"Rosa's Bakery\".",
+        detail(below, snapshot(text("Rosa's Bakery", 0f, left = 0f), text("Fresh bread daily", 0f, left = 100f))),
+    )
+
+    @Test fun overlappingDetail() = assertEquals(
+        "\"Fresh bread daily\" and \"Rosa's Bakery\" overlap; \"Fresh bread daily\" should be under \"Rosa's Bakery\".",
+        detail(below, snapshot(text("Rosa's Bakery", 0f), text("Fresh bread daily", 5f, left = 10f))),
+    )
+
+    @Test fun orderDetailForAMissingSide() =
+        assertEquals("I can't find \"Fresh bread daily\" on the screen.", detail(below, snapshot(title)))
+
+    private val orderRightOfName = Criterion.RightOf("button", "d", Selector(role = "Button", text = "Order"), Selector(text = "Tom's Flowers"))
+
+    @Test fun rightOf() {
+        val row = snapshot(text("Tom's Flowers", 0f, left = 0f), text("Order", 0f, left = 120f, role = "Button"))
+        assertTrue(passes(orderRightOfName, row))
+        val reversed = snapshot(text("Order", 0f, left = 0f, role = "Button"), text("Tom's Flowers", 0f, left = 120f))
+        assertEquals("A button \"Order\" is to the left of \"Tom's Flowers\".", detail(orderRightOfName, reversed))
+        val stacked = snapshot(text("Tom's Flowers", 0f), text("Order", 40f, role = "Button"))
+        assertEquals(
+            "A button \"Order\" and \"Tom's Flowers\" are stacked on top of each other; a button \"Order\" should be to the right of \"Tom's Flowers\".",
+            detail(orderRightOfName, stacked),
+        )
+    }
+
+    @Test fun buttonPhrase() =
+        assertEquals("I can't find a button \"Order\" on the screen.", detail(exists(Selector(role = "Button", text = "Order")), snapshot(title)))
+
+    @Test fun phrases() {
+        assertEquals("\"Rosa's Bakery\"", Selector(text = "  Rosa's  Bakery").phrase())
+        assertEquals("a text containing \"Bakery\"", Selector(text = "Bakery", contains = true).phrase())
+        assertEquals("a button", Selector(role = "Button").phrase())
+        assertEquals("a button containing \"Order\"", Selector(role = "Button", text = "Order", contains = true).phrase())
+        assertEquals("an image described as \"logo\"", Selector(role = "Image", contentDescription = "logo").phrase())
+        assertEquals("something described as \"logo\"", Selector(contentDescription = "logo").phrase())
+        assertEquals("a radio button", Selector(role = "RadioButton").phrase())
+    }
+
+    @Test fun messageOnlyWhenFailed() {
+        val c = Criterion.Exists("title", "The text \"Rosa's Bakery\" is on screen", Selector(text = "Rosa's Bakery"), message = "Where's my name?")
+        val failed = Evaluator.evaluate(listOf(c), snapshot(subtitle)).results.single()
+        assertEquals(CriterionResult("title", c.description, false, "I can't find \"Rosa's Bakery\" on the screen.", "Where's my name?"), failed)
+        assertEquals(CriterionResult("title", c.description, true, null, null), Evaluator.evaluate(listOf(c), snapshot(title)).results.single())
     }
 }

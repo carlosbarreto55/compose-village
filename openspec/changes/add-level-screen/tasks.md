@@ -8,11 +8,11 @@
 
 ## 2. Generated failure details (`levels` module)
 
-- [ ] 2.1 Make each check return a failure reason (`Missing`, `Hidden`, `Count`, `Present`, `Reversed`, `NotInLine`) instead of a boolean; evaluate `below`/`rightOf` by swapping, keeping the author's `a`/`b` for phrasing
-- [ ] 2.2 Implement selector noun phrases (text, role + text, role only, content description, `contains`) with a role-word table for the 9 roles, and the detail sentences for each reason
-- [ ] 2.3 Change `CriterionResult` to `(id, description, passed, detail, message)`
-- [ ] 2.4 Update `EvaluatorTest`: one test per reason and phrase from the `level-acceptance` spec, the aliases, and descriptions/messages in results
-- [ ] 2.5 Commit section 2, e.g. `feat(levels): explain failed criteria with generated details`
+- [x] 2.1 Make each check return a failure reason (`Missing`, `Hidden`, `Count`, `Present`, `Reversed`, `NotInLine`) instead of a boolean; evaluate `below`/`rightOf` by swapping, keeping the author's `a`/`b` for phrasing
+- [x] 2.2 Implement selector noun phrases (text, role + text, role only, content description, `contains`) with a role-word table for the 9 roles, and the detail sentences for each reason
+- [x] 2.3 Change `CriterionResult` to `(id, description, passed, detail, message)`
+- [x] 2.4 Update `EvaluatorTest`: one test per reason and phrase from the `level-acceptance` spec, the aliases, and descriptions/messages in results
+- [x] 2.5 Commit section 2, e.g. `feat(levels): explain failed criteria with generated details`
 
 ## 3. Build-rendered targets (`levels` module)
 
