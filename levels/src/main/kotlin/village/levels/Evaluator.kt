@@ -26,6 +26,16 @@ data class CriterionResult(val id: String, val passed: Boolean, val message: Str
  * inputs: it never touches the scene, the player's classes or the player thread.
  */
 object Evaluator {
+    /**
+     * The verdict for an attempt at [level] (design D6): [compiled] is false when the attempt failed
+     * to compile or load, and [snapshot] is null when it has no scene because it crashed.
+     */
+    fun verdict(level: Level, compiled: Boolean, snapshot: SemanticsSnapshot?): Verdict = when {
+        !compiled -> Verdict.NotRun(Verdict.NotRun.Reason.DID_NOT_COMPILE)
+        snapshot == null -> Verdict.NotRun(Verdict.NotRun.Reason.CRASHED)
+        else -> evaluate(level, snapshot)
+    }
+
     fun evaluate(level: Level, snapshot: SemanticsSnapshot): Verdict.Evaluated = evaluate(level.criteria, snapshot)
 
     fun evaluate(criteria: List<Criterion>, snapshot: SemanticsSnapshot): Verdict.Evaluated {

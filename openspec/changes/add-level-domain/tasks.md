@@ -26,12 +26,12 @@
 
 ## 4. Test level and self-checking levels
 
-- [ ] 4.1 Add `levels/src/main/resources/levels/index.json` and `000-hello-main-street/` (`level.json` with Rosa's request and the `title`, `subtitle` and `order` criteria with their messages, and a `Starter.kt` that compiles and shows an empty `PlayerScreen` with a hint comment)
-- [ ] 4.2 Add `levels/src/test/resources/levels/000-hello-main-street/Solution.kt`
-- [ ] 4.3 Implement `LevelsTest` (`testImplementation(project(":compiler"))`): for every indexed level, validate it, compile and load `Solution.kt` at the level's viewport and assert that the verdict passes, compile and load `Starter.kt` and assert that it fails at least one criterion, and check that the index matches the folders on disk exactly; share one pipeline and one engine across levels
-- [ ] 4.4 Add pipeline-backed tests for the spec scenarios that need real Compose: Button merged with role + text, styled solution still passes, wrong order fails only `order`, crash/compile error gives `NotRun`
-- [ ] 4.5 Confirm that `./gradlew :levels:test` fails, naming the level and criterion, when the solution is broken, and naming the level when the starter already passes (try both by hand, then revert)
-- [ ] 4.6 Commit section 4 with a conventional commit and a descriptive body, e.g. `feat(levels): add hello-main-street test level and self-checking level tests`
+- [x] 4.1 Add `levels/src/main/resources/levels/index.json` and `000-hello-main-street/` (`level.json` with Rosa's request and the `title`, `subtitle` and `order` criteria with their messages, and a `Starter.kt` that compiles and shows an empty `PlayerScreen` with a hint comment)
+- [x] 4.2 Add `levels/src/test/resources/levels/000-hello-main-street/Solution.kt`
+- [x] 4.3 Implement `LevelsTest` (`testImplementation(project(":compiler"))`): for every indexed level, validate it, compile and load `Solution.kt` at the level's viewport and assert that the verdict passes, compile and load `Starter.kt` and assert that it fails at least one criterion, and check that the index matches the folders on disk exactly; share one pipeline and one engine across levels
+- [x] 4.4 Add pipeline-backed tests for the spec scenarios that need real Compose: Button merged with role + text, styled solution still passes, wrong order fails only `order`, crash/compile error gives `NotRun`
+- [x] 4.5 Confirm that `./gradlew :levels:test` fails, naming the level and criterion, when the solution is broken, and naming the level when the starter already passes (try both by hand, then revert)
+- [x] 4.6 Commit section 4 with a conventional commit and a descriptive body, e.g. `feat(levels): add hello-main-street test level and self-checking level tests`
 
 ## 5. Game integration (`app` module)
 
