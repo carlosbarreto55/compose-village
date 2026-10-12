@@ -17,12 +17,12 @@
 
 ## 3. Acceptance evaluator (`levels` module)
 
-- [ ] 3.1 Implement text normalization (trim, collapse whitespace) and selector matching against snapshot nodes: AND of the given fields, any single text value or all values joined by spaces, role by name, `ignoreCase` and `contains`
-- [ ] 3.2 Implement the visibility filter (non-zero size, non-zero overlap with the viewport) applied before every criterion
-- [ ] 3.3 Implement the criteria: `exists`/`count`, `absent`, and `above`/`leftOf` over some pair of distinct visible matches, with a tolerance in dp
-- [ ] 3.4 Implement `Verdict` (`Evaluated` with per-criterion results in level order and `passed`; `NotRun` with `DidNotCompile`/`Crashed`) and `Evaluator.evaluate(level, snapshot)`
-- [ ] 3.5 Unit-test the evaluator with hand-built snapshots, one test per scenario in the `level-acceptance` spec (whitespace, case, ignoreCase, contains, role mismatch, zero size, off-viewport, exact count, absent, column vs row, tolerance, partial progress)
-- [ ] 3.6 Commit section 3 with a conventional commit and a descriptive body, e.g. `feat(levels): evaluate acceptance criteria over semantics snapshots`
+- [x] 3.1 Implement text normalization (trim, collapse whitespace) and selector matching against snapshot nodes: AND of the given fields, any single text value or all values joined by spaces, role by name, `ignoreCase` and `contains`
+- [x] 3.2 Implement the visibility filter (non-zero size, non-zero overlap with the viewport) applied before every criterion
+- [x] 3.3 Implement the criteria: `exists`/`count`, `absent`, and `above`/`leftOf` over some pair of distinct visible matches, with a tolerance in dp
+- [x] 3.4 Implement `Verdict` (`Evaluated` with per-criterion results in level order and `passed`; `NotRun` with `DidNotCompile`/`Crashed`) and `Evaluator.evaluate(level, snapshot)`
+- [x] 3.5 Unit-test the evaluator with hand-built snapshots, one test per scenario in the `level-acceptance` spec (whitespace, case, ignoreCase, contains, role mismatch, zero size, off-viewport, exact count, absent, column vs row, tolerance, partial progress)
+- [x] 3.6 Commit section 3 with a conventional commit and a descriptive body, e.g. `feat(levels): evaluate acceptance criteria over semantics snapshots`
 
 ## 4. Test level and self-checking levels
 
