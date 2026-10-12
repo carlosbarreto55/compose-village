@@ -14,8 +14,12 @@ dependencies {
     implementation(project(":preview"))
     implementation(compose.desktop.currentOs)
     implementation(libs.compose.material3)
+    implementation(project(":levels"))
     implementation(libs.coroutines.swing)
+    testImplementation(libs.kotlin.test)
 }
+
+tasks.test { useJUnitPlatform() }
 
 compose.desktop {
     application {

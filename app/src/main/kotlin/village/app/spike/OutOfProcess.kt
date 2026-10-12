@@ -10,6 +10,7 @@ import village.compiler.Diagnostic
 import village.compiler.PlayerPipeline
 import village.preview.PreviewEngine
 import village.preview.RuntimeError
+import village.preview.SemanticsSnapshot
 import java.io.File
 import java.util.concurrent.TimeUnit
 
@@ -46,6 +47,7 @@ internal fun outOfProcess(report: Report, options: Options) = report.section("Ou
     val pipeline = PlayerPipeline()
     var localDiagnostics: List<Diagnostic>
     var localCrash: RuntimeError?
+    var localSnapshot: SemanticsSnapshot?
     PreviewEngine().use { engine ->
         fun compile(kind: String, run: Int, source: String) {
             val start = System.nanoTime()
@@ -56,6 +58,7 @@ internal fun outOfProcess(report: Report, options: Options) = report.section("Ou
         }
         compile("cold", 0, Samples.BAKERY)
         compile("first", 0, counterApp)
+        localSnapshot = engine.snapshot().get(10, TimeUnit.SECONDS)
         repeat(runs) { compile("warm", it + 1, warmSource(it + 1)) }
         repeat(runs) { i ->
             val before = engine.state.value.frameCount
@@ -74,6 +77,7 @@ internal fun outOfProcess(report: Report, options: Options) = report.section("Ou
     // ---- out-of-process ----
     val remoteDiagnostics: List<Diagnostic>
     val remoteCrash: RuntimeError?
+    var remoteSnapshot: SemanticsSnapshot? = null
     val helperRss = mutableMapOf<String, Double?>()
     val spawnMillis: Double
     val sameJavaHome: Boolean
@@ -97,7 +101,7 @@ internal fun outOfProcess(report: Report, options: Options) = report.section("Ou
         val rendered = { r: Reply.Result -> r.ok && r.png != null && r.error == null }
         request("cold", 0, { helper.compile(Samples.BAKERY) }, rendered)
         helperRss["after warm-up compile"] = rssMb(helper.pid)
-        request("first", 0, { helper.compile(counterApp) }, rendered)
+        request("first", 0, { helper.compile(counterApp).also { remoteSnapshot = it.snapshot } }, rendered)
         repeat(runs) { i -> request("warm", i + 1, { helper.compile(warmSource(i + 1)) }, rendered) }
         repeat(runs) { i ->
             val last = previous
@@ -142,6 +146,9 @@ internal fun outOfProcess(report: Report, options: Options) = report.section("Ou
     check("helper uses the game's Java runtime", sameJavaHome)
     check("diagnostics cross the process boundary unchanged (26:9)", remoteDiagnostics == localDiagnostics && remoteDiagnostics.firstOrNull()?.line == 26) {
         "in-process $localDiagnostics, helper $remoteDiagnostics"
+    }
+    check("semantics snapshots cross the process boundary unchanged", remoteSnapshot != null && remoteSnapshot == localSnapshot) {
+        "${localSnapshot?.nodes()?.count()} nodes in-process, ${remoteSnapshot?.nodes()?.count()} from the helper"
     }
     check("runtime errors cross the process boundary unchanged (line 7)", remoteCrash == localCrash && remoteCrash?.line == 7) {
         "in-process $localCrash, helper $remoteCrash"

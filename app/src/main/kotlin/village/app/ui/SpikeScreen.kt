@@ -17,6 +17,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -63,15 +64,18 @@ fun SpikeScreen(controller: SpikeController) {
     ) {
         Column(Modifier.weight(1f).fillMaxHeight(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Toolbar(controller, onRun = controller::run)
+            controller.level?.let { LevelRequest(it) }
             val errorLines = controller.diagnostics.filter { it.severity == Severity.ERROR && it.line > 0 }.map { it.line }.toSet()
             CodeEditor(controller.code, { controller.code = it }, errorLines, editorFocus, Modifier.weight(1f).fillMaxWidth())
             DiagnosticsList(controller.diagnostics, onSelect = { moveCaret(it.line, it.column) }, Modifier.fillMaxWidth().heightIn(max = 160.dp))
         }
+        val previewWidth = maxOf(SpikeController.PREVIEW_WIDTH_DP.toFloat(), controller.level?.viewport?.widthDp ?: 0f)
         Column(
-            Modifier.width((SpikeController.PREVIEW_WIDTH_DP + 24).dp).fillMaxHeight().verticalScroll(rememberScrollState()),
+            Modifier.width((previewWidth + 24).dp).fillMaxHeight().verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             PreviewPane(preview, controller.engine)
+            controller.level?.let { level -> controller.verdict?.let { VerdictPanel(level, it) } }
             preview.error?.let { RuntimeErrorPanel(it, onSelectLine = { line -> moveCaret(line, 1) }) }
             ConsolePanel(preview.console)
             RecompositionPanel(preview.recompositions)
@@ -82,6 +86,11 @@ fun SpikeScreen(controller: SpikeController) {
 @Composable
 private fun Toolbar(controller: SpikeController, onRun: () -> Unit) {
     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+        FilterChip(selected = controller.level == null, onClick = { controller.open(null) }, label = { Text("Sandbox") }, enabled = !controller.running)
+        for (level in controller.levels) {
+            FilterChip(selected = controller.level == level, onClick = { controller.open(level) }, label = { Text(level.displayName()) }, enabled = !controller.running)
+        }
+        Spacer(Modifier.width(4.dp))
         Button(onClick = onRun, enabled = !controller.running) { Text("Run") }
         Text("⌘↩", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
         Spacer(Modifier.width(4.dp))

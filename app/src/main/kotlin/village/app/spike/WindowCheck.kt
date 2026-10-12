@@ -19,6 +19,7 @@ import village.app.SpikeController
 import village.app.ui.SpikeScreen
 import village.app.ui.offsetOf
 import village.compiler.Diagnostic
+import village.levels.Verdict
 import java.io.File
 
 /**
@@ -83,6 +84,23 @@ internal fun window(report: Report) = report.section("Spike window", Criterion.R
             "${controller.engine.state.value.error}"
         }
         shot("4-runtime-error")
+
+        // The test level, played through the window like a player would.
+        val level = controller.levels.single { it.id == "000-hello-main-street" }
+        controller.open(level)
+        settle { true }
+        fun failed() = (controller.verdict as? Verdict.Evaluated)?.results?.filterNot { it.passed }?.map { it.id }
+        runCode(level.starterCode)
+        check("level: the starter runs and fails the level", failed()?.isNotEmpty() == true) { "${controller.verdict}" }
+        shot("5-level-starter")
+        runCode(level.starterCode.replace("Text(\"Your sign goes here\")", "Text(\"Fresh bread daily\")\n        Text(\"Rosa's Bakery\")"))
+        check("level: the wrong order fails only `order`", failed() == listOf("order")) { "${controller.verdict}" }
+        shot("6-level-wrong-order")
+        runCode(level.starterCode.replace("Text(\"Your sign goes here\")", "Text(\"Rosa's Bakery\")\n        Text(\"Fresh bread daily\")"))
+        check("level: the solution solves it", (controller.verdict as? Verdict.Evaluated)?.passed == true) { "${controller.verdict}" }
+        check("level: the preview renders at the level's 400 x 300 dp viewport",
+            controller.engine.state.value.frame?.let { it.width to it.height } == (400 to 300)) { "${controller.engine.state.value.frame?.let { "${it.width}x${it.height}" }}" }
+        shot("7-level-solved")
         text("Screenshots of each state: `app/build/spike/window/*.png` (not committed).")
     } finally {
         scene.close()

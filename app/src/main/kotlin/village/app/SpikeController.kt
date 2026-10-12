@@ -12,13 +12,18 @@ import kotlinx.coroutines.withContext
 import village.compiler.Diagnostic
 import village.compiler.PlayerPipeline
 import village.compiler.Timings
+import village.levels.Evaluator
+import village.levels.Level
+import village.levels.LevelRepository
+import village.levels.Verdict
 import village.preview.PreviewEngine
 import java.util.concurrent.Executors
 import kotlin.math.roundToInt
 
 /**
  * The spike window's logic: compiles on one background thread (the compiler is not thread-safe)
- * and hands successful attempts to the [PreviewEngine]. State is Compose state, written on [scope].
+ * and hands successful attempts to the [PreviewEngine]. With a [level] open, each Run is also
+ * judged against the level's criteria. State is Compose state, written on [scope].
  *
  * @param density the window's density; the scene renders at the same pixel density, so frames are sharp.
  */
@@ -43,6 +48,27 @@ class SpikeController(private val scope: CoroutineScope, density: Float) : AutoC
     var timings by mutableStateOf<Timings?>(null)
         private set
 
+    /** The bundled levels. They are checked by the build's level tests, so a failure here is a packaging bug. */
+    val levels: List<Level> = runCatching { LevelRepository().all() }.getOrElse { e -> System.err.println(e.message); emptyList() }
+
+    /** The open level, or null in the free sandbox. */
+    var level by mutableStateOf<Level?>(null)
+        private set
+    /** The latest Run's verdict for the open level. */
+    var verdict by mutableStateOf<Verdict?>(null)
+        private set
+
+    /** Opens [level] (null for the sandbox): its starter code replaces the editor's content. Ignored while a run is in progress. */
+    fun open(level: Level?) {
+        if (running || level == this.level) return
+        this.level = level
+        code = TextFieldValue(level?.starterCode ?: Samples.BAKERY)
+        diagnostics = emptyList()
+        timings = null
+        verdict = null
+        engine.unload()
+    }
+
     /** Compiles the sample once in the background so the player's first Run is already warm. */
     fun warmUp() {
         scope.launch {
@@ -56,14 +82,19 @@ class SpikeController(private val scope: CoroutineScope, density: Float) : AutoC
     /** Compiles the editor's code and, if it compiles, shows it in the preview. Ignored while a run is in progress. */
     fun run() {
         val source = code.text
+        val level = level
         if (running) return
         running = true
         scope.launch {
             try {
-                val result = withContext(compileDispatcher) { pipeline().run(source) }
+                val result = withContext(compileDispatcher) { pipeline().run(source, level?.entryFunction ?: "PlayerScreen") }
                 diagnostics = result.diagnostics
                 timings = result.timings
-                result.entry?.let { engine.load(it, source.lines().size, result.loader).await() }
+                result.entry?.let { engine.load(it, source.lines().size, result.loader, level?.viewport).await() }
+                if (level != null) {
+                    val snapshot = if (result.entry != null) engine.snapshot().await() else null
+                    verdict = Evaluator.verdict(level, compiled = result.entry != null, snapshot)
+                }
             } finally {
                 running = false
             }

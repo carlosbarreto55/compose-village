@@ -68,7 +68,8 @@ class CompileServer internal constructor(private val channel: DataOutputStream) 
         val encodeStart = System.nanoTime()
         val png = frame?.let(::encodePng)
         val encodeMillis = (System.nanoTime() - encodeStart) / 1e6
-        return Reply.Result(ok, result?.diagnostics.orEmpty(), result?.timings, error, png, renderMillis, encodeMillis, millisSince(start))
+        val snapshot = engine.snapshot().get(10, TimeUnit.SECONDS)
+        return Reply.Result(ok, result?.diagnostics.orEmpty(), result?.timings, error, png, renderMillis, encodeMillis, millisSince(start), snapshot)
     }
 
     private fun fault(kind: String): Nothing {

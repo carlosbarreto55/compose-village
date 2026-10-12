@@ -3,7 +3,11 @@ package village.app.server
 import village.compiler.Diagnostic
 import village.compiler.Severity
 import village.compiler.Timings
+import village.preview.DpBounds
 import village.preview.RuntimeError
+import village.preview.SemanticsSnapshot
+import village.preview.SnapshotNode
+import village.preview.Viewport
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import java.io.DataInputStream
@@ -60,6 +64,32 @@ internal object Protocol {
     }
 
     fun DataInputStream.readText(): String = String(ByteArray(readInt()).also { readFully(it) }, Charsets.UTF_8)
+
+    // A snapshot is its viewport, then its roots; each node is written before its children (pre-order).
+    fun DataOutputStream.writeSnapshot(s: SemanticsSnapshot) {
+        writeFloat(s.viewport.widthDp); writeFloat(s.viewport.heightDp)
+        writeInt(s.roots.size)
+        s.roots.forEach { writeNode(it) }
+    }
+
+    private fun DataOutputStream.writeNode(n: SnapshotNode) {
+        writeInt(n.texts.size); n.texts.forEach { writeText(it) }
+        writeInt(n.contentDescriptions.size); n.contentDescriptions.forEach { writeText(it) }
+        writeBoolean(n.role != null); n.role?.let { writeText(it) }
+        writeFloat(n.bounds.left); writeFloat(n.bounds.top); writeFloat(n.bounds.right); writeFloat(n.bounds.bottom)
+        writeInt(n.children.size)
+        n.children.forEach { writeNode(it) }
+    }
+
+    fun DataInputStream.readSnapshot() = SemanticsSnapshot(Viewport(readFloat(), readFloat()), List(readInt()) { readNode() })
+
+    private fun DataInputStream.readNode(): SnapshotNode = SnapshotNode(
+        texts = List(readInt()) { readText() },
+        contentDescriptions = List(readInt()) { readText() },
+        role = if (readBoolean()) readText() else null,
+        bounds = DpBounds(readFloat(), readFloat(), readFloat(), readFloat()),
+        children = List(readInt()) { readNode() },
+    )
 }
 
 /** Host -> helper. */
@@ -125,6 +155,8 @@ internal sealed interface Reply {
         val encodeMillis: Double,
         /** Wall time the helper spent on the request, from decoding it to encoding the reply. */
         val serverMillis: Double,
+        /** The scene's semantics snapshot, for acceptance criteria; null when there is no scene. */
+        val snapshot: SemanticsSnapshot? = null,
     ) : Reply
 
     /** The helper could not handle a request; it keeps serving. */
@@ -149,6 +181,8 @@ internal sealed interface Reply {
                     writeInt(r.png?.size ?: -1)
                     r.png?.let { write(it) }
                     writeDouble(r.renderMillis); writeDouble(r.encodeMillis); writeDouble(r.serverMillis)
+                    writeBoolean(r.snapshot != null)
+                    r.snapshot?.let { writeSnapshot(it) }
                 }
                 is Failure -> { writeByte(3); writeText(r.message) }
             }
@@ -176,6 +210,7 @@ internal sealed interface Reply {
                         } else null,
                         png = readInt().takeIf { it >= 0 }?.let { n -> ByteArray(n).also { readFully(it) } },
                         renderMillis = readDouble(), encodeMillis = readDouble(), serverMillis = readDouble(),
+                        snapshot = if (readBoolean()) readSnapshot() else null,
                     )
                     3 -> Failure(readText())
                     else -> error("unknown reply type $type")

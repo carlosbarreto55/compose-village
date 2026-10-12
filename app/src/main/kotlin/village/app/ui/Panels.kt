@@ -36,6 +36,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import village.compiler.Diagnostic
 import village.compiler.Severity
+import village.levels.Level
+import village.levels.Verdict
 import village.preview.PreviewEngine
 import village.preview.PreviewState
 import village.preview.RuntimeError
@@ -44,7 +46,11 @@ import village.preview.RuntimeError
 @Composable
 fun PreviewPane(state: PreviewState, engine: PreviewEngine) {
     val shape = RoundedCornerShape(12.dp)
-    val (width, height) = with(LocalDensity.current) { engine.width.toDp() to engine.height.toDp() }
+    // The frame's size follows the level's viewport; before the first frame, use the engine's.
+    val (width, height) = with(LocalDensity.current) {
+        val frame = state.frame
+        if (frame != null) frame.width.toDp() to frame.height.toDp() else engine.width.toDp() to engine.height.toDp()
+    }
     Box(
         Modifier.size(width, height)
             .clip(shape)
@@ -167,6 +173,62 @@ private fun PanelCard(title: String, content: @Composable () -> Unit) {
         Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
             Text(title, style = MaterialTheme.typography.titleSmall)
             content()
+        }
+    }
+}
+
+/** `000-hello-main-street` -> `Hello Main Street`. Levels have no title yet; this is spike UI. */
+fun Level.displayName() = id.split('-').dropWhile { part -> part.all(Char::isDigit) }.joinToString(" ") { it.replaceFirstChar(Char::uppercase) }
+
+/** Who asks and what they want: the level's task. */
+@Composable
+fun LevelRequest(level: Level) {
+    Card(Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer)) {
+        Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            Text(level.resident, style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSecondaryContainer)
+            Text("“${level.request}”", style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSecondaryContainer)
+        }
+    }
+}
+
+/** The latest Run's verdict: every criterion, with the resident's message for each failed one. */
+@Composable
+fun VerdictPanel(level: Level, verdict: Verdict) {
+    val name = level.resident.substringBefore(',')
+    val solved = verdict is Verdict.Evaluated && verdict.passed
+    val colors = if (solved) CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
+    else CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
+    Card(Modifier.fillMaxWidth(), colors = colors) {
+        Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            when (verdict) {
+                is Verdict.NotRun -> {
+                    Text("$name couldn't look at it yet", style = MaterialTheme.typography.titleSmall)
+                    Text(
+                        when (verdict.reason) {
+                            Verdict.NotRun.Reason.DID_NOT_COMPILE -> "Your code didn't compile. Fix the problems in the list, then Run again."
+                            Verdict.NotRun.Reason.CRASHED -> "Your screen crashed before $name could see it."
+                        },
+                        style = MaterialTheme.typography.bodySmall,
+                    )
+                }
+                is Verdict.Evaluated -> {
+                    val passing = verdict.results.count { it.passed }
+                    Text(
+                        if (verdict.passed) "Solved! $name loves it." else "Not quite: $passing of ${verdict.results.size} checks pass",
+                        style = MaterialTheme.typography.titleSmall,
+                    )
+                    for (r in verdict.results) {
+                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Text(if (r.passed) "✓" else "✗", color = if (r.passed) Color(0xFF2E7D32) else MaterialTheme.colorScheme.error)
+                            Text(
+                                r.message ?: r.id,
+                                style = MaterialTheme.typography.bodySmall,
+                                color = if (r.passed) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurface,
+                            )
+                        }
+                    }
+                }
+            }
         }
     }
 }

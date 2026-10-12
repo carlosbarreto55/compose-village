@@ -35,9 +35,9 @@
 
 ## 5. Game integration (`app` module)
 
-- [ ] 5.1 Carry the snapshot in the helper protocol: optional snapshot field in `Reply.Result`, taken by `CompileServer` after compile and click requests; add an encode/decode round-trip test
-- [ ] 5.2 Add a "Level: Hello, Main Street" entry to the spike window that loads the level, puts its starter code in the editor, shows the resident and request above the editor, and uses the level's viewport and entry function on Run
-- [ ] 5.3 After each Run, evaluate and show the verdict below the preview (✓/✗ per criterion, failed messages, "solved" when all pass; "didn't compile" or "crashed" for `NotRun`)
-- [ ] 5.4 Check that `app` depends on `levels` main only and that the packaged app contains no `Solution.kt` (inspect the jars of the `createDistributable` output)
-- [ ] 5.5 Run `./gradlew build`, then play the level by hand with `./gradlew :app:run`: starter fails, wrong order fails only `order`, solution passes
-- [ ] 5.6 Commit section 5 with a conventional commit and a descriptive body, e.g. `feat(app): play the hello-main-street level with acceptance verdicts`
+- [x] 5.1 Carry the snapshot in the helper protocol: optional snapshot field in `Reply.Result`, taken by `CompileServer` after compile and click requests; add an encode/decode round-trip test
+- [x] 5.2 Add a "Level: Hello, Main Street" entry to the spike window that loads the level, puts its starter code in the editor, shows the resident and request above the editor, and uses the level's viewport and entry function on Run
+- [x] 5.3 After each Run, evaluate and show the verdict below the preview (✓/✗ per criterion, failed messages, "solved" when all pass; "didn't compile" or "crashed" for `NotRun`)
+- [x] 5.4 Check that `app` depends on `levels` main only and that the packaged app contains no `Solution.kt` (inspect the jars of the `createDistributable` output)
+- [x] 5.5 Run `./gradlew build`, then play the level by hand with `./gradlew :app:run`: starter fails, wrong order fails only `order`, solution passes
+- [x] 5.6 Commit section 5 with a conventional commit and a descriptive body, e.g. `feat(app): play the hello-main-street level with acceptance verdicts`
