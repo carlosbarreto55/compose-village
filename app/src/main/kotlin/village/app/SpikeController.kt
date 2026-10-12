@@ -70,8 +70,8 @@ class SpikeController(private val scope: CoroutineScope, density: Float) : AutoC
         private set
     private val decodedTargets = mutableMapOf<String, ImageBitmap?>()
 
-    /** Whether the target is laid semi-transparently over the player's preview. */
-    var overlayTarget by mutableStateOf(false)
+    /** Whether the preview shows the level's target ("Target") instead of the player's screen ("Your screen"). */
+    var showTarget by mutableStateOf(false)
 
     /** Each panel and the level that unlocks it: the first in play order that lists it. */
     val unlocks: Map<Panel, String> = panelUnlocks(levels)
@@ -95,6 +95,7 @@ class SpikeController(private val scope: CoroutineScope, density: Float) : AutoC
         diagnostics = emptyList()
         timings = null
         verdict = null
+        showTarget = false
         target = level?.let { l -> decodedTargets.getOrPut(l.id) { l.targetPng?.let { Image.makeFromEncoded(it).toComposeImageBitmap() } } }
         engine.unload()
         highlightJob?.cancel()
@@ -128,6 +129,7 @@ class SpikeController(private val scope: CoroutineScope, density: Float) : AutoC
         val level = level
         if (running) return
         running = true
+        showTarget = false // a Run always shows its result
         scope.launch {
             try {
                 val result = withContext(compileDispatcher) { pipeline().run(source, level?.entryFunction ?: "PlayerScreen") }

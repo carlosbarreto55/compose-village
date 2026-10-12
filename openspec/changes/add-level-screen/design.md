@@ -19,7 +19,7 @@ This design explains how to build them.
 ## Goals / Non-Goals
 
 **Goals:**
-- The player always sees the goal: a target thumbnail, a ghost before the first Run, and an overlay on demand.
+- The player always sees the goal: a ghost before the first Run, and a "Your screen | Target" switch to look at it full size.
 - Checklist lines written by authors (`description`), with failure explanations generated generically, so new levels never need new code.
 - A clear "Level complete" state, and a Continue button through the indexed levels.
 - Panels appear only when a level needs them, with a small unlock moment.
@@ -43,7 +43,7 @@ levels/src/targets/kotlin/RenderTargets.kt  (own source set: main classes + comp
 ```
 - **A separate `targets` source set**, run by a `JavaExec` task named `renderTargets`. It can't use the test source set: test compilation depends on main's processed resources, and those would depend on the render task, which would create a cycle. The `targets` source set depends on main's *classes* only, plus `:compiler`. It reads level data straight from the source directories through `LevelFiles.directory`.
 - The task's inputs are the level resources, the solutions and the runtime classpath. Its output is the generated directory, so Gradle skips it when nothing changed. It fails if a solution doesn't compile or render.
-- **Density 2×** stays sharp on Retina displays and scales down for the thumbnail. The game draws the image at the viewport's dp size.
+- **Density 2×** stays sharp on Retina displays. The game draws the image at the viewport's dp size.
 - `LevelFiles` gains `readBytes`, and `Level` gains `targetPng: ByteArray?`. It is null for fixture levels in unit tests. `LevelsTest` asserts that every bundled level has one.
 - The app decodes the PNG into an `ImageBitmap` once, when the level opens, and keeps it in the controller. This is the whole of "render once and cache".
 
@@ -87,24 +87,24 @@ These are four serializable classes. `Below(a, b)` is evaluated as `Above(b, a)`
 ### D5. Level screen layout and states
 ```
 ┌ toolbar: [Sandbox] [Hello Main Street] [Open Sign]   Run ⌘↩   timings ┐
-├ request card (resident, request)          │ ┌ preview (viewport) ───┐ ┌target┐ │
-│                                           │ │ ghost / frame         │ │thumb │ │
-│ editor                                    │ │ (+ overlay 50%)       │ └──────┘ │
-│                                           │ └───────────────────────┘ ◐ Overlay│
+├ request card (resident, request)          │ [ Your screen | Target ]          │
+│                                           │ ┌ preview (viewport) ─────────────┐│
+│ editor                                    │ │ ghost / frame / target          ││
+│                                           │ └─────────────────────────────────┘│
 │                                           │ ┌ checklist / Level complete ─────┐│
 │ problems list                             │ │ ○/✓/✗ description · detail       ││
 │                                           │ └──────────────────────────────────┘│
 │                                           │ [Console]  [Recompositions]  (if listed)│
 ```
 - **Ghost**: before the first frame of this level (state `frame == null && error == null`), the preview draws the target at an alpha of 0.25, with the caption "Rosa's sketch: press Run to build it". The name comes from `resident`.
-- **Overlay**: an `Image` at an alpha of 0.5, stacked above the frame. It doesn't consume pointer events, because the input is handled by the pane's `pointerInput`, which sits beneath the image. The overlay state is kept per session.
+- **View switch**: a Material3 segmented button above the preview, "Your screen" or "Target". "Target" draws the target at full opacity instead of the frame, and the pane's `pointerInput` stops forwarding events to the scene. Opening a level and starting a Run switch back to "Your screen". A thumbnail next to the preview and a 50% overlay were tried first; the thumbnail was too small to read and took width from the editor, so the switch replaced both.
 - **Checklist**:
   - Before the first Run, each line shows ○ and its description.
   - After a Run, each line shows ✓ or ✗ and its description. A ✗ line also shows the detail, then the message in italics.
   - `NotRun` shows a single line: "didn't compile" or "crashed".
 - **Level complete**: the card switches to the primary container color and shows "Level complete!", a short line ("Rosa loves her new sign"), the ✓ list and a Continue button. On the last level, it shows "More of Main Street is coming soon" instead of Continue.
 - **Continue** calls `controller.open(next)`, which replaces the editor with the next level's starter code and resets the verdict, ghost and highlights.
-- The window widens the preview column to fit the viewport plus the thumbnail (thumbnail width half the viewport).
+- The preview column is as wide as the level's viewport (at least the sandbox's 360 dp).
 
 ### D6. Content
 - **Level 000** becomes two criteria: `exists title` ("The text \"Rosa's Bakery\" is on screen") and `below order` (a = "Fresh bread daily", b = "Rosa's Bakery", "\"Fresh bread daily\" appears below \"Rosa's Bakery\""). The redundant `subtitle` check goes away. Its solution becomes plain `Text`s, so the target matches what is checked.
@@ -132,7 +132,7 @@ These are four serializable classes. `Below(a, b)` is evaluated as `Above(b, a)`
 - **Targets render with the build machine's fonts.** A build on Linux would ship a slightly different-looking target. → Release builds are macOS-only today, and the target is for display only, never compared.
 - **Builds get slower when level data changes**, because the render step compiles every solution (a few seconds). → The step is up-to-date-checked, and it reuses one pipeline and one engine for all levels.
 - **Generated English details limit localization.** → Phrases live in a single file and can be swapped out later.
-- **The overlay invites pixel-perfect matching.** → Solutions show only what is checked (an authoring rule in the spec), and a passing attempt is "Level complete" whatever its styling.
+- **A full-size target invites pixel-perfect matching.** → Solutions show only what is checked (an authoring rule in the spec), and a passing attempt is "Level complete" whatever its styling.
 - **Derived unlocks re-trigger on replay.** For example, opening 001 again highlights the Console again. → This is accepted until saved progress exists.
 - **Level 001's `println` request isn't checked.** → This is stated in the design. Console criteria can come with interaction criteria.
 

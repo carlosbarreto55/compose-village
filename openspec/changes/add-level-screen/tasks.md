@@ -37,3 +37,11 @@
 - [x] 5.5 Update the harness window section to play through the real window: target and ghost before Run with no Console or Recompositions in 000; starter → two ✗ "can't find"; wrong order → reversed detail; solution → Level complete; Continue → 001 with the Console visible and highlighted; screenshots for each state
 - [x] 5.6 Run `./gradlew build` and `./gradlew :app:spike -Pargs="--only window,outofprocess"`; check that the packaged app contains both `target.png` files and no `Solution.kt`
 - [x] 5.7 Commit section 5, e.g. `feat(app): level screen with target, checklist, level complete and panel unlocks`
+
+## 6. Target view switch (replaces the thumbnail and overlay)
+
+- [x] 6.1 Update the change's artifacts: the `level-screen` spec (target shown through the ghost and a "Your screen | Target" switch; "Target view switch" replaces "Target overlay toggle"), design D5 and the proposal
+- [x] 6.2 Controller: replace `overlayTarget` with `showTarget`, reset to "Your screen" when a level opens and when a Run starts
+- [x] 6.3 UI: remove the thumbnail; add the segmented switch above the preview; on "Target" the pane draws the target at full size and stops forwarding mouse input; the preview column is as wide as the viewport
+- [x] 6.4 Harness window section: switching to Target shows it and Run switches back; screenshots without a thumbnail
+- [x] 6.5 Run `./gradlew build`, the window harness section and `openspec validate add-level-screen --strict`, then commit, e.g. `feat(app): replace the target thumbnail and overlay with a Your screen / Target switch`

@@ -27,7 +27,10 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.FilterChip
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.SegmentedButton
+import androidx.compose.material3.SegmentedButtonDefaults
+import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -59,14 +62,15 @@ import village.preview.Viewport
 
 /**
  * The engine's latest frame at its real pixel size; mouse input is forwarded to the player's scene.
- * [ghost] is drawn faded while there is no frame yet (the level's target, with [ghostCaption]);
- * [overlay] is drawn semi-transparently over the frame. Neither takes mouse input.
+ * [target] is the level's target: drawn faded while there is no frame yet (with [ghostCaption]), and
+ * at full size instead of the frame when [showTarget] is set, which also stops mouse forwarding.
  */
 @Composable
 fun PreviewPane(
     state: PreviewState, engine: PreviewEngine, viewport: Viewport? = null,
-    ghost: ImageBitmap? = null, ghostCaption: String = "", overlay: ImageBitmap? = null,
+    target: ImageBitmap? = null, ghostCaption: String = "", showTarget: Boolean = false,
 ) {
+    val targetShown = showTarget && target != null
     val shape = RoundedCornerShape(12.dp)
     // A level's viewport, even before its first frame (the ghost needs it); otherwise the frame's or engine's size.
     val (width, height) = with(LocalDensity.current) {
@@ -82,14 +86,14 @@ fun PreviewPane(
             .clip(shape)
             .background(Color.White)
             .border(1.dp, MaterialTheme.colorScheme.outlineVariant, shape)
-            .pointerInput(engine) {
+            .pointerInput(engine, targetShown) {
                 awaitPointerEventScope {
                     while (true) {
                         val event = awaitPointerEvent()
                         val change = event.changes.firstOrNull() ?: continue
                         val forwarded = event.type == PointerEventType.Press || event.type == PointerEventType.Release ||
                             event.type == PointerEventType.Move || event.type == PointerEventType.Scroll
-                        if (forwarded) {
+                        if (forwarded && !targetShown) {
                             engine.sendPointer(event.type, engine.toScene(change.position, size.width, size.height), change.scrollDelta)
                         }
                     }
@@ -97,13 +101,12 @@ fun PreviewPane(
             },
     ) {
         val frame = state.frame
-        if (frame != null) {
+        if (targetShown) {
+            Image(target!!, contentDescription = "Target", Modifier.fillMaxSize(), contentScale = ContentScale.FillBounds, filterQuality = FilterQuality.High)
+        } else if (frame != null) {
             Image(frame, contentDescription = "Your screen", Modifier.fillMaxSize(), contentScale = ContentScale.FillBounds)
-            overlay?.let {
-                Image(it, contentDescription = "Target overlay", Modifier.fillMaxSize().alpha(0.5f), contentScale = ContentScale.FillBounds, filterQuality = FilterQuality.High)
-            }
-        } else if (state.error == null && ghost != null) {
-            Image(ghost, contentDescription = "Target sketch", Modifier.fillMaxSize().alpha(0.25f), contentScale = ContentScale.FillBounds, filterQuality = FilterQuality.High)
+        } else if (state.error == null && target != null) {
+            Image(target, contentDescription = "Target sketch", Modifier.fillMaxSize().alpha(0.25f), contentScale = ContentScale.FillBounds, filterQuality = FilterQuality.High)
             Text(ghostCaption, Modifier.align(Alignment.BottomCenter).padding(12.dp), style = MaterialTheme.typography.labelLarge, color = Color.Gray)
         } else if (state.error == null) {
             Text("Press Run to see your screen", Modifier.align(Alignment.Center), color = Color.Gray)
@@ -111,25 +114,15 @@ fun PreviewPane(
     }
 }
 
-/** The level's target, small, next to the preview, with the overlay toggle. */
+/** Chooses what the preview shows: the player's screen or the level's target. */
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun TargetThumbnail(target: ImageBitmap, viewport: Viewport, overlay: Boolean, onOverlayChange: (Boolean) -> Unit) {
-    val shape = RoundedCornerShape(8.dp)
-    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-        Text("Target", style = MaterialTheme.typography.labelLarge)
-        Image(
-            target, contentDescription = "Target",
-            Modifier.size((viewport.widthDp * THUMBNAIL_SCALE).dp, (viewport.heightDp * THUMBNAIL_SCALE).dp)
-                .clip(shape).background(Color.White).border(1.dp, MaterialTheme.colorScheme.outlineVariant, shape),
-            contentScale = ContentScale.FillBounds,
-            filterQuality = FilterQuality.High,
-        )
-        FilterChip(selected = overlay, onClick = { onOverlayChange(!overlay) }, label = { Text("Overlay") })
+fun TargetSwitch(showTarget: Boolean, onChange: (Boolean) -> Unit) {
+    SingleChoiceSegmentedButtonRow(Modifier.width(300.dp)) { // wide enough that "Your screen" and its check fit on one line
+        SegmentedButton(selected = !showTarget, onClick = { onChange(false) }, shape = SegmentedButtonDefaults.itemShape(0, 2)) { Text("Your screen") }
+        SegmentedButton(selected = showTarget, onClick = { onChange(true) }, shape = SegmentedButtonDefaults.itemShape(1, 2)) { Text("Target") }
     }
 }
-
-/** Thumbnail size relative to the level's viewport. */
-const val THUMBNAIL_SCALE = 0.5f
 
 @Composable
 fun DiagnosticsList(diagnostics: List<Diagnostic>, onSelect: (Diagnostic) -> Unit, modifier: Modifier = Modifier) {

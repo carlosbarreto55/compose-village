@@ -127,12 +127,15 @@ internal fun window(report: Report) = report.section("Spike window", Criterion.R
         runCode(hello.starterCode.replace("Text(\"Your sign goes here\")", "Text(\"Fresh bread daily\")\n        Text(\"Rosa's Bakery\")"))
         check("level: the wrong order fails only the order, saying which text is on top",
             details() == listOf(null, "\"Fresh bread daily\" is above \"Rosa's Bakery\".")) { "${controller.verdict}" }
-        controller.overlayTarget = true
-        settle { true }
-        shot("7-level-wrong-order-overlay")
-        controller.overlayTarget = false
+        clickText("Target")
+        check("level: the Target switch shows the target in the preview", controller.showTarget && onScreen("Your screen")) {
+            "showTarget=${controller.showTarget}"
+        }
+        shot("7-level-target-view")
 
         runCode(hello.starterCode.replace("Text(\"Your sign goes here\")", "Text(\"Rosa's Bakery\")\n        Text(\"Fresh bread daily\")"))
+        check("level: Run switches the preview back to the player's screen",
+            !controller.showTarget && controller.engine.state.value.frame != null) { "showTarget=${controller.showTarget}" }
         check("level: the solution completes the level", (controller.verdict as? Verdict.Evaluated)?.passed == true &&
             onScreen("Level complete!") && onScreen("Continue")) { "${controller.verdict}" }
         check("level: the preview renders at the level's 400 x 300 dp viewport",

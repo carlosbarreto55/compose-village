@@ -12,9 +12,8 @@ This change turns the spike window's level mode into a first playable level scre
 ## What Changes
 
 - **Level target.** Each level's reference solution is rendered **at build time** into a `target.png` that ships with the level. `Solution.kt` itself still never ships, and the game never compiles it.
-  - The screen shows the target as a thumbnail next to the preview.
-  - It shows the target as a faded "ghost" in the preview before the first Run.
-  - An overlay toggle lays the target semi-transparently over the player's preview.
+  - The screen shows the target as a faded "ghost" in the preview before the first Run.
+  - A "Your screen | Target" switch above the preview shows the target at full size, in place of the player's screen.
   - The target is for display only. Acceptance still never compares pixels.
 - **Requirements checklist.**
   - Each criterion gets a required player-facing `description` (e.g. "\"Fresh bread daily\" appears below \"Rosa's Bakery\""). The checklist below the preview always shows these: neutral before the first Run, then ✓ or ✗ after each Run.
@@ -33,7 +32,7 @@ This change turns the spike window's level mode into a first playable level scre
 ## Capabilities
 
 ### New Capabilities
-- `level-screen`: what the player sees while playing a level: the target thumbnail, ghost and overlay; the requirements checklist with generated failure details; the "Level complete" state and Continue; per-level panel disclosure; and panel unlock highlights.
+- `level-screen`: what the player sees while playing a level: the target ghost and the "Your screen | Target" switch; the requirements checklist with generated failure details; the "Level complete" state and Continue; per-level panel disclosure; and panel unlock highlights.
 
 ### Modified Capabilities
 - `level-definition`:
@@ -51,6 +50,6 @@ This change turns the spike window's level mode into a first playable level scre
   - model, loader and evaluator: descriptions, generated details, aliases, panels, target bytes;
   - a new build step that renders each solution to `target.png` in generated resources, using the real pipeline and engine at 2× density;
   - level data for both levels.
-- **`app`**: the level screen reworked: target thumbnail, ghost and overlay; the checklist and "Level complete" state; panel visibility and unlock highlights; Continue. Harness window checks are updated.
+- **`app`**: the level screen reworked: target ghost and view switch; the checklist and "Level complete" state; panel visibility and unlock highlights; Continue. Harness window checks are updated.
 - **Build**: `processResources` in `levels` depends on the render step, which compiles every solution, adding a few seconds whenever level data changes. Targets render on the build machine, so they use that machine's fonts.
 - **No change** to the compiler, sandbox or guard, or to the preview engine's public API.

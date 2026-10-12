@@ -1,11 +1,11 @@
 ## ADDED Requirements
 
 ### Requirement: Level target
-While a level is open, the screen SHALL show the level's target, the image rendered from its reference solution, as a thumbnail next to the player's preview. The target SHALL be loaded with the level and SHALL NOT trigger any compilation in the game. The target SHALL be used only for display, never to judge the attempt.
+While a level is open, the screen SHALL show the level's target, the image rendered from its reference solution, in the preview area: as a ghost before the first Run, and through a switch between the player's screen and the target. The target SHALL be loaded with the level and SHALL NOT trigger any compilation in the game. The target SHALL be used only for display, never to judge the attempt.
 
 #### Scenario: Target before the first Run
 - **WHEN** the player opens "Hello Main Street" and has not pressed Run yet
-- **THEN** the target thumbnail shows Rosa's sign with "Rosa's Bakery" above "Fresh bread daily"
+- **THEN** the preview shows Rosa's sign, faded, with "Rosa's Bakery" above "Fresh bread daily"
 
 #### Scenario: Running does not recompile the target
 - **WHEN** the player presses Run five times in a level
@@ -18,12 +18,20 @@ Until the player's first Run in an open level renders a frame, the preview SHALL
 - **WHEN** the player opens a level, sees the faded target in the preview, and then presses Run on code that renders
 - **THEN** the preview shows the player's frame instead of the ghost
 
-### Requirement: Target overlay toggle
-The screen SHALL offer a toggle that overlays the target semi-transparently (at about 50% opacity) on top of the player's preview, aligned to the same viewport. The overlay SHALL NOT block mouse input to the player's preview.
+### Requirement: Target view switch
+While a level with a target is open, the screen SHALL offer a switch above the preview with two options, "Your screen" (the default) and "Target". Choosing "Target" SHALL show the target at full size and full opacity in the preview, at the level's viewport. While the target is shown, mouse input SHALL NOT be sent to the player's scene. Switching SHALL NOT recompile or reload anything. Opening a level and pressing Run SHALL both switch back to "Your screen". The sandbox SHALL have no switch.
 
-#### Scenario: Comparing with the target
-- **WHEN** the player's preview shows the texts in the wrong order and the player turns the overlay on
-- **THEN** the target appears over the preview so the mismatch is visible, and clicks still reach the player's UI
+#### Scenario: Looking at the target
+- **WHEN** the player chooses "Target"
+- **THEN** the preview shows the target at full size, at the level's viewport
+
+#### Scenario: No clicks reach the scene while Target is shown
+- **WHEN** the target is shown and the player clicks where their own button would be
+- **THEN** the click is not sent to the player's scene
+
+#### Scenario: Run shows the result
+- **WHEN** the target is shown and the player presses Run
+- **THEN** the switch returns to "Your screen" and the preview shows the new attempt
 
 ### Requirement: Requirements checklist
 While a level is open, the screen SHALL show a checklist below the preview with one line per criterion, in the level's order, using each criterion's `description`. Before the first Run, every line SHALL show a neutral marker. After each Run, each line SHALL show ✓ if the criterion passed or ✗ if it failed. A failed line SHALL show the evaluator's generated detail and, if the criterion has one, its `message`. If the attempt did not compile or crashed, the checklist SHALL say so instead of marking lines.

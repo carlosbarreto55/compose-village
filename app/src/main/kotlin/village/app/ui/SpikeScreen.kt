@@ -73,22 +73,17 @@ fun SpikeScreen(controller: SpikeController) {
         val level = controller.level
         val target = controller.target
         val viewportWidth = level?.viewport?.widthDp ?: SpikeController.PREVIEW_WIDTH_DP.toFloat()
-        val thumbnailWidth = if (level != null && target != null) viewportWidth * THUMBNAIL_SCALE + 12 else 0f
         Column(
-            Modifier.width((maxOf(SpikeController.PREVIEW_WIDTH_DP.toFloat(), viewportWidth + thumbnailWidth) + 24).dp)
+            Modifier.width((maxOf(SpikeController.PREVIEW_WIDTH_DP.toFloat(), viewportWidth) + 24).dp)
                 .fillMaxHeight().verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                PreviewPane(
-                    preview, controller.engine, viewport = level?.viewport,
-                    ghost = target, ghostCaption = level?.let { "${it.resident.substringBefore(',')}'s sketch: press Run to build it" }.orEmpty(),
-                    overlay = target?.takeIf { controller.overlayTarget },
-                )
-                if (level != null && target != null) {
-                    TargetThumbnail(target, level.viewport, controller.overlayTarget, onOverlayChange = { controller.overlayTarget = it })
-                }
-            }
+            if (level != null && target != null) TargetSwitch(controller.showTarget, onChange = { controller.showTarget = it })
+            PreviewPane(
+                preview, controller.engine, viewport = level?.viewport,
+                target = target, ghostCaption = level?.let { "${it.resident.substringBefore(',')}'s sketch: press Run to build it" }.orEmpty(),
+                showTarget = controller.showTarget,
+            )
             level?.let { Checklist(it, controller.verdict, hasNext = controller.nextLevel != null, onContinue = controller::continueToNext) }
             preview.error?.let { RuntimeErrorPanel(it, onSelectLine = { line -> moveCaret(line, 1) }) }
             if (controller.shows(Panel.CONSOLE)) {
