@@ -19,6 +19,9 @@ import village.app.SpikeController
 import village.app.ui.SpikeScreen
 import village.app.ui.offsetOf
 import village.compiler.Diagnostic
+import androidx.compose.ui.semantics.SemanticsNode
+import androidx.compose.ui.semantics.SemanticsProperties
+import androidx.compose.ui.semantics.getOrNull
 import village.levels.Verdict
 import java.io.File
 
@@ -85,22 +88,70 @@ internal fun window(report: Report) = report.section("Spike window", Criterion.R
         }
         shot("4-runtime-error")
 
-        // The test level, played through the window like a player would.
-        val level = controller.levels.single { it.id == "000-hello-main-street" }
-        controller.open(level)
+        // The levels, played through the window like a player would (add-level-screen).
+        fun texts(): List<String> = scene.semanticsOwners.flatMap { owner ->
+            fun walk(n: SemanticsNode): List<String> =
+                n.config.getOrNull(SemanticsProperties.Text).orEmpty().map { it.text } + n.children.flatMap(::walk)
+            walk(owner.rootSemanticsNode)
+        }
+        fun onScreen(text: String) = texts().any { text in it }
+        fun clickText(text: String) {
+            val node = scene.semanticsOwners.asSequence().flatMap { owner ->
+                fun walk(n: SemanticsNode): Sequence<SemanticsNode> = sequenceOf(n) + n.children.asSequence().flatMap(::walk)
+                walk(owner.rootSemanticsNode)
+            }.first { n -> n.config.getOrNull(SemanticsProperties.Text)?.any { it.text == text } == true }
+            val center = node.boundsInRoot.center
+            scene.sendPointerEvent(PointerEventType.Press, center, buttons = PointerButtons(isPrimaryPressed = true), button = PointerButton.Primary)
+            scene.sendPointerEvent(PointerEventType.Release, center, buttons = PointerButtons(), button = PointerButton.Primary)
+            settle { true }
+        }
+        fun details() = (controller.verdict as? Verdict.Evaluated)?.results?.map { it.detail }
+
+        val hello = controller.levels.single { it.id == "000-hello-main-street" }
+        controller.open(hello)
         settle { true }
-        fun failed() = (controller.verdict as? Verdict.Evaluated)?.results?.filterNot { it.passed }?.map { it.id }
-        runCode(level.starterCode)
-        check("level: the starter runs and fails the level", failed()?.isNotEmpty() == true) { "${controller.verdict}" }
-        shot("5-level-starter")
-        runCode(level.starterCode.replace("Text(\"Your sign goes here\")", "Text(\"Fresh bread daily\")\n        Text(\"Rosa's Bakery\")"))
-        check("level: the wrong order fails only `order`", failed() == listOf("order")) { "${controller.verdict}" }
-        shot("6-level-wrong-order")
-        runCode(level.starterCode.replace("Text(\"Your sign goes here\")", "Text(\"Rosa's Bakery\")\n        Text(\"Fresh bread daily\")"))
-        check("level: the solution solves it", (controller.verdict as? Verdict.Evaluated)?.passed == true) { "${controller.verdict}" }
+        check("level: the target and its ghost show before the first Run", controller.target != null &&
+            controller.engine.state.value.frame == null && onScreen("Rosa's sketch") && onScreen("Target")) { texts().joinToString(" | ") }
+        check("level: Hello Main Street hides the Console and Recompositions panels", !onScreen("Console") && !onScreen("Recompositions")) {
+            texts().joinToString(" | ")
+        }
+        check("level: the checklist lists both requirements before the first Run",
+            hello.criteria.all { onScreen(it.description) } && onScreen("Rosa's checklist"))
+        shot("5-level-before-run")
+
+        runCode(hello.starterCode)
+        check("level: the starter shows both requirements unmet with \"can't find\" details",
+            details() == listOf("I can't find \"Rosa's Bakery\" on the screen.", "I can't find \"Fresh bread daily\" on the screen.")) { "${controller.verdict}" }
+        shot("6-level-starter")
+
+        runCode(hello.starterCode.replace("Text(\"Your sign goes here\")", "Text(\"Fresh bread daily\")\n        Text(\"Rosa's Bakery\")"))
+        check("level: the wrong order fails only the order, saying which text is on top",
+            details() == listOf(null, "\"Fresh bread daily\" is above \"Rosa's Bakery\".")) { "${controller.verdict}" }
+        controller.overlayTarget = true
+        settle { true }
+        shot("7-level-wrong-order-overlay")
+        controller.overlayTarget = false
+
+        runCode(hello.starterCode.replace("Text(\"Your sign goes here\")", "Text(\"Rosa's Bakery\")\n        Text(\"Fresh bread daily\")"))
+        check("level: the solution completes the level", (controller.verdict as? Verdict.Evaluated)?.passed == true &&
+            onScreen("Level complete!") && onScreen("Continue")) { "${controller.verdict}" }
         check("level: the preview renders at the level's 400 x 300 dp viewport",
             controller.engine.state.value.frame?.let { it.width to it.height } == (400 to 300)) { "${controller.engine.state.value.frame?.let { "${it.width}x${it.height}" }}" }
-        shot("7-level-solved")
+        shot("8-level-complete")
+
+        clickText("Continue")
+        check("level: Continue opens Open Sign with the Console unlocked and highlighted",
+            controller.level?.id == "001-open-sign" && onScreen("Console") && !onScreen("Recompositions") &&
+                onScreen("New: Console") && controller.highlighted.isNotEmpty()) { "${controller.level}, ${texts().joinToString(" | ")}" }
+        shot("9-open-sign-unlock")
+        clickText("Got it")
+        check("level: \"Got it\" dismisses the unlock explanation", !onScreen("New: Console") && onScreen("Console"))
+
+        val openSign = controller.levels.single { it.id == "001-open-sign" }
+        runCode(openSign.starterCode.replace("Text(\"Tom's Flowers\")", "Text(\"Tom's Flowers\")\n        Button(onClick = { println(\"New order!\") }) { Text(\"Order\") }"))
+        check("level: solving the last level says more is coming instead of Continue",
+            onScreen("Level complete!") && onScreen("More of Main Street is coming soon.") && !onScreen("Continue")) { texts().joinToString(" | ") }
+        shot("10-open-sign-complete")
         text("Screenshots of each state: `app/build/spike/window/*.png` (not committed).")
     } finally {
         scene.close()

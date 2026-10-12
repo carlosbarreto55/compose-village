@@ -30,10 +30,10 @@
 
 ## 5. Level screen (`app` module)
 
-- [ ] 5.1 Controller: decode the level's target once when it opens; track the first frame since opening (for the ghost), the overlay toggle and the panels to highlight (from `unlocks()`); add `continueToNext()` and a `nextLevel` lookup
-- [ ] 5.2 Preview area: target thumbnail next to the preview, ghost (alpha 0.25 + caption) until the first frame, overlay toggle (alpha 0.5, input still reaches the scene); widen the preview column to fit
-- [ ] 5.3 Checklist panel: ○ descriptions before the first Run, ✓/✗ with detail and optional message after each Run, `NotRun` line; "Level complete" state with Continue, or "coming soon" on the last level
-- [ ] 5.4 Panel disclosure: show Console/Recompositions only when the level lists them (all in the sandbox); unlock highlight with a pulsing border, explanation callout, "Got it", and auto-dismiss after ~8 s
-- [ ] 5.5 Update the harness window section to play through the real window: target and ghost before Run with no Console or Recompositions in 000; starter → two ✗ "can't find"; wrong order → reversed detail; solution → Level complete; Continue → 001 with the Console visible and highlighted; screenshots for each state
-- [ ] 5.6 Run `./gradlew build` and `./gradlew :app:spike -Pargs="--only window,outofprocess"`; check that the packaged app contains both `target.png` files and no `Solution.kt`
-- [ ] 5.7 Commit section 5, e.g. `feat(app): level screen with target, checklist, level complete and panel unlocks`
+- [x] 5.1 Controller: decode the level's target once when it opens; track the first frame since opening (for the ghost), the overlay toggle and the panels to highlight (from `unlocks()`); add `continueToNext()` and a `nextLevel` lookup
+- [x] 5.2 Preview area: target thumbnail next to the preview, ghost (alpha 0.25 + caption) until the first frame, overlay toggle (alpha 0.5, input still reaches the scene); widen the preview column to fit
+- [x] 5.3 Checklist panel: ○ descriptions before the first Run, ✓/✗ with detail and optional message after each Run, `NotRun` line; "Level complete" state with Continue, or "coming soon" on the last level
+- [x] 5.4 Panel disclosure: show Console/Recompositions only when the level lists them (all in the sandbox); unlock highlight with a pulsing border, explanation callout, "Got it", and auto-dismiss after ~8 s
+- [x] 5.5 Update the harness window section to play through the real window: target and ghost before Run with no Console or Recompositions in 000; starter → two ✗ "can't find"; wrong order → reversed detail; solution → Level complete; Continue → 001 with the Console visible and highlighted; screenshots for each state
+- [x] 5.6 Run `./gradlew build` and `./gradlew :app:spike -Pargs="--only window,outofprocess"`; check that the packaged app contains both `target.png` files and no `Solution.kt`
+- [x] 5.7 Commit section 5, e.g. `feat(app): level screen with target, checklist, level complete and panel unlocks`

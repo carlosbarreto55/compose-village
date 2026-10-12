@@ -18,38 +18,64 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
+import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.FilterQuality
+import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import village.compiler.Diagnostic
 import village.compiler.Severity
 import village.levels.Level
+import village.levels.Panel
 import village.levels.Verdict
 import village.preview.PreviewEngine
 import village.preview.PreviewState
 import village.preview.RuntimeError
+import village.preview.Viewport
 
-/** The engine's latest frame at its real pixel size; mouse input is forwarded to the player's scene. */
+/**
+ * The engine's latest frame at its real pixel size; mouse input is forwarded to the player's scene.
+ * [ghost] is drawn faded while there is no frame yet (the level's target, with [ghostCaption]);
+ * [overlay] is drawn semi-transparently over the frame. Neither takes mouse input.
+ */
 @Composable
-fun PreviewPane(state: PreviewState, engine: PreviewEngine) {
+fun PreviewPane(
+    state: PreviewState, engine: PreviewEngine, viewport: Viewport? = null,
+    ghost: ImageBitmap? = null, ghostCaption: String = "", overlay: ImageBitmap? = null,
+) {
     val shape = RoundedCornerShape(12.dp)
-    // The frame's size follows the level's viewport; before the first frame, use the engine's.
+    // A level's viewport, even before its first frame (the ghost needs it); otherwise the frame's or engine's size.
     val (width, height) = with(LocalDensity.current) {
         val frame = state.frame
-        if (frame != null) frame.width.toDp() to frame.height.toDp() else engine.width.toDp() to engine.height.toDp()
+        when {
+            viewport != null -> viewport.widthDp.dp to viewport.heightDp.dp
+            frame != null -> frame.width.toDp() to frame.height.toDp()
+            else -> engine.width.toDp() to engine.height.toDp()
+        }
     }
     Box(
         Modifier.size(width, height)
@@ -73,11 +99,37 @@ fun PreviewPane(state: PreviewState, engine: PreviewEngine) {
         val frame = state.frame
         if (frame != null) {
             Image(frame, contentDescription = "Your screen", Modifier.fillMaxSize(), contentScale = ContentScale.FillBounds)
+            overlay?.let {
+                Image(it, contentDescription = "Target overlay", Modifier.fillMaxSize().alpha(0.5f), contentScale = ContentScale.FillBounds, filterQuality = FilterQuality.High)
+            }
+        } else if (state.error == null && ghost != null) {
+            Image(ghost, contentDescription = "Target sketch", Modifier.fillMaxSize().alpha(0.25f), contentScale = ContentScale.FillBounds, filterQuality = FilterQuality.High)
+            Text(ghostCaption, Modifier.align(Alignment.BottomCenter).padding(12.dp), style = MaterialTheme.typography.labelLarge, color = Color.Gray)
         } else if (state.error == null) {
             Text("Press Run to see your screen", Modifier.align(Alignment.Center), color = Color.Gray)
         }
     }
 }
+
+/** The level's target, small, next to the preview, with the overlay toggle. */
+@Composable
+fun TargetThumbnail(target: ImageBitmap, viewport: Viewport, overlay: Boolean, onOverlayChange: (Boolean) -> Unit) {
+    val shape = RoundedCornerShape(8.dp)
+    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        Text("Target", style = MaterialTheme.typography.labelLarge)
+        Image(
+            target, contentDescription = "Target",
+            Modifier.size((viewport.widthDp * THUMBNAIL_SCALE).dp, (viewport.heightDp * THUMBNAIL_SCALE).dp)
+                .clip(shape).background(Color.White).border(1.dp, MaterialTheme.colorScheme.outlineVariant, shape),
+            contentScale = ContentScale.FillBounds,
+            filterQuality = FilterQuality.High,
+        )
+        FilterChip(selected = overlay, onClick = { onOverlayChange(!overlay) }, label = { Text("Overlay") })
+    }
+}
+
+/** Thumbnail size relative to the level's viewport. */
+const val THUMBNAIL_SCALE = 0.5f
 
 @Composable
 fun DiagnosticsList(diagnostics: List<Diagnostic>, onSelect: (Diagnostic) -> Unit, modifier: Modifier = Modifier) {
@@ -191,17 +243,28 @@ fun LevelRequest(level: Level) {
     }
 }
 
-/** The latest Run's verdict: every criterion, with the resident's message for each failed one. */
+/**
+ * The level's requirements: neutral before the first Run, then ✓/✗ with the generated detail and
+ * the villager's message for each failed one; "Level complete" with Continue when all pass.
+ */
 @Composable
-fun VerdictPanel(level: Level, verdict: Verdict) {
+fun Checklist(level: Level, verdict: Verdict?, hasNext: Boolean, onContinue: () -> Unit) {
     val name = level.resident.substringBefore(',')
-    val solved = verdict is Verdict.Evaluated && verdict.passed
-    val colors = if (solved) CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
+    val complete = verdict is Verdict.Evaluated && verdict.passed
+    val colors = if (complete) CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
     else CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
     Card(Modifier.fillMaxWidth(), colors = colors) {
         Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-            when (verdict) {
-                is Verdict.NotRun -> {
+            when {
+                complete -> {
+                    Text("Level complete!", style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.onPrimaryContainer)
+                    Text("$name loves it.", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onPrimaryContainer)
+                }
+                verdict is Verdict.Evaluated -> {
+                    val passing = verdict.results.count { it.passed }
+                    Text("Not quite: $passing of ${verdict.results.size} done", style = MaterialTheme.typography.titleSmall)
+                }
+                verdict is Verdict.NotRun -> {
                     Text("$name couldn't look at it yet", style = MaterialTheme.typography.titleSmall)
                     Text(
                         when (verdict.reason) {
@@ -211,24 +274,57 @@ fun VerdictPanel(level: Level, verdict: Verdict) {
                         style = MaterialTheme.typography.bodySmall,
                     )
                 }
-                is Verdict.Evaluated -> {
-                    val passing = verdict.results.count { it.passed }
+                else -> Text("$name's checklist", style = MaterialTheme.typography.titleSmall)
+            }
+            val results = (verdict as? Verdict.Evaluated)?.results
+            level.criteria.forEachIndexed { i, criterion ->
+                val result = results?.get(i)
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text(
-                        if (verdict.passed) "Solved! $name loves it." else "Not quite: $passing of ${verdict.results.size} checks pass",
-                        style = MaterialTheme.typography.titleSmall,
+                        when (result?.passed) { true -> "\u2713"; false -> "\u2717"; null -> "\u25CB" },
+                        color = when (result?.passed) {
+                            true -> Color(0xFF2E7D32)
+                            false -> MaterialTheme.colorScheme.error
+                            null -> MaterialTheme.colorScheme.onSurfaceVariant
+                        },
                     )
-                    for (r in verdict.results) {
-                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            Text(if (r.passed) "✓" else "✗", color = if (r.passed) Color(0xFF2E7D32) else MaterialTheme.colorScheme.error)
-                            Text(
-                                r.message ?: r.id,
-                                style = MaterialTheme.typography.bodySmall,
-                                color = if (r.passed) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurface,
-                            )
+                    Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                        Text(criterion.description, style = MaterialTheme.typography.bodyMedium)
+                        result?.detail?.let { Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error) }
+                        result?.message?.let {
+                            Text(it, style = MaterialTheme.typography.bodySmall.copy(fontStyle = FontStyle.Italic), color = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
                     }
                 }
             }
+            if (complete) {
+                if (hasNext) Button(onClick = onContinue) { Text("Continue") }
+                else Text("More of Main Street is coming soon.", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onPrimaryContainer)
+            }
         }
+    }
+}
+
+/** What each panel does, shown when a level unlocks it. Game text, not level data. */
+val PANEL_EXPLANATIONS = mapOf(
+    Panel.CONSOLE to ("Console" to "The Console shows what your code prints with println. Use it to see what your code is doing."),
+    Panel.RECOMPOSITIONS to ("Recompositions" to "This panel counts how often each of your composables runs. Fewer runs means a snappier screen."),
+)
+
+/** Wraps a panel; while [highlight] is set, it pulses and explains what the panel does, like an unlock. */
+@Composable
+fun Unlockable(panel: Panel, highlight: Boolean, onDismiss: () -> Unit, content: @Composable () -> Unit) {
+    if (!highlight) return content()
+    val (title, explanation) = PANEL_EXPLANATIONS.getValue(panel)
+    val pulse by rememberInfiniteTransition().animateFloat(0.3f, 1f, infiniteRepeatable(tween(700), RepeatMode.Reverse))
+    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        Card(Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.tertiaryContainer)) {
+            Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Text("New: $title", style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.onTertiaryContainer)
+                Text(explanation, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onTertiaryContainer)
+                TextButton(onClick = onDismiss) { Text("Got it") }
+            }
+        }
+        Box(Modifier.border(2.dp, MaterialTheme.colorScheme.primary.copy(alpha = pulse), RoundedCornerShape(14.dp)).padding(2.dp)) { content() }
     }
 }

@@ -104,7 +104,7 @@ These are four serializable classes. `Below(a, b)` is evaluated as `Above(b, a)`
   - `NotRun` shows a single line: "didn't compile" or "crashed".
 - **Level complete**: the card switches to the primary container color and shows "Level complete!", a short line ("Rosa loves her new sign"), the ✓ list and a Continue button. On the last level, it shows "More of Main Street is coming soon" instead of Continue.
 - **Continue** calls `controller.open(next)`, which replaces the editor with the next level's starter code and resets the verdict, ghost and highlights.
-- The window widens the preview column to fit the viewport plus the thumbnail (thumbnail width about 35% of the viewport).
+- The window widens the preview column to fit the viewport plus the thumbnail (thumbnail width half the viewport).
 
 ### D6. Content
 - **Level 000** becomes two criteria: `exists title` ("The text \"Rosa's Bakery\" is on screen") and `below order` (a = "Fresh bread daily", b = "Rosa's Bakery", "\"Fresh bread daily\" appears below \"Rosa's Bakery\""). The redundant `subtitle` check goes away. Its solution becomes plain `Text`s, so the target matches what is checked.

@@ -3,11 +3,16 @@ package village.app
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.toComposeImageBitmap
 import androidx.compose.ui.text.input.TextFieldValue
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.asCoroutineDispatcher
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.future.await
 import kotlinx.coroutines.launch
+import org.jetbrains.skia.Image
 import kotlinx.coroutines.withContext
 import village.compiler.Diagnostic
 import village.compiler.PlayerPipeline
@@ -15,7 +20,9 @@ import village.compiler.Timings
 import village.levels.Evaluator
 import village.levels.Level
 import village.levels.LevelRepository
+import village.levels.Panel
 import village.levels.Verdict
+import village.levels.panelUnlocks
 import village.preview.PreviewEngine
 import java.util.concurrent.Executors
 import kotlin.math.roundToInt
@@ -58,6 +65,28 @@ class SpikeController(private val scope: CoroutineScope, density: Float) : AutoC
     var verdict by mutableStateOf<Verdict?>(null)
         private set
 
+    /** The open level's target, decoded once per level from its build-rendered PNG. */
+    var target by mutableStateOf<ImageBitmap?>(null)
+        private set
+    private val decodedTargets = mutableMapOf<String, ImageBitmap?>()
+
+    /** Whether the target is laid semi-transparently over the player's preview. */
+    var overlayTarget by mutableStateOf(false)
+
+    /** Each panel and the level that unlocks it: the first in play order that lists it. */
+    val unlocks: Map<Panel, String> = panelUnlocks(levels)
+
+    /** Panels being highlighted because the open level unlocks them. */
+    var highlighted by mutableStateOf(emptySet<Panel>())
+        private set
+    private var highlightJob: Job? = null
+
+    /** The level after the open one in play order, or null on the last level (and in the sandbox). */
+    val nextLevel: Level? get() = level?.let { levels.getOrNull(levels.indexOf(it) + 1) }
+
+    /** Whether [panel] is on screen: the sandbox shows every panel, a level only the ones it lists. */
+    fun shows(panel: Panel) = level?.let { panel in it.panels } ?: true
+
     /** Opens [level] (null for the sandbox): its starter code replaces the editor's content. Ignored while a run is in progress. */
     fun open(level: Level?) {
         if (running || level == this.level) return
@@ -66,7 +95,21 @@ class SpikeController(private val scope: CoroutineScope, density: Float) : AutoC
         diagnostics = emptyList()
         timings = null
         verdict = null
+        target = level?.let { l -> decodedTargets.getOrPut(l.id) { l.targetPng?.let { Image.makeFromEncoded(it).toComposeImageBitmap() } } }
         engine.unload()
+        highlightJob?.cancel()
+        highlighted = level?.let { l -> unlocks.filterValues { it == l.id }.keys } ?: emptySet()
+        if (highlighted.isNotEmpty()) highlightJob = scope.launch { delay(HIGHLIGHT_MILLIS); highlighted = emptySet() }
+    }
+
+    /** Opens the next level; used by the "Level complete" state. */
+    fun continueToNext() {
+        nextLevel?.let(::open)
+    }
+
+    /** The player dismissed [panel]'s unlock explanation. */
+    fun dismissHighlight(panel: Panel) {
+        highlighted = highlighted - panel
     }
 
     /** Compiles the sample once in the background so the player's first Run is already warm. */
@@ -109,6 +152,9 @@ class SpikeController(private val scope: CoroutineScope, density: Float) : AutoC
     }
 
     companion object {
+        /** How long an unlocked panel stays highlighted unless dismissed. */
+        const val HIGHLIGHT_MILLIS = 8_000L
+
         /** A phone-sized preview. */
         const val PREVIEW_WIDTH_DP = 360
         const val PREVIEW_HEIGHT_DP = 640

@@ -37,6 +37,7 @@ import androidx.compose.ui.input.key.type
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.unit.dp
 import village.app.SpikeController
+import village.levels.Panel
 import village.compiler.Severity
 
 /** The spike window: code editor and diagnostics on the left, the live preview and its panels on the right. */
@@ -69,16 +70,37 @@ fun SpikeScreen(controller: SpikeController) {
             CodeEditor(controller.code, { controller.code = it }, errorLines, editorFocus, Modifier.weight(1f).fillMaxWidth())
             DiagnosticsList(controller.diagnostics, onSelect = { moveCaret(it.line, it.column) }, Modifier.fillMaxWidth().heightIn(max = 160.dp))
         }
-        val previewWidth = maxOf(SpikeController.PREVIEW_WIDTH_DP.toFloat(), controller.level?.viewport?.widthDp ?: 0f)
+        val level = controller.level
+        val target = controller.target
+        val viewportWidth = level?.viewport?.widthDp ?: SpikeController.PREVIEW_WIDTH_DP.toFloat()
+        val thumbnailWidth = if (level != null && target != null) viewportWidth * THUMBNAIL_SCALE + 12 else 0f
         Column(
-            Modifier.width((previewWidth + 24).dp).fillMaxHeight().verticalScroll(rememberScrollState()),
+            Modifier.width((maxOf(SpikeController.PREVIEW_WIDTH_DP.toFloat(), viewportWidth + thumbnailWidth) + 24).dp)
+                .fillMaxHeight().verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            PreviewPane(preview, controller.engine)
-            controller.level?.let { level -> controller.verdict?.let { VerdictPanel(level, it) } }
+            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                PreviewPane(
+                    preview, controller.engine, viewport = level?.viewport,
+                    ghost = target, ghostCaption = level?.let { "${it.resident.substringBefore(',')}'s sketch: press Run to build it" }.orEmpty(),
+                    overlay = target?.takeIf { controller.overlayTarget },
+                )
+                if (level != null && target != null) {
+                    TargetThumbnail(target, level.viewport, controller.overlayTarget, onOverlayChange = { controller.overlayTarget = it })
+                }
+            }
+            level?.let { Checklist(it, controller.verdict, hasNext = controller.nextLevel != null, onContinue = controller::continueToNext) }
             preview.error?.let { RuntimeErrorPanel(it, onSelectLine = { line -> moveCaret(line, 1) }) }
-            ConsolePanel(preview.console)
-            RecompositionPanel(preview.recompositions)
+            if (controller.shows(Panel.CONSOLE)) {
+                Unlockable(Panel.CONSOLE, Panel.CONSOLE in controller.highlighted, { controller.dismissHighlight(Panel.CONSOLE) }) {
+                    ConsolePanel(preview.console)
+                }
+            }
+            if (controller.shows(Panel.RECOMPOSITIONS)) {
+                Unlockable(Panel.RECOMPOSITIONS, Panel.RECOMPOSITIONS in controller.highlighted, { controller.dismissHighlight(Panel.RECOMPOSITIONS) }) {
+                    RecompositionPanel(preview.recompositions)
+                }
+            }
         }
     }
 }
