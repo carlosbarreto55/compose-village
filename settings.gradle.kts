@@ -15,4 +15,4 @@ dependencyResolutionManagement {
     }
 }
 
-include(":host-api", ":compiler", ":preview", ":app")
+include(":host-api", ":compiler", ":preview", ":levels", ":app")

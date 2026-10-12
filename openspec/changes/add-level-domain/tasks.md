@@ -8,12 +8,12 @@
 
 ## 2. Level model and loader (new `levels` module)
 
-- [ ] 2.1 Create the `levels` module (Kotlin/JVM, `api(project(":preview"))`), add the `kotlin-serialization` plugin (Kotlin version) and `kotlinx-serialization-json` to the version catalog, and include the module in `settings.gradle.kts`
-- [ ] 2.2 Define the `@Serializable` model: `Level` (formatVersion, id, resident, request, entryFunction, starter, viewport, criteria), `Selector` (text, role, contentDescription, ignoreCase, contains), and a sealed `Criterion` with discriminator `type` for `exists` (optional `count`), `absent`, `above` and `leftOf` (`a`, `b`, `toleranceDp` = 1), each with `id` and `message`
-- [ ] 2.3 Implement `LevelRepository`: read `levels/index.json` from resources, load each `level.json` strictly (unknown keys rejected) and read its starter file
-- [ ] 2.4 Implement validation that collects every error into a `LevelLoadException` naming the folder, criterion and field: id format and id = folder, unique criterion ids, non-blank request and messages, `formatVersion == 1`, non-empty selectors, known role names (listed in the error), positive viewport, starter file present
-- [ ] 2.5 Unit-test the loader with fixture levels for each validation rule in the `level-definition` spec (minimal level defaults, duplicate ids, folder/id mismatch, typo field, unknown role, format version 2)
-- [ ] 2.6 Commit section 2 with a conventional commit and a descriptive body, e.g. `feat(levels): add level data model and strict JSON loader`
+- [x] 2.1 Create the `levels` module (Kotlin/JVM, `api(project(":preview"))`), add the `kotlin-serialization` plugin (Kotlin version) and `kotlinx-serialization-json` to the version catalog, and include the module in `settings.gradle.kts`
+- [x] 2.2 Define the `@Serializable` model: `Level` (formatVersion, id, resident, request, entryFunction, starter, viewport, criteria), `Selector` (text, role, contentDescription, ignoreCase, contains), and a sealed `Criterion` with discriminator `type` for `exists` (optional `count`), `absent`, `above` and `leftOf` (`a`, `b`, `toleranceDp` = 1), each with `id` and `message`
+- [x] 2.3 Implement `LevelRepository`: read `levels/index.json` from resources, load each `level.json` strictly (unknown keys rejected) and read its starter file
+- [x] 2.4 Implement validation that collects every error into a `LevelLoadException` naming the folder, criterion and field: id format and id = folder, unique criterion ids, non-blank request and messages, `formatVersion == 1`, non-empty selectors, known role names (listed in the error), positive viewport, starter file present
+- [x] 2.5 Unit-test the loader with fixture levels for each validation rule in the `level-definition` spec (minimal level defaults, duplicate ids, folder/id mismatch, typo field, unknown role, format version 2)
+- [x] 2.6 Commit section 2 with a conventional commit and a descriptive body, e.g. `feat(levels): add level data model and strict JSON loader`
 
 ## 3. Acceptance evaluator (`levels` module)
 
