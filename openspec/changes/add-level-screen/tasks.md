@@ -23,10 +23,10 @@
 
 ## 4. Level content
 
-- [ ] 4.1 Rewrite `000-hello-main-street`: criteria `title` (exists) and `order` (`below`), each with a description; plain `Solution.kt`; starter unchanged
-- [ ] 4.2 Add `001-open-sign` (Tom the florist): `level.json` with three criteria and `"panels": ["console"]`, `Starter.kt`, test-only `Solution.kt`, and an index entry
-- [ ] 4.3 Update `LevelScenariosTest` for the new criteria and details (wrong order → reversed detail, side by side → not-in-line detail, starter → two missing details) and run `./gradlew :levels:test`
-- [ ] 4.4 Commit section 4, e.g. `feat(levels): two-requirement Hello Main Street and the Open Sign level`
+- [x] 4.1 Rewrite `000-hello-main-street`: criteria `title` (exists) and `order` (`below`), each with a description; plain `Solution.kt`; starter unchanged
+- [x] 4.2 Add `001-open-sign` (Tom the florist): `level.json` with three criteria and `"panels": ["console"]`, `Starter.kt`, test-only `Solution.kt`, and an index entry
+- [x] 4.3 Update `LevelScenariosTest` for the new criteria and details (wrong order → reversed detail, side by side → not-in-line detail, starter → two missing details) and run `./gradlew :levels:test`
+- [x] 4.4 Commit section 4, e.g. `feat(levels): two-requirement Hello Main Street and the Open Sign level`
 
 ## 5. Level screen (`app` module)
 

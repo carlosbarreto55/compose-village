@@ -8,23 +8,16 @@
     {
       "type": "exists",
       "id": "title",
-      "node": { "text": "Rosa's Bakery" },
       "description": "The text \"Rosa's Bakery\" is on screen",
+      "node": { "text": "Rosa's Bakery" },
       "message": "Rosa doesn't see her shop's name yet."
     },
     {
-      "type": "exists",
-      "id": "subtitle",
-      "node": { "text": "Fresh bread daily" },
-      "description": "The text \"Fresh bread daily\" is on screen",
-      "message": "The sign is missing \"Fresh bread daily\"."
-    },
-    {
-      "type": "above",
+      "type": "below",
       "id": "order",
-      "a": { "text": "Rosa's Bakery" },
-      "b": { "text": "Fresh bread daily" },
       "description": "\"Fresh bread daily\" appears below \"Rosa's Bakery\"",
+      "a": { "text": "Fresh bread daily" },
+      "b": { "text": "Rosa's Bakery" },
       "message": "Rosa wants her name on top."
     }
   ]

@@ -109,12 +109,26 @@ class LevelScenariosTest {
     @Test fun wrongOrderFailsOnlyTheOrder() {
         val verdict = evaluated("""Column { Text("Fresh bread daily"); Text("Rosa's Bakery") }""")
         assertEquals(listOf("order"), verdict.results.filterNot { it.passed }.map { it.id })
-        assertEquals("Rosa wants her name on top.", verdict.results.single { it.id == "order" }.message)
+        val order = verdict.results.single { it.id == "order" }
+        assertEquals("\"Fresh bread daily\" is above \"Rosa's Bakery\".", order.detail)
+        assertEquals("Rosa wants her name on top.", order.message)
+    }
+
+    @Test fun starterFailsBothWithCantFindDetails() {
+        val verdict = assertIs<Verdict.Evaluated>(Attempts.verdict(level, level.starterCode))
+        assertEquals(
+            listOf("I can't find \"Rosa's Bakery\" on the screen.", "I can't find \"Fresh bread daily\" on the screen."),
+            verdict.results.map { it.detail },
+        )
     }
 
     @Test fun sideBySideIsNotAbove() {
         val verdict = evaluated("""Row { Text("Rosa's Bakery"); Text("Fresh bread daily") }""")
         assertEquals(listOf("order"), verdict.results.filterNot { it.passed }.map { it.id })
+        assertEquals(
+            "\"Fresh bread daily\" and \"Rosa's Bakery\" are side by side; \"Fresh bread daily\" should be under \"Rosa's Bakery\".",
+            verdict.results.single { it.id == "order" }.detail,
+        )
     }
 
     @Test fun buttonIsMatchedByRoleAndText() {
@@ -123,6 +137,13 @@ class LevelScenariosTest {
             .let { assertIs<Verdict.Evaluated>(it).passed }
         assertTrue(passes("""Button(onClick = {}) { Row { Text("Order") } }"""))
         assertTrue(!passes("""Text("Order")"""))
+    }
+
+    @Test fun openSignButtonOnTheLeftIsReversed() {
+        val openSign = LevelRepository().load("001-open-sign")
+        val verdict = assertIs<Verdict.Evaluated>(Attempts.verdict(openSign, screen("""Row { Button(onClick = {}) { Text("Order") }; Text("Tom's Flowers") }""")))
+        assertEquals(listOf("placement"), verdict.results.filterNot { it.passed }.map { it.id })
+        assertEquals("A button \"Order\" is to the left of \"Tom's Flowers\".", verdict.results.single { !it.passed }.detail)
     }
 
     @Test fun compileErrorIsNotRun() {

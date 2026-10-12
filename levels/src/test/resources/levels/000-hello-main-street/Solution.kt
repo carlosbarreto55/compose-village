@@ -7,7 +7,7 @@ import androidx.compose.ui.unit.dp
 @Composable
 fun PlayerScreen() {
     Column(Modifier.padding(16.dp)) {
-        Text("Rosa's Bakery", style = MaterialTheme.typography.headlineMedium)
+        Text("Rosa's Bakery")
         Text("Fresh bread daily")
     }
 }
