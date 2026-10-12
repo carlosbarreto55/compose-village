@@ -1,6 +1,7 @@
 package village.levels
 
 import java.io.File
+import javax.imageio.ImageIO
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
@@ -35,6 +36,13 @@ class LevelsTest {
     @Test fun everyLevelLoads() {
         val problems = repository.ids().mapNotNull { id -> runCatching { repository.load(id) }.exceptionOrNull()?.message }
         if (problems.isNotEmpty()) fail(problems.joinToString("\n"))
+    }
+
+    @Test fun everyLevelHasATargetAtTwiceItsViewport() = forEachLevel { level ->
+        val png = level.targetPng ?: return@forEachLevel "${level.id}: no target.png (rendered by :levels:renderTargets)"
+        val image = ImageIO.read(png.inputStream()) ?: return@forEachLevel "${level.id}: target.png is not an image"
+        val expected = (level.viewport.widthDp * 2).toInt() to (level.viewport.heightDp * 2).toInt()
+        if (image.width to image.height != expected) "${level.id}: target is ${image.width}x${image.height}, expected ${expected.first}x${expected.second}" else null
     }
 
     @Test fun solutionsPassEveryCriterion() = forEachLevel { level ->

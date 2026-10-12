@@ -16,10 +16,10 @@
 
 ## 3. Build-rendered targets (`levels` module)
 
-- [ ] 3.1 Add a `targets` source set (main classes + `:compiler`) with `RenderTargets`: for each indexed level, compile and render `Solution.kt` at the level viewport and density 2 with one pipeline and one engine, write `build/generated/level-targets/levels/<id>/target.png`, and fail on compile errors or crashes
-- [ ] 3.2 Register a `renderTargets` `JavaExec` task with level data, solutions and classpath as inputs and the generated directory as output; make `processResources` include its output; check that there is no task cycle and that a second build is up to date
-- [ ] 3.3 Extend `LevelsTest`: every bundled level has a `target.png` of `viewport × 2` pixels
-- [ ] 3.4 Commit section 3, e.g. `build(levels): render level targets from reference solutions at build time`
+- [x] 3.1 Add a `targets` source set (main classes + `:compiler`) with `RenderTargets`: for each indexed level, compile and render `Solution.kt` at the level viewport and density 2 with one pipeline and one engine, write `build/generated/level-targets/levels/<id>/target.png`, and fail on compile errors or crashes
+- [x] 3.2 Register a `renderTargets` `JavaExec` task with level data, solutions and classpath as inputs and the generated directory as output; make `processResources` include its output; check that there is no task cycle and that a second build is up to date
+- [x] 3.3 Extend `LevelsTest`: every bundled level has a `target.png` of `viewport × 2` pixels
+- [x] 3.4 Commit section 3, e.g. `build(levels): render level targets from reference solutions at build time`
 
 ## 4. Level content
 
