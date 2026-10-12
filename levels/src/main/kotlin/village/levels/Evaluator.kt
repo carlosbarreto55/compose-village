@@ -51,6 +51,8 @@ object Evaluator {
         is Criterion.Absent -> visible.none { c.node.matches(it) }
         is Criterion.Above -> somePair(visible, c.a, c.b) { a, b -> a.bounds.bottom <= b.bounds.top + c.toleranceDp }
         is Criterion.LeftOf -> somePair(visible, c.a, c.b) { a, b -> a.bounds.right <= b.bounds.left + c.toleranceDp }
+        is Criterion.Below -> somePair(visible, c.b, c.a) { a, b -> a.bounds.bottom <= b.bounds.top + c.toleranceDp }
+        is Criterion.RightOf -> somePair(visible, c.b, c.a) { a, b -> a.bounds.right <= b.bounds.left + c.toleranceDp }
     }
 
     /** Some node matching [a] and some *other* node matching [b] satisfy [ordered]. */

@@ -19,11 +19,22 @@ fun interface LevelFiles {
     /** The file's text, or null if it does not exist. */
     fun read(path: String): String?
 
+    /** The file's bytes, or null if it does not exist. Text-only sources (test fixtures) have no binary files. */
+    fun readBytes(path: String): ByteArray? = null
+
     companion object {
         /** The levels bundled with the game, under the `levels/` resource root. */
-        val BUNDLED = LevelFiles { path -> LevelFiles::class.java.classLoader.getResource("levels/$path")?.readText() }
+        val BUNDLED: LevelFiles = object : LevelFiles {
+            private fun url(path: String) = LevelFiles::class.java.classLoader.getResource("levels/$path")
+            override fun read(path: String) = url(path)?.readText()
+            override fun readBytes(path: String) = url(path)?.readBytes()
+        }
 
-        fun directory(root: File) = LevelFiles { path -> File(root, path).takeIf { it.isFile }?.readText() }
+        fun directory(root: File): LevelFiles = object : LevelFiles {
+            private fun file(path: String) = File(root, path).takeIf { it.isFile }
+            override fun read(path: String) = file(path)?.readText()
+            override fun readBytes(path: String) = file(path)?.readBytes()
+        }
     }
 }
 
@@ -49,6 +60,9 @@ class LevelRepository(private val files: LevelFiles = LevelFiles.BUNDLED) {
     }
 
     fun all(): List<Level> = ids().map(::load)
+
+    /** Each panel mapped to the first level, in play order, that lists it: that level unlocks it. */
+    fun unlocks(): Map<Panel, String> = panelUnlocks(all())
 
     /** Loads and validates the level in folder [folder]; throws [LevelLoadException] listing every problem found. */
     fun load(folder: String): Level {
@@ -86,6 +100,10 @@ class LevelRepository(private val files: LevelFiles = LevelFiles.BUNDLED) {
         if (problems.isNotEmpty()) invalid()
 
         problems += validate(folder, file, criteria)
+        val panels = file.panels.mapNotNull { name ->
+            Panel.fromJson(name) ?: run { problems += "panel '$name' is unknown; valid panels are ${Panel.entries.joinToString { it.jsonName }}"; null }
+        }
+        file.panels.groupingBy { it }.eachCount().filterValues { it > 1 }.keys.forEach { problems += "panel '$it' is listed more than once" }
         val starter = files.read("$folder/${file.starter}")
         if (starter == null) problems += "starter file '${file.starter}' not found in $folder/"
         if (problems.isNotEmpty()) invalid()
@@ -93,6 +111,7 @@ class LevelRepository(private val files: LevelFiles = LevelFiles.BUNDLED) {
         return Level(
             id = file.id, resident = file.resident.trim(), request = file.request.trim(), entryFunction = file.entryFunction,
             starterCode = starter!!, viewport = Viewport(file.viewport.widthDp, file.viewport.heightDp), criteria = criteria,
+            panels = panels, targetPng = files.readBytes("$folder/$TARGET_FILE"),
         )
     }
 
@@ -123,15 +142,18 @@ class LevelRepository(private val files: LevelFiles = LevelFiles.BUNDLED) {
         criteria.forEachIndexed { i, c ->
             val name = if (c.id.isBlank()) "criterion #${i + 1}" else "criterion '${c.id}'"
             if (c.id.isBlank()) add("$name: id must not be blank")
-            if (c.message.isBlank()) add("$name: message must not be blank")
+            if (c.description.isBlank()) add("$name: description must not be blank")
+            if (c.message?.isBlank() == true) add("$name: message must not be blank (leave it out instead)")
             when (c) {
                 is Criterion.Exists -> {
                     addAll(validate(name, "node", c.node))
                     if (c.count != null && c.count < 1) add("$name: count must be at least 1 (use 'absent' for none)")
                 }
                 is Criterion.Absent -> addAll(validate(name, "node", c.node))
-                is Criterion.Above -> addAll(validate(name, "a", c.a) + validate(name, "b", c.b) + validateTolerance(name, c.toleranceDp))
-                is Criterion.LeftOf -> addAll(validate(name, "a", c.a) + validate(name, "b", c.b) + validateTolerance(name, c.toleranceDp))
+                is Criterion.Order -> {
+                    addAll(validate(name, "a", c.a) + validate(name, "b", c.b))
+                    if (c.toleranceDp < 0) add("$name: toleranceDp must not be negative")
+                }
             }
         }
     }
@@ -147,16 +169,15 @@ class LevelRepository(private val files: LevelFiles = LevelFiles.BUNDLED) {
         }
     }
 
-    private fun validateTolerance(criterion: String, toleranceDp: Float) =
-        if (toleranceDp < 0) listOf("$criterion: toleranceDp must not be negative") else emptyList()
-
     companion object {
         const val FORMAT_VERSION = 1
         const val INDEX = "index.json"
         const val LEVEL_FILE = "level.json"
+        /** Rendered at build time from the level's reference solution (design D1). */
+        const val TARGET_FILE = "target.png"
         private val ID = Regex("^[a-z0-9]+(-[a-z0-9]+)*$")
         private val IDENTIFIER = Regex("^[A-Za-z_][A-Za-z0-9_]*$")
-        private val CRITERION_TYPES = listOf("exists", "absent", "above", "leftOf")
+        private val CRITERION_TYPES = listOf("exists", "absent", "above", "below", "leftOf", "rightOf")
 
         // Strict: unknown keys are errors (a typo must not silently drop a field). "type" picks the criterion.
         private val json = Json { ignoreUnknownKeys = false; classDiscriminator = "type" }
@@ -173,6 +194,8 @@ private class LevelFile(
     val entryFunction: String = "PlayerScreen",
     val starter: String = "Starter.kt",
     val viewport: ViewportFile = ViewportFile(),
+    /** Extra panels by name; checked in [LevelRepository.load] so an unknown name lists the valid ones. */
+    val panels: List<String> = emptyList(),
     /** Decoded one by one into [Criterion]s, see [LevelRepository.load]. */
     val criteria: List<JsonElement>,
 )

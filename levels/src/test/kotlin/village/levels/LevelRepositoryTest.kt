@@ -3,9 +3,11 @@ package village.levels
 import village.preview.Viewport
 import kotlin.test.Test
 import kotlin.test.assertContains
+import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertIs
+import kotlin.test.assertNull
 
 class LevelRepositoryTest {
     private fun repo(vararg files: Pair<String, String>) = LevelRepository(LevelFiles { files.toMap()[it] })
@@ -19,7 +21,7 @@ class LevelRepositoryTest {
         return e.message!!
     }
 
-    private val exists = """{ "type": "exists", "id": "title", "message": "Rosa doesn't see her name.", "node": { "text": "Rosa's Bakery" } }"""
+    private val exists = """{ "type": "exists", "id": "title", "description": "The text \"Rosa's Bakery\" is on screen", "node": { "text": "Rosa's Bakery" } }"""
 
     private fun minimal(id: String = "sign", criteria: String = exists, extra: String = "") =
         """{ "formatVersion": 1, "id": "$id", "resident": "Rosa, the baker", "request": "Make me a sign." $extra, "criteria": [ $criteria ] }"""
@@ -30,30 +32,39 @@ class LevelRepositoryTest {
         assertEquals("PlayerScreen", level.entryFunction)
         assertEquals("fun PlayerScreen() {}", level.starterCode)
         assertEquals(Viewport(360f, 640f), level.viewport)
+        assertEquals(emptyList(), level.panels)
+        assertNull(level.targetPng)
         val c = assertIs<Criterion.Exists>(level.criteria.single())
         assertEquals(Selector(text = "Rosa's Bakery"), c.node)
+        assertEquals("The text \"Rosa's Bakery\" is on screen", c.description)
+        assertNull(c.message)
     }
 
     @Test fun allCriterionTypesDecode() {
         val criteria = """
             $exists,
-            { "type": "exists", "id": "buttons", "message": "m", "node": { "role": "Button" }, "count": 2 },
-            { "type": "absent", "id": "closed", "message": "m", "node": { "text": "closed", "ignoreCase": true, "contains": true } },
-            { "type": "above", "id": "order", "message": "m", "a": { "text": "A" }, "b": { "contentDescription": "logo" }, "toleranceDp": 2 },
-            { "type": "leftOf", "id": "row", "message": "m", "a": { "text": "A" }, "b": { "text": "B" } }
+            { "type": "exists", "id": "buttons", "description": "d", "node": { "role": "Button" }, "count": 2, "message": "m" },
+            { "type": "absent", "id": "closed", "description": "d", "node": { "text": "closed", "ignoreCase": true, "contains": true } },
+            { "type": "above", "id": "order", "description": "d", "a": { "text": "A" }, "b": { "contentDescription": "logo" }, "toleranceDp": 2 },
+            { "type": "below", "id": "under", "description": "d", "a": { "text": "B" }, "b": { "text": "A" } },
+            { "type": "leftOf", "id": "row", "description": "d", "a": { "text": "A" }, "b": { "text": "B" } },
+            { "type": "rightOf", "id": "after", "description": "d", "a": { "text": "B" }, "b": { "text": "A" } }
         """
-        val json = minimal("shop", criteria, """, "entryFunction": "Shop", "starter": "Main.kt", "viewport": { "widthDp": 400, "heightDp": 300 }""")
+        val json = minimal("shop", criteria, """, "entryFunction": "Shop", "starter": "Main.kt", "viewport": { "widthDp": 400, "heightDp": 300 }, "panels": ["console", "recompositions"]""")
         val level = repo("shop/level.json" to json, "shop/Main.kt" to "code").load("shop")
         assertEquals("Shop", level.entryFunction)
         assertEquals("code", level.starterCode)
         assertEquals(Viewport(400f, 300f), level.viewport)
+        assertEquals(listOf(Panel.CONSOLE, Panel.RECOMPOSITIONS), level.panels)
         assertEquals(
             listOf(
-                Criterion.Exists("title", "Rosa doesn't see her name.", Selector(text = "Rosa's Bakery")),
-                Criterion.Exists("buttons", "m", Selector(role = "Button"), count = 2),
-                Criterion.Absent("closed", "m", Selector(text = "closed", ignoreCase = true, contains = true)),
-                Criterion.Above("order", "m", Selector(text = "A"), Selector(contentDescription = "logo"), toleranceDp = 2f),
-                Criterion.LeftOf("row", "m", Selector(text = "A"), Selector(text = "B")),
+                Criterion.Exists("title", "The text \"Rosa's Bakery\" is on screen", Selector(text = "Rosa's Bakery")),
+                Criterion.Exists("buttons", "d", Selector(role = "Button"), count = 2, message = "m"),
+                Criterion.Absent("closed", "d", Selector(text = "closed", ignoreCase = true, contains = true)),
+                Criterion.Above("order", "d", Selector(text = "A"), Selector(contentDescription = "logo"), toleranceDp = 2f),
+                Criterion.Below("under", "d", Selector(text = "B"), Selector(text = "A")),
+                Criterion.LeftOf("row", "d", Selector(text = "A"), Selector(text = "B")),
+                Criterion.RightOf("after", "d", Selector(text = "B"), Selector(text = "A")),
             ),
             level.criteria,
         )
@@ -70,8 +81,48 @@ class LevelRepositoryTest {
     }
 
     @Test fun typoInFieldName() {
-        val message = problems("sign", minimal(criteria = exists.replace("\"message\"", "\"mesage\"")))
-        assertContains(message, "criterion 'title': Encountered an unknown key 'mesage'")
+        val message = problems("sign", minimal(criteria = exists.replace("\"description\"", "\"descripton\"")))
+        assertContains(message, "criterion 'title': Encountered an unknown key 'descripton'")
+    }
+
+    @Test fun missingDescription() {
+        val message = problems("sign", minimal(criteria = """{ "type": "exists", "id": "title", "message": "m", "node": { "text": "A" } }"""))
+        assertContains(message, "criterion 'title'")
+        assertContains(message, "description")
+    }
+
+    @Test fun blankDescriptionAndMessage() {
+        val message = problems("sign", minimal(criteria = """{ "type": "exists", "id": "title", "description": " ", "message": "", "node": { "text": "A" } }"""))
+        assertContains(message, "criterion 'title': description must not be blank")
+        assertContains(message, "criterion 'title': message must not be blank")
+    }
+
+    @Test fun unknownPanelListsValidPanels() {
+        val message = problems("sign", minimal(extra = """, "panels": ["consol"]"""))
+        assertContains(message, "panel 'consol' is unknown; valid panels are console, recompositions")
+    }
+
+    @Test fun repeatedPanel() = assertContains(problems("sign", minimal(extra = """, "panels": ["console", "console"]""")), "panel 'console' is listed more than once")
+
+    @Test fun targetBytesAreLoaded() {
+        val files = object : LevelFiles {
+            val text = mapOf("sign/level.json" to minimal(), "sign/Starter.kt" to "code")
+            override fun read(path: String) = text[path]
+            override fun readBytes(path: String) = if (path == "sign/target.png") byteArrayOf(1, 2, 3) else null
+        }
+        assertContentEquals(byteArrayOf(1, 2, 3), LevelRepository(files).load("sign").targetPng)
+    }
+
+    @Test fun firstLevelListingAPanelUnlocksIt() {
+        fun lvl(id: String, panels: String) = "$id/level.json" to minimal(id, extra = """, "panels": $panels""")
+        val repo = repo(
+            "index.json" to """["a", "b", "c", "d"]""",
+            lvl("a", "[]"), "a/Starter.kt" to "",
+            lvl("b", """["console"]"""), "b/Starter.kt" to "",
+            lvl("c", """["console", "recompositions"]"""), "c/Starter.kt" to "",
+            lvl("d", """["recompositions"]"""), "d/Starter.kt" to "",
+        )
+        assertEquals(mapOf(Panel.CONSOLE to "b", Panel.RECOMPOSITIONS to "c"), repo.unlocks())
     }
 
     @Test fun unknownRoleListsValidRoles() {
@@ -86,7 +137,7 @@ class LevelRepositoryTest {
     }
 
     @Test fun unknownCriterionType() {
-        assertContains(problems("sign", minimal(criteria = exists.replace("\"exists\"", "\"below\""))), "criterion 'title': unknown type 'below'")
+        assertContains(problems("sign", minimal(criteria = exists.replace("\"exists\"", "\"beneath\""))), "criterion 'title': unknown type 'beneath'")
     }
 
     @Test fun missingRequiredField() {
@@ -97,11 +148,11 @@ class LevelRepositoryTest {
 
     @Test fun emptySelectorBlankMessageAndBadNumbers() {
         val criteria = """
-            { "type": "exists", "id": "a", "message": " ", "node": { "ignoreCase": true }, "count": 0 },
-            { "type": "above", "id": "b", "message": "m", "a": { "text": "A" }, "b": { "text": "B" }, "toleranceDp": -1 }
+            { "type": "exists", "id": "a", "description": " ", "node": { "ignoreCase": true }, "count": 0 },
+            { "type": "rightOf", "id": "b", "description": "d", "a": { "text": "A" }, "b": { "text": "B" }, "toleranceDp": -1 }
         """
         val message = problems("sign", minimal(criteria = criteria, extra = """, "viewport": { "widthDp": 0, "heightDp": 300 }"""))
-        assertContains(message, "criterion 'a': message must not be blank")
+        assertContains(message, "criterion 'a': description must not be blank")
         assertContains(message, "criterion 'a': node must set at least one of text, role, contentDescription")
         assertContains(message, "criterion 'a': count must be at least 1")
         assertContains(message, "criterion 'b': toleranceDp must not be negative")

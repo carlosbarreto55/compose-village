@@ -1,10 +1,10 @@
 ## 1. Level model: descriptions, panels, aliases (`levels` module)
 
-- [ ] 1.1 Add `description` (required) to every criterion and make `message` optional (non-blank if given); add the `Below` and `RightOf` criterion types (`below`, `rightOf`) with `a`, `b` and `toleranceDp`
-- [ ] 1.2 Add `panels` to `level.json` (`enum Panel { CONSOLE, RECOMPOSITIONS }`, lowercase in JSON, default empty); validate unknown names (listing the valid ones) and repeated names
-- [ ] 1.3 Add `LevelFiles.readBytes` and `Level.targetPng: ByteArray?`, loaded from `<id>/target.png` when present; add `LevelRepository.unlocks()` (each panel → the first indexed level that lists it)
-- [ ] 1.4 Update `LevelRepositoryTest` for the new rules (missing description, blank message, typo `descripton`, unknown/repeated panel, defaults, target bytes) and add unlock-derivation tests with fixture indexes
-- [ ] 1.5 Commit section 1 with a conventional commit and a descriptive body, e.g. `feat(levels): add criterion descriptions, order aliases, panels and targets to the level model`
+- [x] 1.1 Add `description` (required) to every criterion and make `message` optional (non-blank if given); add the `Below` and `RightOf` criterion types (`below`, `rightOf`) with `a`, `b` and `toleranceDp`
+- [x] 1.2 Add `panels` to `level.json` (`enum Panel { CONSOLE, RECOMPOSITIONS }`, lowercase in JSON, default empty); validate unknown names (listing the valid ones) and repeated names
+- [x] 1.3 Add `LevelFiles.readBytes` and `Level.targetPng: ByteArray?`, loaded from `<id>/target.png` when present; add `LevelRepository.unlocks()` (each panel → the first indexed level that lists it)
+- [x] 1.4 Update `LevelRepositoryTest` for the new rules (missing description, blank message, typo `descripton`, unknown/repeated panel, defaults, target bytes) and add unlock-derivation tests with fixture indexes
+- [x] 1.5 Commit section 1 with a conventional commit and a descriptive body, e.g. `feat(levels): add criterion descriptions, order aliases, panels and targets to the level model`
 
 ## 2. Generated failure details (`levels` module)
 

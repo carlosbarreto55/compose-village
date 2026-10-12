@@ -120,9 +120,9 @@ class EvaluatorTest {
 
     @Test fun partialProgressListsEveryCriterionInOrder() {
         val criteria = listOf(
-            Criterion.Exists("title", "Rosa doesn't see her shop's name yet.", Selector(text = "Rosa's Bakery")),
-            Criterion.Exists("subtitle", "The sign is missing \"Fresh bread daily\".", Selector(text = "Fresh bread daily")),
-            Criterion.Above("order", "Rosa wants her name on top.", Selector(text = "Rosa's Bakery"), Selector(text = "Fresh bread daily")),
+            Criterion.Exists("title", "d", Selector(text = "Rosa's Bakery"), message = "Rosa doesn't see her shop's name yet."),
+            Criterion.Exists("subtitle", "d", Selector(text = "Fresh bread daily"), message = "The sign is missing \"Fresh bread daily\"."),
+            Criterion.Above("order", "d", Selector(text = "Rosa's Bakery"), Selector(text = "Fresh bread daily"), message = "Rosa wants her name on top."),
         )
         val verdict = Evaluator.evaluate(criteria, snapshot(title))
         assertFalse(verdict.passed)

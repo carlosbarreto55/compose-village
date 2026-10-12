@@ -18,8 +18,27 @@ class Level(
     val starterCode: String,
     val viewport: Viewport,
     val criteria: List<Criterion>,
+    /** Extra panels this level shows; the preview, target, checklist and problems are always shown. */
+    val panels: List<Panel> = emptyList(),
+    /** The reference solution rendered at build time (PNG at 2x density), or null if none was rendered. */
+    val targetPng: ByteArray? = null,
 ) {
     override fun toString() = "Level($id)"
+}
+
+/** Panels a level can opt in to. The first level in play order that lists one unlocks it. */
+enum class Panel(val jsonName: String) {
+    CONSOLE("console"),
+    RECOMPOSITIONS("recompositions");
+
+    companion object {
+        fun fromJson(name: String) = entries.firstOrNull { it.jsonName == name }
+    }
+}
+
+/** Each panel mapped to the id of the first level in [levels] (in play order) that lists it. */
+fun panelUnlocks(levels: List<Level>): Map<Panel, String> = buildMap {
+    for (level in levels) for (panel in level.panels) putIfAbsent(panel, level.id)
 }
 
 /**
@@ -37,31 +56,61 @@ data class Selector(
     val contains: Boolean = false,
 )
 
-/** One acceptance check. [message] is shown to the player, in the resident's voice, when it fails. */
+/**
+ * One acceptance check. [description] is the checklist line the player always sees; [message], if
+ * set, is an extra line in the resident's voice shown when it fails.
+ */
 @Serializable
 sealed interface Criterion {
     val id: String
-    val message: String
+    val description: String
+    val message: String?
 
     /** At least one visible node matches [node]; exactly [count] if set. */
     @Serializable @SerialName("exists")
-    data class Exists(override val id: String, override val message: String, val node: Selector, val count: Int? = null) : Criterion
+    data class Exists(
+        override val id: String, override val description: String, val node: Selector, val count: Int? = null,
+        override val message: String? = null,
+    ) : Criterion
 
     /** No visible node matches [node]. */
     @Serializable @SerialName("absent")
-    data class Absent(override val id: String, override val message: String, val node: Selector) : Criterion
+    data class Absent(override val id: String, override val description: String, val node: Selector, override val message: String? = null) : Criterion
 
-    /** Some node matching [a] has its bottom at or above the top of some other node matching [b]. */
+    /** The relative position of a node matching [a] and some other node matching [b]. */
+    sealed interface Order : Criterion {
+        val a: Selector
+        val b: Selector
+        val toleranceDp: Float
+    }
+
+    /** A's bottom is at or above B's top. */
     @Serializable @SerialName("above")
     data class Above(
-        override val id: String, override val message: String, val a: Selector, val b: Selector, val toleranceDp: Float = 1f,
-    ) : Criterion
+        override val id: String, override val description: String, override val a: Selector, override val b: Selector,
+        override val toleranceDp: Float = 1f, override val message: String? = null,
+    ) : Order
 
-    /** Some node matching [a] has its right edge at or left of the left edge of some other node matching [b]. */
+    /** A's top is at or below B's bottom: [Above] with [a] and [b] swapped. */
+    @Serializable @SerialName("below")
+    data class Below(
+        override val id: String, override val description: String, override val a: Selector, override val b: Selector,
+        override val toleranceDp: Float = 1f, override val message: String? = null,
+    ) : Order
+
+    /** A's right edge is at or left of B's left edge. */
     @Serializable @SerialName("leftOf")
     data class LeftOf(
-        override val id: String, override val message: String, val a: Selector, val b: Selector, val toleranceDp: Float = 1f,
-    ) : Criterion
+        override val id: String, override val description: String, override val a: Selector, override val b: Selector,
+        override val toleranceDp: Float = 1f, override val message: String? = null,
+    ) : Order
+
+    /** A's left edge is at or right of B's right edge: [LeftOf] with [a] and [b] swapped. */
+    @Serializable @SerialName("rightOf")
+    data class RightOf(
+        override val id: String, override val description: String, override val a: Selector, override val b: Selector,
+        override val toleranceDp: Float = 1f, override val message: String? = null,
+    ) : Order
 }
 
 /** The level data cannot be played; [problems] name the field at fault, each on its own. */
