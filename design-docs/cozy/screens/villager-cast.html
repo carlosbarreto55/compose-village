@@ -1,0 +1,253 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The cast — talking busts</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&amp;family=Atkinson+Hyperlegible:wght@400;700&amp;family=JetBrains+Mono:wght@400;600&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#7A4E2D}a:hover{color:#5A3820}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<template id="dc">
+<div style="width: 1440px; min-height: 1000px; box-sizing: border-box; padding: 36px 28px; background: #F3EADB; color: #2B2118; font-family: 'Atkinson Hyperlegible', sans-serif; display: flex; flex-direction: column; gap: 24px">
+
+<div style="display: flex; flex-direction: column; gap: 6px">
+<h1 style="margin: 0; font-family: 'Fredoka', sans-serif; font-weight: 700; font-size: 32px; color: #5A3820">The cast</h1>
+<p style="margin: 0; font-size: 17px; line-height: 1.5; color: #6B5A48; max-width: 900px">Talking busts for the level intro and the reactions after Run. Every villager uses the same rig: eyes, mouth and a small bob are the only moving parts. Pick a villager to hear them.</p>
+</div>
+
+<div style="display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 16px">
+
+<div style="display: flex; flex-direction: column; gap: 10px; background: #FFF9EF; border: 3px solid {{rosa.border}}; border-radius: 22px; padding: 14px">
+<div style="height: 236px; border-radius: 16px; background: #F6DFB8; display: flex; align-items: flex-end; justify-content: center; overflow: hidden">
+<div style="line-height: 0; transform: translateY({{rosa.bob}}px); transition: transform 90ms ease-out">
+<svg width="190" height="228" viewBox="0 0 200 240" role="img" aria-label="Rosa the baker">
+<circle cx="100" cy="108" r="58" fill="#5A3820"></circle>
+<path d="M28 240 C28 186 60 164 100 164 C140 164 172 186 172 240 Z" fill="#FFFDF8" stroke="#E2D3BC" stroke-width="3"></path>
+<path d="M100 170 V240" stroke="#E2D3BC" stroke-width="2"></path>
+<circle cx="112" cy="198" r="4" fill="#B8A58C"></circle><circle cx="112" cy="222" r="4" fill="#B8A58C"></circle>
+<rect x="88" y="140" width="24" height="30" rx="8" fill="#B57D55"></rect>
+<circle cx="52" cy="108" r="10" fill="#C98E64"></circle><circle cx="148" cy="108" r="10" fill="#C98E64"></circle>
+<circle cx="100" cy="104" r="48" fill="#C98E64"></circle>
+<path d="M54 98 Q62 70 100 68 Q138 70 146 98 Q126 82 100 84 Q74 82 54 98 Z" fill="#5A3820"></path>
+<path d="M50 74 C34 74 34 46 56 48 C58 22 90 18 100 34 C110 18 142 22 144 48 C166 46 166 74 150 74 Z" fill="#FFFFFF" stroke="#E2D3BC" stroke-width="3" stroke-linejoin="round"></path>
+<rect x="54" y="64" width="92" height="18" rx="6" fill="#FFFFFF" stroke="#E2D3BC" stroke-width="3"></rect>
+<g style="opacity: {{rosa.eyesOpen}}"><circle cx="82" cy="106" r="5.5" fill="#2B2118"></circle><circle cx="118" cy="106" r="5.5" fill="#2B2118"></circle><circle cx="84" cy="104" r="1.6" fill="#FFFFFF"></circle><circle cx="120" cy="104" r="1.6" fill="#FFFFFF"></circle></g>
+<g style="opacity: {{rosa.eyesClosed}}"><path d="M76 107 Q82 111 88 107 M112 107 Q118 111 124 107" fill="none" stroke="#2B2118" stroke-width="3" stroke-linecap="round"></path></g>
+<circle cx="70" cy="124" r="8" fill="#E89A8A" opacity="0.7"></circle><circle cx="130" cy="124" r="8" fill="#E89A8A" opacity="0.7"></circle>
+<circle cx="136" cy="114" r="3" fill="#FFFFFF" opacity="0.85"></circle>
+<g style="opacity: {{rosa.mouthClosed}}"><path d="M88 128 Q100 138 112 128" fill="none" stroke="#2B2118" stroke-width="3" stroke-linecap="round"></path></g>
+<g style="opacity: {{rosa.mouthOpen}}"><ellipse cx="100" cy="131" rx="11" ry="9" fill="#7E2E1C"></ellipse><ellipse cx="100" cy="136" rx="6" ry="3.5" fill="#E07A8A"></ellipse></g>
+</svg>
+</div>
+</div>
+<div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap"><span style="font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: 20px">Rosa</span><span style="padding: 3px 10px; border-radius: 999px; background: #F6DFB8; font-size: 13px; color: #5A3820">Baker</span></div>
+<span style="font-size: 14px; color: #6B5A48">1 · Hello Main Street</span>
+<button onClick="{{rosa.talk}}" style="height: 44px; border: 1px solid #D8C7AE; border-radius: 999px; background: transparent; color: #5A3820; font-family: 'Atkinson Hyperlegible', sans-serif; font-size: 15px; font-weight: 700; cursor: pointer">Make Rosa talk</button>
+</div>
+
+<div style="display: flex; flex-direction: column; gap: 10px; background: #FFF9EF; border: 3px solid {{tom.border}}; border-radius: 22px; padding: 14px">
+<div style="height: 236px; border-radius: 16px; background: #F7D3DA; display: flex; align-items: flex-end; justify-content: center; overflow: hidden">
+<div style="line-height: 0; transform: translateY({{tom.bob}}px); transition: transform 90ms ease-out">
+<svg width="190" height="228" viewBox="0 0 200 240" role="img" aria-label="Tom the florist">
+<path d="M28 240 C28 186 60 164 100 164 C140 164 172 186 172 240 Z" fill="#4E7A3A"></path>
+<path d="M72 180 C82 174 118 174 128 180 L134 240 H66 Z" fill="#F3E3C8"></path>
+<circle cx="116" cy="204" r="6" fill="#E07A8A"></circle><circle cx="116" cy="204" r="2.2" fill="#F7D9A8"></circle>
+<rect x="88" y="140" width="24" height="32" rx="8" fill="#D9A27A"></rect>
+<circle cx="52" cy="106" r="10" fill="#E8B48A"></circle><circle cx="148" cy="106" r="10" fill="#E8B48A"></circle>
+<circle cx="100" cy="102" r="50" fill="#E8B48A"></circle>
+<path d="M46 92 Q100 4 154 92 Q100 70 46 92 Z" fill="#4E7A3A"></path>
+<circle cx="140" cy="64" r="14" fill="#E07A8A"></circle><circle cx="140" cy="64" r="5" fill="#F7D9A8"></circle>
+<g style="opacity: {{tom.eyesOpen}}"><circle cx="82" cy="106" r="5.5" fill="#2B2118"></circle><circle cx="118" cy="106" r="5.5" fill="#2B2118"></circle><circle cx="84" cy="104" r="1.6" fill="#FFFFFF"></circle><circle cx="120" cy="104" r="1.6" fill="#FFFFFF"></circle></g>
+<g style="opacity: {{tom.eyesClosed}}"><path d="M76 107 Q82 111 88 107 M112 107 Q118 111 124 107" fill="none" stroke="#2B2118" stroke-width="3" stroke-linecap="round"></path></g>
+<circle cx="70" cy="124" r="8" fill="#E89A8A" opacity="0.7"></circle><circle cx="130" cy="124" r="8" fill="#E89A8A" opacity="0.7"></circle>
+<g style="opacity: {{tom.mouthClosed}}"><path d="M88 128 Q100 138 112 128" fill="none" stroke="#2B2118" stroke-width="3" stroke-linecap="round"></path></g>
+<g style="opacity: {{tom.mouthOpen}}"><ellipse cx="100" cy="131" rx="11" ry="9" fill="#7E2E1C"></ellipse><ellipse cx="100" cy="136" rx="6" ry="3.5" fill="#E07A8A"></ellipse></g>
+</svg>
+</div>
+</div>
+<div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap"><span style="font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: 20px">Tom</span><span style="padding: 3px 10px; border-radius: 999px; background: #F7D3DA; font-size: 13px; color: #5A3820">Florist</span></div>
+<span style="font-size: 14px; color: #6B5A48">2 · Open Sign</span>
+<button onClick="{{tom.talk}}" style="height: 44px; border: 1px solid #D8C7AE; border-radius: 999px; background: transparent; color: #5A3820; font-family: 'Atkinson Hyperlegible', sans-serif; font-size: 15px; font-weight: 700; cursor: pointer">Make Tom talk</button>
+</div>
+
+<div style="display: flex; flex-direction: column; gap: 10px; background: #FFF9EF; border: 3px solid {{marco.border}}; border-radius: 22px; padding: 14px">
+<div style="height: 236px; border-radius: 16px; background: #E9EBEE; display: flex; align-items: flex-end; justify-content: center; overflow: hidden">
+<div style="line-height: 0; transform: translateY({{marco.bob}}px); transition: transform 90ms ease-out">
+<svg width="190" height="228" viewBox="0 0 200 240" role="img" aria-label="Marco the chef">
+<path d="M28 240 C28 186 60 164 100 164 C140 164 172 186 172 240 Z" fill="#FFFDF8" stroke="#D5D9DE" stroke-width="3"></path>
+<circle cx="86" cy="208" r="4" fill="#B8A58C"></circle><circle cx="114" cy="208" r="4" fill="#B8A58C"></circle><circle cx="86" cy="228" r="4" fill="#B8A58C"></circle><circle cx="114" cy="228" r="4" fill="#B8A58C"></circle>
+<rect x="88" y="140" width="24" height="30" rx="8" fill="#CF9670"></rect>
+<path d="M76 166 L100 172 L124 166 L100 196 Z" fill="#C2503A"></path>
+<circle cx="52" cy="106" r="10" fill="#E0A77E"></circle><circle cx="148" cy="106" r="10" fill="#E0A77E"></circle>
+<circle cx="100" cy="102" r="50" fill="#E0A77E"></circle>
+<path d="M52 104 Q48 82 62 76 L66 104 Z M148 104 Q152 82 138 76 L134 104 Z" fill="#3A2A20"></path>
+<path d="M58 78 C42 76 42 48 62 50 C58 18 94 8 100 28 C106 8 142 18 138 50 C158 48 158 76 142 78 Z" fill="#FFFFFF" stroke="#D5D9DE" stroke-width="3" stroke-linejoin="round"></path>
+<rect x="58" y="66" width="84" height="18" rx="5" fill="#FFFFFF" stroke="#D5D9DE" stroke-width="3"></rect>
+<path d="M72 94 L90 91 M110 91 L128 94" stroke="#3A2A20" stroke-width="4" stroke-linecap="round"></path>
+<g style="opacity: {{marco.eyesOpen}}"><circle cx="82" cy="106" r="5.5" fill="#2B2118"></circle><circle cx="118" cy="106" r="5.5" fill="#2B2118"></circle><circle cx="84" cy="104" r="1.6" fill="#FFFFFF"></circle><circle cx="120" cy="104" r="1.6" fill="#FFFFFF"></circle></g>
+<g style="opacity: {{marco.eyesClosed}}"><path d="M76 107 Q82 111 88 107 M112 107 Q118 111 124 107" fill="none" stroke="#2B2118" stroke-width="3" stroke-linecap="round"></path></g>
+<circle cx="68" cy="122" r="8" fill="#E89A8A" opacity="0.6"></circle><circle cx="132" cy="122" r="8" fill="#E89A8A" opacity="0.6"></circle>
+<g style="opacity: {{marco.mouthClosed}}"><path d="M90 136 Q100 142 110 136" fill="none" stroke="#2B2118" stroke-width="3" stroke-linecap="round"></path></g>
+<g style="opacity: {{marco.mouthOpen}}"><ellipse cx="100" cy="138" rx="9" ry="7" fill="#7E2E1C"></ellipse><ellipse cx="100" cy="142" rx="5" ry="2.5" fill="#E07A8A"></ellipse></g>
+<path d="M78 126 Q88 116 100 124 Q112 116 122 126 Q112 132 100 127 Q88 132 78 126 Z" fill="#3A2A20"></path>
+</svg>
+</div>
+</div>
+<div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap"><span style="font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: 20px">Marco</span><span style="padding: 3px 10px; border-radius: 999px; background: #E9EBEE; font-size: 13px; color: #5A3820">Chef</span></div>
+<span style="font-size: 14px; color: #6B5A48">3 · Restaurant Menu</span>
+<button onClick="{{marco.talk}}" style="height: 44px; border: 1px solid #D8C7AE; border-radius: 999px; background: transparent; color: #5A3820; font-family: 'Atkinson Hyperlegible', sans-serif; font-size: 15px; font-weight: 700; cursor: pointer">Make Marco talk</button>
+</div>
+
+<div style="display: flex; flex-direction: column; gap: 10px; background: #FFF9EF; border: 3px solid {{lucia.border}}; border-radius: 22px; padding: 14px">
+<div style="height: 236px; border-radius: 16px; background: #D7E8D2; display: flex; align-items: flex-end; justify-content: center; overflow: hidden">
+<div style="line-height: 0; transform: translateY({{lucia.bob}}px); transition: transform 90ms ease-out">
+<svg width="190" height="228" viewBox="0 0 200 240" role="img" aria-label="Dona Lúcia the teacher">
+<circle cx="100" cy="100" r="56" fill="#CFC6BA"></circle>
+<circle cx="100" cy="42" r="20" fill="#CFC6BA"></circle>
+<path d="M28 240 C28 186 60 164 100 164 C140 164 172 186 172 240 Z" fill="#5E8A6A"></path>
+<path d="M80 166 L100 192 L120 166 Z" fill="#FFF9EF"></path>
+<path d="M100 192 V240" stroke="#4A6F55" stroke-width="2"></path>
+<circle cx="108" cy="208" r="3.5" fill="#F2C46B"></circle><circle cx="108" cy="226" r="3.5" fill="#F2C46B"></circle>
+<rect x="88" y="140" width="24" height="30" rx="8" fill="#7E5036"></rect>
+<circle cx="52" cy="106" r="10" fill="#8D5B3E"></circle><circle cx="148" cy="106" r="10" fill="#8D5B3E"></circle>
+<circle cx="100" cy="102" r="50" fill="#8D5B3E"></circle>
+<path d="M52 98 Q58 58 100 56 Q142 58 148 98 Q132 74 100 76 Q68 74 52 98 Z" fill="#CFC6BA"></path>
+<circle cx="82" cy="106" r="13" fill="#FFFFFF" opacity="0.35"></circle><circle cx="118" cy="106" r="13" fill="#FFFFFF" opacity="0.35"></circle>
+<g style="opacity: {{lucia.eyesOpen}}"><circle cx="82" cy="106" r="5.5" fill="#2B2118"></circle><circle cx="118" cy="106" r="5.5" fill="#2B2118"></circle><circle cx="84" cy="104" r="1.6" fill="#FFFFFF"></circle><circle cx="120" cy="104" r="1.6" fill="#FFFFFF"></circle></g>
+<g style="opacity: {{lucia.eyesClosed}}"><path d="M76 107 Q82 111 88 107 M112 107 Q118 111 124 107" fill="none" stroke="#2B2118" stroke-width="3" stroke-linecap="round"></path></g>
+<circle cx="82" cy="106" r="13" fill="none" stroke="#3A2A20" stroke-width="3"></circle><circle cx="118" cy="106" r="13" fill="none" stroke="#3A2A20" stroke-width="3"></circle><path d="M95 106 H105" stroke="#3A2A20" stroke-width="3"></path>
+<circle cx="68" cy="128" r="8" fill="#B5644E" opacity="0.6"></circle><circle cx="132" cy="128" r="8" fill="#B5644E" opacity="0.6"></circle>
+<g style="opacity: {{lucia.mouthClosed}}"><path d="M88 130 Q100 140 112 130" fill="none" stroke="#2B2118" stroke-width="3" stroke-linecap="round"></path></g>
+<g style="opacity: {{lucia.mouthOpen}}"><ellipse cx="100" cy="133" rx="10" ry="8" fill="#4A1E12"></ellipse><ellipse cx="100" cy="137" rx="5.5" ry="3" fill="#C46A6A"></ellipse></g>
+</svg>
+</div>
+</div>
+<div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap"><span style="font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: 20px">Dona Lúcia</span><span style="padding: 3px 10px; border-radius: 999px; background: #D7E8D2; font-size: 13px; color: #5A3820">Teacher</span></div>
+<span style="font-size: 14px; color: #6B5A48">4 · Contest Scoreboard</span>
+<button onClick="{{lucia.talk}}" style="height: 44px; border: 1px solid #D8C7AE; border-radius: 999px; background: transparent; color: #5A3820; font-family: 'Atkinson Hyperlegible', sans-serif; font-size: 15px; font-weight: 700; cursor: pointer">Make Dona Lúcia talk</button>
+</div>
+
+<div style="display: flex; flex-direction: column; gap: 10px; background: #FFF9EF; border: 3px solid {{iara.border}}; border-radius: 22px; padding: 14px">
+<div style="height: 236px; border-radius: 16px; background: #CFE3F0; display: flex; align-items: flex-end; justify-content: center; overflow: hidden">
+<div style="line-height: 0; transform: translateY({{iara.bob}}px); transition: transform 90ms ease-out">
+<svg width="190" height="228" viewBox="0 0 200 240" role="img" aria-label="Iara the boat captain">
+<path d="M46 104 Q40 176 66 186 H134 Q160 176 154 104 Q150 52 100 50 Q50 52 46 104 Z" fill="#2B2118"></path>
+<path d="M28 240 C28 186 60 164 100 164 C140 164 172 186 172 240 Z" fill="#2F4A6B"></path>
+<path d="M76 168 L100 200 L124 168" fill="none" stroke="#F3E3C8" stroke-width="4" stroke-linejoin="round"></path>
+<circle cx="88" cy="216" r="4" fill="#F2C46B"></circle><circle cx="112" cy="216" r="4" fill="#F2C46B"></circle>
+<rect x="88" y="140" width="24" height="30" rx="8" fill="#9C6B46"></rect>
+<circle cx="52" cy="108" r="10" fill="#B07A52"></circle><circle cx="148" cy="108" r="10" fill="#B07A52"></circle>
+<circle cx="100" cy="104" r="48" fill="#B07A52"></circle>
+<path d="M56 82 Q54 38 100 36 Q146 38 144 82 Z" fill="#FFFFFF" stroke="#CFD8E0" stroke-width="3"></path>
+<rect x="56" y="68" width="88" height="14" fill="#1E2F45"></rect>
+<path d="M40 84 Q100 70 160 84 Q158 94 100 90 Q42 94 40 84 Z" fill="#1E2F45"></path>
+<circle cx="100" cy="54" r="8" fill="#F2C46B"></circle><path d="M100 49 V59 M96 56 Q100 61 104 56" fill="none" stroke="#1E2F45" stroke-width="1.8" stroke-linecap="round"></path>
+<g style="opacity: {{iara.eyesOpen}}"><circle cx="82" cy="108" r="5.5" fill="#2B2118"></circle><circle cx="118" cy="108" r="5.5" fill="#2B2118"></circle><circle cx="84" cy="106" r="1.6" fill="#FFFFFF"></circle><circle cx="120" cy="106" r="1.6" fill="#FFFFFF"></circle></g>
+<g style="opacity: {{iara.eyesClosed}}"><path d="M76 109 Q82 113 88 109 M112 109 Q118 113 124 109" fill="none" stroke="#2B2118" stroke-width="3" stroke-linecap="round"></path></g>
+<circle cx="70" cy="126" r="8" fill="#D9806A" opacity="0.6"></circle><circle cx="130" cy="126" r="8" fill="#D9806A" opacity="0.6"></circle>
+<g style="opacity: {{iara.mouthClosed}}"><path d="M88 130 Q100 140 112 130" fill="none" stroke="#2B2118" stroke-width="3" stroke-linecap="round"></path></g>
+<g style="opacity: {{iara.mouthOpen}}"><ellipse cx="100" cy="133" rx="11" ry="9" fill="#7E2E1C"></ellipse><ellipse cx="100" cy="138" rx="6" ry="3.5" fill="#E07A8A"></ellipse></g>
+</svg>
+</div>
+</div>
+<div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap"><span style="font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: 20px">Iara</span><span style="padding: 3px 10px; border-radius: 999px; background: #CFE3F0; font-size: 13px; color: #5A3820">Boat captain</span></div>
+<span style="font-size: 14px; color: #6B5A48">5 · Ferry Times</span>
+<button onClick="{{iara.talk}}" style="height: 44px; border: 1px solid #D8C7AE; border-radius: 999px; background: transparent; color: #5A3820; font-family: 'Atkinson Hyperlegible', sans-serif; font-size: 15px; font-weight: 700; cursor: pointer">Make Iara talk</button>
+</div>
+</div>
+
+<div style="position: relative; margin-top: 14px">
+<span style="position: absolute; top: -18px; left: 36px; z-index: 1; display: inline-flex; align-items: baseline; gap: 8px; padding: 6px 16px; border-radius: 999px; background: #7A4E2D; color: #FFF9EF; font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: 18px">{{speaker}}<span style="font-family: 'Atkinson Hyperlegible', sans-serif; font-weight: 400; font-size: 14px; color: #F3E3C8">{{speakerJob}}</span></span>
+<button onClick="{{finish}}" style="width: 100%; display: flex; flex-direction: column; gap: 10px; text-align: left; padding: 32px 36px 20px; border: 4px solid #7A4E2D; border-radius: 22px; background: #FFF9EF; box-shadow: inset 0 0 0 5px #FFF9EF, inset 0 0 0 7px #E2D3BC, 0 6px 0 #5A3820; color: #2B2118; font-family: 'Atkinson Hyperlegible', sans-serif; font-size: 24px; line-height: 1.5; cursor: pointer">
+<span style="display: block; min-height: 72px; white-space: pre-wrap">{{shown}}</span>
+<span style="display: flex; align-items: center; gap: 8px; font-size: 14px; color: #6B5A48"><span style="flex-grow: 1"></span>
+<sc-if value="{{done}}" hint-placeholder-val="{{ false }}"><span style="display: inline-flex; align-items: center; gap: 8px; opacity: {{arrowOpacity}}">Pick another villager<svg width="18" height="14" viewBox="0 0 18 14" aria-hidden="true"><path d="M2 2 H16 L9 12 Z" fill="#7A4E2D"></path></svg></span></sc-if>
+</span>
+</button>
+</div>
+
+<div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px">
+<div style="display: flex; flex-direction: column; gap: 4px; padding: 14px 16px; border-radius: 16px; background: #FBF4E8; border: 1px solid #E2D3BC"><b style="font-size: 15px">Mouth</b><span style="font-size: 14px; line-height: 1.45; color: #6B5A48">Opens and closes every 120 ms while letters appear. Closed as soon as the line is out.</span></div>
+<div style="display: flex; flex-direction: column; gap: 4px; padding: 14px 16px; border-radius: 16px; background: #FBF4E8; border: 1px solid #E2D3BC"><b style="font-size: 15px">Bob</b><span style="font-size: 14px; line-height: 1.45; color: #6B5A48">The bust lifts 4 dp each time the mouth opens, 90 ms ease-out.</span></div>
+<div style="display: flex; flex-direction: column; gap: 4px; padding: 14px 16px; border-radius: 16px; background: #FBF4E8; border: 1px solid #E2D3BC"><b style="font-size: 15px">Blink</b><span style="font-size: 14px; line-height: 1.45; color: #6B5A48">120 ms, about every 3.6 s, offset per villager so they never blink together.</span></div>
+<div style="display: flex; flex-direction: column; gap: 4px; padding: 14px 16px; border-radius: 16px; background: #FBF4E8; border: 1px solid #E2D3BC"><b style="font-size: 15px">Reduced motion</b><span style="font-size: 14px; line-height: 1.45; color: #6B5A48">The whole line appears at once. No mouth flaps, no bob, no blinking.</span></div>
+</div>
+</div>
+</template>
+<script src="dc-lite.js"></script>
+<script>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { who: "tom", n: 0, tick: 0 };
+  }
+
+  componentDidMount() {
+    this.timer = setInterval(() => this.step(), 40);
+  }
+
+  componentWillUnmount() {
+    clearInterval(this.timer);
+  }
+
+  cast() {
+    return [
+      { id: "rosa", name: "Rosa", job: "Baker", line: "Good morning! Smell that? Fresh bread, right out of the oven. Now my bakery just needs a sign." },
+      { id: "tom", name: "Tom", job: "Florist", line: "Oh, hi! You must be the new sign maker. I'm Tom, I run the flower shop next to Rosa's bakery." },
+      { id: "marco", name: "Marco", job: "Chef", line: "Benvenuto! My whole menu lives in my head. Can you help me put it up on the wall?" },
+      { id: "lucia", name: "Dona Lúcia", job: "Teacher", line: "Good afternoon, dear. The school contest is tomorrow, and our scoreboard is still blank." },
+      { id: "iara", name: "Iara", job: "Boat captain", line: "Ahoy! The ferry always leaves on time. The trouble is, nobody knows when that is." }
+    ];
+  }
+
+  speaking() {
+    const who = this.state.who;
+    return this.cast().find((v) => v.id === who);
+  }
+
+  step() {
+    const s = this.state;
+    const full = this.speaking().line;
+    const cps = this.props.speed ?? 40;
+    const n = this.props.reducedMotion ? full.length : Math.min(full.length, s.n + cps * 0.04);
+    this.setState({ n: n, tick: s.tick + 1 });
+  }
+
+  renderVals() {
+    const s = this.state;
+    const reduced = !!this.props.reducedMotion;
+    const speaker = this.speaking();
+    const typing = s.n < speaker.line.length;
+    const vals = {};
+    this.cast().forEach((v, i) => {
+      const talking = v.id === s.who && typing && !reduced && Math.floor(s.tick / 3) % 2 === 0;
+      const blinking = !reduced && (s.tick + i * 17) % 90 < 3;
+      vals[v.id] = {
+        border: v.id === s.who ? "#7A4E2D" : "#E2D3BC",
+        mouthOpen: talking ? 1 : 0,
+        mouthClosed: talking ? 0 : 1,
+        eyesOpen: blinking ? 0 : 1,
+        eyesClosed: blinking ? 1 : 0,
+        bob: talking ? -4 : 0,
+        talk: () => this.setState({ who: v.id, n: 0 })
+      };
+    });
+    vals.speaker = speaker.name;
+    vals.speakerJob = speaker.job;
+    vals.shown = speaker.line.slice(0, Math.floor(s.n));
+    vals.done = !typing;
+    vals.arrowOpacity = reduced || s.tick % 20 < 12 ? 1 : 0.3;
+    vals.finish = () => this.setState({ n: speaker.line.length });
+    return vals;
+  }
+}
+
+mountDC(Component, {"speed": 40, "reducedMotion": false});
+</script>
+</body>
+</html>
