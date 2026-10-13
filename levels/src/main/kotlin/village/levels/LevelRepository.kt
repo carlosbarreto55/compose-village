@@ -101,9 +101,22 @@ class LevelRepository(private val files: LevelFiles = LevelFiles.BUNDLED) {
                 else -> decode(Criterion.serializer(), obj, problems, "$name: ")
             }
         }
+        // Steps the same way, so an error names the step.
+        val actions = file.actions.mapIndexedNotNull { i, element ->
+            val obj = element as? JsonObject
+            val id = (obj?.get("id") as? JsonPrimitive)?.contentOrNull
+            val name = if (id.isNullOrBlank()) "step #${i + 1}" else "step '$id'"
+            val type = (obj?.get("type") as? JsonPrimitive)?.contentOrNull
+            when {
+                obj == null -> { problems += "$name must be a JSON object"; null }
+                type !in ACTION_TYPES -> { problems += "$name: unknown type '$type'; valid step types are ${ACTION_TYPES.joinToString()}"; null }
+                else -> decode(Action.serializer(), obj, problems, "$name: ")
+            }
+        }
         if (problems.isNotEmpty()) invalid()
 
         problems += validate(folder, file, criteria)
+        problems += validate(actions, criteria)
         val panels = file.panels.mapNotNull { name ->
             Panel.fromJson(name) ?: run { problems += "panel '$name' is unknown; valid panels are ${Panel.entries.joinToString { it.jsonName }}"; null }
         }
@@ -120,7 +133,7 @@ class LevelRepository(private val files: LevelFiles = LevelFiles.BUNDLED) {
             id = file.id, title = file.title.trim(), villager = Villager(file.villager.id, file.villager.name.trim(), profession!!), shop = file.shop.trim(),
             request = file.request.trim(), concepts = file.concepts.map(String::trim), thanks = file.thanks?.trim(),
             intro = file.intro.map(String::trim), celebration = file.celebration.map(String::trim), entryFunction = file.entryFunction,
-            starterCode = starter!!, viewport = Viewport(file.viewport.widthDp, file.viewport.heightDp), criteria = criteria,
+            starterCode = starter!!, viewport = Viewport(file.viewport.widthDp, file.viewport.heightDp), criteria = criteria, actions = actions,
             panels = panels, targetPng = files.readBytes("$folder/$TARGET_FILE"),
         )
     }
@@ -173,6 +186,26 @@ class LevelRepository(private val files: LevelFiles = LevelFiles.BUNDLED) {
                     addAll(validate(name, "a", c.a) + validate(name, "b", c.b))
                     if (c.toleranceDp < 0) add("$name: toleranceDp must not be negative")
                 }
+                is Criterion.Prints -> if (c.text.isBlank()) add("$name: text must not be blank")
+            }
+        }
+    }
+
+    /** The customer's steps, and the criteria's `after` references to them. */
+    private fun validate(actions: List<Action>, criteria: List<Criterion>) = buildList {
+        actions.forEachIndexed { i, a ->
+            val name = if (a.id.isBlank()) "step #${i + 1}" else "step '${a.id}'"
+            if (a.id.isBlank()) add("$name: id must not be blank")
+            else if (!ID.matches(a.id)) add("$name: id must be lowercase words and digits separated by '-'")
+            addAll(validate(name, "node", a.node))
+        }
+        actions.groupingBy { it.id }.eachCount().filterValues { it > 1 }.keys.forEach { add("step id '$it' is used more than once") }
+        val ids = actions.map { it.id }.toSet()
+        criteria.forEach { c ->
+            val after = c.after ?: return@forEach
+            if (after !in ids) {
+                val steps = if (ids.isEmpty()) "the level has no steps" else "its steps are ${ids.joinToString()}"
+                add("criterion '${c.id}': after '$after' is not one of the level's steps; $steps")
             }
         }
     }
@@ -208,7 +241,8 @@ class LevelRepository(private val files: LevelFiles = LevelFiles.BUNDLED) {
         private val VILLAGER_ID = Regex("^[a-z]+(-[a-z]+)*$")
         /** The longest dialogue line: three lines of 24 sp text in the narrowest dialogue box (talking-villagers D8). */
         const val MAX_LINE = 140
-        private val CRITERION_TYPES = listOf("exists", "absent", "above", "below", "leftOf", "rightOf")
+        private val CRITERION_TYPES = listOf("exists", "absent", "above", "below", "leftOf", "rightOf", "prints")
+        private val ACTION_TYPES = listOf("press", "enterText")
 
         // Strict: unknown keys are errors (a typo must not silently drop a field). "type" picks the criterion.
         private val json = Json { ignoreUnknownKeys = false; classDiscriminator = "type" }
@@ -235,6 +269,8 @@ private class LevelFile(
     val panels: List<String> = emptyList(),
     /** Decoded one by one into [Criterion]s, see [LevelRepository.load]. */
     val criteria: List<JsonElement>,
+    /** Decoded one by one into [Action]s, like [criteria]. */
+    val actions: List<JsonElement> = emptyList(),
 )
 
 /** [profession] by name; checked in [LevelRepository.load] so an unknown name lists the valid ones. */

@@ -30,6 +30,8 @@ class Level(
     val starterCode: String,
     val viewport: Viewport,
     val criteria: List<Criterion>,
+    /** What the customer does after the first frame, in order (customer-actions); none for a still screen. */
+    val actions: List<Action> = emptyList(),
     /** Extra panels this level shows; the preview, target, checklist and problems are always shown. */
     val panels: List<Panel> = emptyList(),
     /** The reference solution rendered at build time (PNG at 2x density), or null if none was rendered. */
@@ -87,26 +89,47 @@ data class Selector(
     val contains: Boolean = false,
 )
 
+/** One step the customer performs on the player's screen after the first frame. [node] picks its target. */
+@Serializable
+sealed interface Action {
+    /** Named by a criterion's `after` to check the screen right after this step. */
+    val id: String
+    val node: Selector
+
+    /** Presses the target like a mouse click. */
+    @Serializable @SerialName("press")
+    data class Press(override val id: String, override val node: Selector) : Action
+
+    /** Replaces the target's text with [text], as typing does. */
+    @Serializable @SerialName("enterText")
+    data class EnterText(override val id: String, override val node: Selector, val text: String) : Action
+}
+
 /**
  * One acceptance check. [description] is the checklist line the player always sees; [message], if
- * set, is an extra line in the villager's voice shown when it fails.
+ * set, is an extra line in the villager's voice shown when it fails. [after], if set, is the id of the
+ * customer step after which it is checked; otherwise it is checked against the first frame.
  */
 @Serializable
 sealed interface Criterion {
     val id: String
     val description: String
     val message: String?
+    val after: String?
 
     /** At least one visible node matches [node]; exactly [count] if set. */
     @Serializable @SerialName("exists")
     data class Exists(
         override val id: String, override val description: String, val node: Selector, val count: Int? = null,
-        override val message: String? = null,
+        override val message: String? = null, override val after: String? = null,
     ) : Criterion
 
     /** No visible node matches [node]. */
     @Serializable @SerialName("absent")
-    data class Absent(override val id: String, override val description: String, val node: Selector, override val message: String? = null) : Criterion
+    data class Absent(
+        override val id: String, override val description: String, val node: Selector, override val message: String? = null,
+        override val after: String? = null,
+    ) : Criterion
 
     /** The relative position of a node matching [a] and some other node matching [b]. */
     sealed interface Order : Criterion {
@@ -119,29 +142,40 @@ sealed interface Criterion {
     @Serializable @SerialName("above")
     data class Above(
         override val id: String, override val description: String, override val a: Selector, override val b: Selector,
-        override val toleranceDp: Float = 1f, override val message: String? = null,
+        override val toleranceDp: Float = 1f, override val message: String? = null, override val after: String? = null,
     ) : Order
 
     /** A's top is at or below B's bottom: [Above] with [a] and [b] swapped. */
     @Serializable @SerialName("below")
     data class Below(
         override val id: String, override val description: String, override val a: Selector, override val b: Selector,
-        override val toleranceDp: Float = 1f, override val message: String? = null,
+        override val toleranceDp: Float = 1f, override val message: String? = null, override val after: String? = null,
     ) : Order
 
     /** A's right edge is at or left of B's left edge. */
     @Serializable @SerialName("leftOf")
     data class LeftOf(
         override val id: String, override val description: String, override val a: Selector, override val b: Selector,
-        override val toleranceDp: Float = 1f, override val message: String? = null,
+        override val toleranceDp: Float = 1f, override val message: String? = null, override val after: String? = null,
     ) : Order
 
     /** A's left edge is at or right of B's right edge: [LeftOf] with [a] and [b] swapped. */
     @Serializable @SerialName("rightOf")
     data class RightOf(
         override val id: String, override val description: String, override val a: Selector, override val b: Selector,
-        override val toleranceDp: Float = 1f, override val message: String? = null,
+        override val toleranceDp: Float = 1f, override val message: String? = null, override val after: String? = null,
     ) : Order
+
+    /**
+     * A line printed during the moment (the [after] step, or while the screen first appeared) matches
+     * [text], with the forgiving text rules of [Selector].
+     */
+    @Serializable @SerialName("prints")
+    data class Prints(
+        override val id: String, override val description: String, val text: String,
+        val ignoreCase: Boolean = false, val contains: Boolean = false,
+        override val message: String? = null, override val after: String? = null,
+    ) : Criterion
 }
 
 /** The level data cannot be played; [problems] name the field at fault, each on its own. */

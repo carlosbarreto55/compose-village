@@ -57,6 +57,9 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import village.app.GameText
 import village.app.ui.components.TextAction
@@ -64,6 +67,7 @@ import village.app.ui.components.VillageCard
 import village.app.ui.theme.LocalReducedMotion
 import village.app.ui.theme.Village
 import village.app.ui.theme.VillageShapes
+import village.levels.Customer
 import village.levels.Panel
 import village.preview.PreviewEngine
 import village.preview.PreviewState
@@ -87,6 +91,7 @@ fun PreviewCard(
     showTarget: Boolean, onShowTarget: (Boolean) -> Unit,
     overlay: Boolean, onOverlay: (Boolean) -> Unit,
     building: Boolean, complete: Boolean, glow: Float,
+    customerCaption: String? = null, onPlayerPress: () -> Unit = {},
 ) {
     val c = Village.colors
     val targetShown = showTarget && target != null
@@ -131,6 +136,7 @@ fun PreviewCard(
                                 val forwarded = event.type == PointerEventType.Press || event.type == PointerEventType.Release ||
                                     event.type == PointerEventType.Move || event.type == PointerEventType.Scroll
                                 if (forwarded && !targetShown) {
+                                    if (event.type == PointerEventType.Press) onPlayerPress()
                                     engine.sendPointer(event.type, engine.toScene(change.position, size.width, size.height), change.scrollDelta)
                                 }
                             }
@@ -147,6 +153,7 @@ fun PreviewCard(
                             Image(target, contentDescription = "Sketch overlay", Modifier.fillMaxSize().alpha(0.4f), contentScale = ContentScale.FillBounds, filterQuality = FilterQuality.High)
                         }
                         val caption = when {
+                            frame != null && customerCaption != null && !building -> customerCaption
                             frame != null || state.error != null -> null
                             overlay && target != null && villagerName != null -> GameText.ghostCaption(villagerName)
                             else -> "Press Run to see your screen"
@@ -154,7 +161,13 @@ fun PreviewCard(
                         if (caption != null) {
                             Text(
                                 caption, style = Village.type.small, color = c.inkMuted, textAlign = TextAlign.Center,
-                                modifier = Modifier.align(if (overlay) Alignment.BottomCenter else Alignment.Center).padding(14.dp),
+                                modifier = Modifier.align(
+                                    when {
+                                        frame != null && complete -> Alignment.BottomStart // the Matches badge is at the bottom end
+                                        frame != null || overlay -> Alignment.BottomCenter
+                                        else -> Alignment.Center
+                                    },
+                                ).padding(14.dp),
                             )
                         }
                         if (complete && frame != null && villagerName != null) MatchesBadge(villagerName, Modifier.align(Alignment.BottomEnd).padding(14.dp))
@@ -267,17 +280,54 @@ private fun TerminalCard(label: String, content: @Composable () -> Unit) {
     }
 }
 
+/**
+ * What the attempt printed, with a customer line before each customer step's output, or
+ * `(nothing printed)` after a step that printed nothing (customer-bot D6). [empty] is shown before
+ * anything was printed.
+ */
 @Composable
-fun ConsolePanel(console: String) {
+fun ConsolePanel(console: String, marks: List<Customer.Mark> = emptyList(), empty: String = GameText.CONSOLE_EMPTY) {
     val c = Village.colors
     TerminalCard(PANEL_EXPLANATIONS.getValue(Panel.CONSOLE).first) {
+        val lines = if (console.isEmpty() && marks.isEmpty()) listOf(ConsoleLine(empty, ConsoleLine.Kind.CUSTOMER)) else consoleTranscript(console, marks)
         Text(
-            console.ifEmpty { GameText.CONSOLE_EMPTY }.lines().takeLast(200).joinToString("\n"),
+            buildAnnotatedString {
+                lines.takeLast(200).forEachIndexed { i, line ->
+                    if (i > 0) append("\n")
+                    val color = when (line.kind) {
+                        ConsoleLine.Kind.OUTPUT -> c.syntaxString
+                        ConsoleLine.Kind.CUSTOMER -> c.syntaxComment
+                        ConsoleLine.Kind.NOTHING -> c.editorErrorText
+                    }
+                    withStyle(SpanStyle(color = color)) { append(line.text) }
+                }
+            },
             style = Village.type.codeSmall,
-            color = if (console.isEmpty()) c.syntaxComment else c.syntaxString,
             modifier = Modifier.heightIn(max = 140.dp).verticalScroll(rememberScrollState()),
         )
     }
+}
+
+/** One Console line: something the attempt printed, a customer line, or `(nothing printed)`. */
+data class ConsoleLine(val text: String, val kind: Kind) {
+    enum class Kind { OUTPUT, CUSTOMER, NOTHING }
+}
+
+/** [console] split into lines, with each step's customer line before the output it caused (its [Customer.Mark]). */
+fun consoleTranscript(console: String, marks: List<Customer.Mark>): List<ConsoleLine> = buildList {
+    fun output(from: Int, to: Int) {
+        val text = console.substring(from.coerceIn(0, console.length), to.coerceIn(0, console.length))
+        text.removeSuffix("\n").takeIf { it.isNotEmpty() }?.lines()?.forEach { add(ConsoleLine(it, ConsoleLine.Kind.OUTPUT)) }
+    }
+    var at = 0
+    for (mark in marks.sortedBy { it.consoleOffset }) {
+        output(at, mark.consoleOffset)
+        add(ConsoleLine(GameText.customerLine(mark.action), ConsoleLine.Kind.CUSTOMER))
+        if (mark.length == 0) add(ConsoleLine(GameText.NOTHING_PRINTED, ConsoleLine.Kind.NOTHING))
+        else output(mark.consoleOffset, mark.consoleOffset + mark.length)
+        at = mark.consoleOffset + mark.length
+    }
+    output(at, console.length)
 }
 
 /** Per-composable recomposition counts as bars: the technical hook for the future heatmap. */

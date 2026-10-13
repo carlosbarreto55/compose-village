@@ -219,4 +219,76 @@ class EvaluatorTest {
         assertEquals(CriterionResult("title", c.description, false, "I can't find \"Rosa's Bakery\" on the screen.", "Where's my name?"), failed)
         assertEquals(CriterionResult("title", c.description, true, null, null), Evaluator.evaluate(listOf(c), snapshot(title)).results.single())
     }
+
+    // ---- criteria at a moment, and prints (customer-bot); records built by hand ----
+
+    private val order = Action.Press("order", Selector(role = "Button", text = "Order"))
+    private val name = Action.EnterText("name", Selector(text = "Your name"), "Rosa")
+    private val bell = Criterion.Prints("bell", "d", "New order!", after = "order")
+    private val sign = snapshot(text("Tom's Flowers", 0f), text("Order", 0f, left = 120f, role = "Button"))
+
+    private fun pressed(printed: String, screen: SemanticsSnapshot = sign) = Attempt(Moment(sign, ""), listOf(Step(order, Outcome.Done(Moment(screen, printed)))))
+    private fun result(c: Criterion, a: Attempt) = Evaluator.evaluate(listOf(c), a).results.single()
+
+    @Test fun printsAfterAPress() = assertTrue(result(bell, pressed("New order!\n")).passed)
+
+    @Test fun extraOutputStillPrints() = assertTrue(result(bell, pressed("Ding!\n  New   order! \n")).passed)
+
+    @Test fun printedDuringTheFirstFrameIsNotThePress() {
+        val attempt = Attempt(Moment(sign, "New order!\n"), listOf(Step(order, Outcome.Done(Moment(sign, "")))))
+        assertEquals("A customer pressed \"Order\", but nothing was printed.", result(bell, attempt).detail)
+        assertTrue(result(bell.copy(after = null), attempt).passed)
+    }
+
+    @Test fun somethingElsePrinted() = assertEquals(
+        "A customer pressed \"Order\" and \"New oder!\" was printed, but I wanted \"New order!\".",
+        result(bell, pressed("New oder!\n")).detail,
+    )
+
+    @Test fun printsOptions() {
+        assertTrue(result(bell.copy(ignoreCase = true), pressed("NEW ORDER!")).passed)
+        assertTrue(result(bell.copy(contains = true), pressed("Ding! New order! Ding!")).passed)
+        assertFalse(result(bell, pressed("new order!")).passed)
+    }
+
+    @Test fun nothingPrintedWhenTheScreenAppeared() = assertEquals(
+        "Nothing printed \"Hello\" when your screen appeared.",
+        result(Criterion.Prints("hello", "d", "Hello"), Attempt.still(sign)).detail,
+    )
+
+    @Test fun existsAfterAStep() {
+        val one = Criterion.Exists("one", "d", Selector(text = "Count: 1"), after = "order")
+        val attempt = Attempt(Moment(snapshot(text("Count: 0", 0f)), ""), listOf(Step(order, Outcome.Done(Moment(snapshot(text("Count: 1", 0f)), "")))))
+        assertTrue(result(one, attempt).passed)
+        assertFalse(result(one.copy(after = null), attempt).passed)
+    }
+
+    @Test fun stepTargetMissingOrHidden() {
+        val missing = Attempt(Moment(sign, ""), listOf(Step(order, Outcome.NotFound(hidden = false))))
+        assertEquals("The customer couldn't find a button \"Order\" to press.", result(bell, missing).detail)
+        val hidden = Attempt(Moment(sign, ""), listOf(Step(order, Outcome.NotFound(hidden = true))))
+        assertEquals("The customer found a button \"Order\", but it has no size or is off the screen.", result(bell, hidden).detail)
+    }
+
+    @Test fun notReachedExplainsWhatStoppedTheCustomer() {
+        val attempt = Attempt(Moment(sign, ""), listOf(Step(name, Outcome.NotFound(hidden = false)), Step(order, Outcome.NotReached)))
+        assertEquals("The customer couldn't find \"Your name\" to type into.", result(bell, attempt).detail)
+    }
+
+    @Test fun typedDetail() {
+        val greeted = Criterion.Prints("hi", "d", "Hi, Rosa", after = "name")
+        val attempt = Attempt(Moment(sign, ""), listOf(Step(name, Outcome.Done(Moment(sign, "")))))
+        assertEquals("A customer typed \"Rosa\" into \"Your name\", but nothing was printed.", result(greeted, attempt).detail)
+    }
+
+    @Test fun pressedNodeWithoutTextIsNamedByItsPhrase() {
+        val press = Action.Press("go", Selector(role = "Button"))
+        val attempt = Attempt(Moment(sign, ""), listOf(Step(press, Outcome.Done(Moment(sign, "")))))
+        assertEquals("A customer pressed a button, but nothing was printed.", result(Criterion.Prints("p", "d", "Go", after = "go"), attempt).detail)
+    }
+
+    @Test fun messageShownWhenACustomerCriterionFails() {
+        val failed = result(bell.copy(message = "My bell stayed quiet."), pressed(""))
+        assertEquals("My bell stayed quiet.", failed.message)
+    }
 }

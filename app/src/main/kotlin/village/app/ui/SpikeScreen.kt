@@ -48,6 +48,8 @@ import village.app.expressionFor
 import village.app.reactionFor
 import village.app.ui.theme.Village
 import village.app.ui.theme.VillageShapes
+import village.app.GameText
+import village.levels.Action
 import village.levels.Panel
 import village.app.ui.villagers.BigDialogueOverlay
 import village.app.ui.theme.LocalReducedMotion
@@ -181,6 +183,7 @@ private fun RightColumn(controller: SpikeController, completion: Transition<Bool
         showTarget = controller.showTarget, onShowTarget = { controller.showTarget = it },
         overlay = controller.overlaySketch, onOverlay = controller::toggleOverlay,
         building = controller.running, complete = controller.complete, glow = glow,
+        customerCaption = controller.customerCaption, onPlayerPress = controller::notePreviewInput,
     )
     if (level != null) {
         CompletionCard(
@@ -197,7 +200,10 @@ private fun RightColumn(controller: SpikeController, completion: Transition<Bool
         if (!controller.shows(panel)) continue
         Unlockable(panel, panel in controller.highlighted, { controller.dismissHighlight(panel) }) {
             when (panel) {
-                Panel.CONSOLE -> ConsolePanel(preview.console)
+                Panel.CONSOLE -> ConsolePanel(
+                    preview.console, controller.customerMarks,
+                    empty = if (controller.level?.actions?.any { it is Action.Press } == true) GameText.CONSOLE_EMPTY_CUSTOMER else GameText.CONSOLE_EMPTY,
+                )
                 Panel.RECOMPOSITIONS -> RecompositionPanel(preview.recompositions)
             }
         }

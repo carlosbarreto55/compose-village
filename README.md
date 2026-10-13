@@ -25,6 +25,10 @@ Every level is a villager with a request, starter code and a checklist.
 | ![Tom introduces himself in a dialogue box beside his talking bust, with Skip intro and 1 of 4](docs/screenshots/villager-intro.png) | ![Rosa celebrates her finished sign: a delighted bust with sparkles beside a glowing dialogue box](docs/screenshots/villager-celebration.png) |
 | Villagers talk. The first time a level opens, its villager introduces themselves and their wish; **Talk to** replays it. | When their shop first opens, they celebrate before the completion card appears. |
 
+Some wishes are about what a button *does*. After each Run, a customer uses your screen, for example pressing Tom's Order button, and the Console and the checklist show what happened:
+
+![Open Sign with an empty onClick: three wishes met, "A customer pressed Order, but nothing was printed", Tom's bell stayed quiet, and the Console shows the customer's press](docs/screenshots/customer-silent-bell.png)
+
 The **Sandbox**, at the end of the street, is a free editor with every panel. Compile errors, sandbox violations and runtime crashes point at the line that caused them:
 
 ![The sandbox with a compile error: the line is highlighted and the problem is listed under the code](docs/screenshots/sandbox-compile-error.png)
@@ -68,7 +72,8 @@ Levels live in [`levels/src/main/resources/levels/`](levels/src/main/resources/l
 - the villager and their request;
 - the starter code;
 - the panels it uses;
-- its criteria, such as "this text exists" or "this button is to the right of that text".
+- what a customer does after the first frame, such as pressing a button or typing into a field;
+- its criteria, such as "this text exists", "this button is to the right of that text" or "pressing Order prints New order!".
 
 Each level's reference solution sits in `levels/src/test/resources/levels/`. The build checks that the solution passes every criterion, and that the starter code compiles but doesn't pass yet.
 

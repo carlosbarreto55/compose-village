@@ -41,6 +41,7 @@ class LevelRepositoryTest {
         assertEquals(emptyList(), level.concepts)
         assertNull(level.thanks)
         assertNull(level.targetPng)
+        assertEquals(emptyList(), level.actions)
         val c = assertIs<Criterion.Exists>(level.criteria.single())
         assertEquals(Selector(text = "Rosa's Bakery"), c.node)
         assertEquals("The text \"Rosa's Bakery\" is on screen", c.description)
@@ -227,4 +228,58 @@ class LevelRepositoryTest {
         assertContains(assertFailsWith<LevelLoadException> { repo("index.json" to """["a", "a"]""").ids() }.message!!, "more than once: a")
         assertFailsWith<LevelLoadException> { repo("index.json" to """{"levels": []}""").ids() }
     }
+
+    // ---- the customer's steps (customer-bot) ----
+
+    private val press = """{ "id": "order", "type": "press", "node": { "role": "Button", "text": "Order" } }"""
+    private val bell = """{ "type": "prints", "id": "bell", "description": "d", "after": "order", "text": "New order!", "message": "My bell stayed quiet." }"""
+
+    private fun withSteps(steps: String, criteria: String = "$exists, $bell") = minimal(criteria = criteria, extra = """, "actions": [ $steps ]""")
+
+    @Test fun stepsAndPrintsDecode() {
+        val type = """{ "id": "name", "type": "enterText", "node": { "text": "Your name" }, "text": "" }"""
+        val level = level("sign", withSteps("$press, $type"))
+        assertEquals(
+            listOf(Action.Press("order", Selector(role = "Button", text = "Order")), Action.EnterText("name", Selector(text = "Your name"), "")),
+            level.actions,
+        )
+        assertEquals(Criterion.Prints("bell", "d", "New order!", message = "My bell stayed quiet.", after = "order"), level.criteria.last())
+        assertNull(level.criteria.first().after)
+    }
+
+    @Test fun afterAnUnknownStep() {
+        val message = problems("sign", withSteps(press, "$exists, ${bell.replace("\"after\": \"order\"", "\"after\": \"ordr\"")}"))
+        assertContains(message, "criterion 'bell': after 'ordr' is not one of the level's steps; its steps are order")
+    }
+
+    @Test fun afterWithNoSteps() =
+        assertContains(problems("sign", minimal(criteria = "$exists, $bell")), "criterion 'bell': after 'order' is not one of the level's steps; the level has no steps")
+
+    @Test fun unknownStepType() {
+        val message = problems("sign", withSteps("""{ "id": "order", "type": "click", "node": { "text": "Order" } }""", exists))
+        assertContains(message, "step 'order': unknown type 'click'; valid step types are press, enterText")
+    }
+
+    @Test fun badStepIdsSelectorsAndText() {
+        val steps = """
+            { "id": "Order", "type": "press", "node": { "text": "Order" } },
+            { "id": "", "type": "press", "node": { "ignoreCase": true } },
+            { "id": "twice", "type": "press", "node": { "text": "A" } },
+            { "id": "twice", "type": "press", "node": { "text": "B" } }
+        """
+        val message = problems("sign", withSteps(steps, exists))
+        assertContains(message, "step 'Order': id must be lowercase words and digits separated by '-'")
+        assertContains(message, "step #2: id must not be blank")
+        assertContains(message, "step #2: node must set at least one of text, role, contentDescription")
+        assertContains(message, "step id 'twice' is used more than once")
+    }
+
+    @Test fun enterTextNeedsText() {
+        val message = problems("sign", withSteps("""{ "id": "name", "type": "enterText", "node": { "text": "Your name" } }""", exists))
+        assertContains(message, "step 'name': ")
+        assertContains(message, "'text'")
+    }
+
+    @Test fun blankPrintsText() =
+        assertContains(problems("sign", withSteps(press, "$exists, ${bell.replace("New order!", " ")}")), "criterion 'bell': text must not be blank")
 }

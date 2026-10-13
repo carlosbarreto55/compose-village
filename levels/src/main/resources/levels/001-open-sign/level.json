@@ -18,6 +18,9 @@
   "request": "Can you make my shop sign? Put \"Tom's Flowers\" with an \"Order\" button to the right of it. When someone presses Order, print \"New order!\" so I hear the bell.",
   "viewport": { "widthDp": 400, "heightDp": 240 },
   "panels": ["console"],
+  "actions": [
+    { "id": "order", "type": "press", "node": { "role": "Button", "text": "Order" } }
+  ],
   "criteria": [
     {
       "type": "exists",
@@ -39,6 +42,14 @@
       "a": { "role": "Button", "text": "Order" },
       "b": { "text": "Tom's Flowers" },
       "message": "Customers should read my name first, then see the button."
+    },
+    {
+      "type": "prints",
+      "id": "bell",
+      "description": "Pressing \"Order\" prints \"New order!\"",
+      "after": "order",
+      "text": "New order!",
+      "message": "The sign looks lovely! But a customer pressed Order and my bell stayed quiet…"
     }
   ]
 }

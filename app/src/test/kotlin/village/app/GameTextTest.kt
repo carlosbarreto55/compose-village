@@ -1,7 +1,12 @@
 package village.app
 
+import village.app.ui.ConsoleLine
+import village.app.ui.consoleTranscript
+import village.levels.Action
 import village.levels.CriterionResult
+import village.levels.Customer
 import village.levels.LevelRepository
+import village.levels.Selector
 import village.levels.Verdict
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -45,5 +50,34 @@ class GameTextTest {
             }
         """.trimIndent()
         assertEquals(4, countCodeLines(code))
+    }
+}
+
+class ConsoleTranscriptTest {
+    private val order = Action.Press("order", Selector(role = "Button", text = "Order"))
+
+    private fun lines(console: String, vararg marks: Customer.Mark) = consoleTranscript(console, marks.toList()).map { it.kind to it.text }
+
+    @Test fun customerLineBeforeTheStepsOutput() = assertEquals(
+        listOf(ConsoleLine.Kind.OUTPUT to "composing", ConsoleLine.Kind.CUSTOMER to "customer › pressed [Order]", ConsoleLine.Kind.OUTPUT to "New order!"),
+        lines("composing\nNew order!\n", Customer.Mark(order, 10, 11)),
+    )
+
+    @Test fun nothingPrinted() = assertEquals(
+        listOf(ConsoleLine.Kind.CUSTOMER to "customer › pressed [Order]", ConsoleLine.Kind.NOTHING to "(nothing printed)"),
+        lines("", Customer.Mark(order, 0, 0)),
+    )
+
+    @Test fun thePlayersOwnClicksAfterTheCustomerHaveNoCustomerLine() = assertEquals(
+        listOf(ConsoleLine.Kind.CUSTOMER to "customer › pressed [Order]", ConsoleLine.Kind.NOTHING to "(nothing printed)", ConsoleLine.Kind.OUTPUT to "clicked"),
+        lines("clicked\n", Customer.Mark(order, 0, 0)),
+    )
+
+    @Test fun typedLineAndCaption() {
+        val name = Action.EnterText("name", Selector(text = "Your name"), "Rosa")
+        assertEquals("customer › typed \"Rosa\" into [Your name]", GameText.customerLine(name))
+        assertEquals("A customer typed into Your name", GameText.customerCaption(name))
+        assertEquals("A customer pressed Order", GameText.customerCaption(order))
+        assertEquals("customer › pressed [Button]", GameText.customerLine(Action.Press("go", Selector(role = "Button"))))
     }
 }

@@ -28,6 +28,8 @@ data class SemanticsSnapshot(
 }
 
 data class SnapshotNode(
+    /** The merged semantics node's id: the engine finds the node again by it, e.g. to press it. -1 when built by hand. */
+    val id: Int = -1,
     /** `SemanticsProperties.Text`: several values when the node merged several texts. */
     val texts: List<String> = emptyList(),
     val contentDescriptions: List<String> = emptyList(),

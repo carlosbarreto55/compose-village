@@ -152,8 +152,49 @@ class LevelScenariosTest {
     @Test fun openSignButtonOnTheLeftIsReversed() {
         val openSign = LevelRepository().load("001-open-sign")
         val verdict = assertIs<Verdict.Evaluated>(Attempts.verdict(openSign, screen("""Row { Button(onClick = {}) { Text("Order") }; Text("Tom's Flowers") }""")))
-        assertEquals(listOf("placement"), verdict.results.filterNot { it.passed }.map { it.id })
-        assertEquals("A button \"Order\" is to the left of \"Tom's Flowers\".", verdict.results.single { !it.passed }.detail)
+        assertEquals(listOf("placement", "bell"), verdict.results.filterNot { it.passed }.map { it.id })
+        assertEquals("A button \"Order\" is to the left of \"Tom's Flowers\".", verdict.results.single { it.id == "placement" }.detail)
+    }
+
+    // ---- Open Sign's customer presses Order (customer-bot) ----
+
+    private val openSign by lazy { LevelRepository().load("001-open-sign") }
+    private fun tom(body: String) = assertIs<Verdict.Evaluated>(Attempts.verdict(openSign, screen(body)))
+    private fun bell(verdict: Verdict.Evaluated) = verdict.results.single { it.id == "bell" }
+
+    @Test fun starterHasNoButtonToPress() {
+        val bell = bell(assertIs<Verdict.Evaluated>(Attempts.verdict(openSign, openSign.starterCode)))
+        assertEquals("The customer couldn't find a button \"Order\" to press.", bell.detail)
+    }
+
+    @Test fun emptyOnClickLeavesTheBellQuiet() {
+        val verdict = tom("""Row { Text("Tom's Flowers"); Button(onClick = { }) { Text("Order") } }""")
+        assertEquals(listOf("bell"), verdict.results.filterNot { it.passed }.map { it.id })
+        assertEquals("A customer pressed \"Order\", but nothing was printed.", bell(verdict).detail)
+        assertEquals("The sign looks lovely! But a customer pressed Order and my bell stayed quiet…", bell(verdict).message)
+    }
+
+    @Test fun printingWhileComposingIsNotPressing() {
+        val verdict = tom("""println("New order!"); Row { Text("Tom's Flowers"); Button(onClick = { }) { Text("Order") } }""")
+        assertTrue(!bell(verdict).passed)
+    }
+
+    @Test fun nestedButtonContentIsPressed() {
+        val verdict = tom("""Row { Text("Tom's Flowers"); Button(onClick = { println("New order!") }) { Row { Text("Order") } } }""")
+        assertTrue(verdict.passed, verdict.toString())
+    }
+
+    @Test fun throwingOnClickCrashes() {
+        val verdict = Attempts.verdict(openSign, screen("""Row { Text("Tom's Flowers"); Button(onClick = { error("bell broke") }) { Text("Order") } }"""))
+        assertEquals(Verdict.NotRun(Verdict.NotRun.Reason.CRASHED), verdict)
+    }
+
+    @Test fun visitMarksWhereEachStepsOutputStarts() {
+        val visit = assertNotNull(Attempts.visit(openSign, screen("""println("Hello"); Row { Text("Tom's Flowers"); Button(onClick = { println("New order!") }) { Text("Order") } }""")))
+        assertEquals("Hello\n", visit.attempt.first.printed)
+        val mark = visit.marks.single()
+        assertEquals("order", mark.action.id)
+        assertEquals("Hello\n".length to "New order!\n".length, mark.consoleOffset to mark.length)
     }
 
     @Test fun compileErrorIsNotRun() {

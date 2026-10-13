@@ -9,9 +9,11 @@ import androidx.compose.ui.input.pointer.PointerButton
 import androidx.compose.ui.input.pointer.PointerButtons
 import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsNode
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.semantics.getOrNull
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.Density
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -40,6 +42,18 @@ data class PreviewState(
     val recompositions: Map<String, Int> = emptyMap(),
     /** The first trace info string seen for the player's file (format record for design D9). */
     val traceInfoSample: String? = null,
+)
+
+/** What a customer action on a node did (customer-bot design D4). */
+data class ActionResult(
+    /** False when the node isn't in the current tree, or can't take text for enter text: nothing was done. */
+    val found: Boolean,
+    /** The screen after the action, or null if the attempt crashed (or nothing is loaded). */
+    val snapshot: SemanticsSnapshot?,
+    /** Everything the attempt printed while the action ran. */
+    val printed: String,
+    /** Where [printed] starts in the attempt's console output. */
+    val consoleStart: Int = 0,
 )
 
 /**
@@ -120,6 +134,31 @@ class PreviewEngine(
      * synthetic press and release, exactly like a mouse click. Completes with false if not found.
      */
     fun click(text: String): CompletableFuture<Boolean> = session.call { click(text) }
+
+    /**
+     * Presses the merged semantics node [nodeId], from the latest [snapshot], like a mouse click at
+     * its centre. Completes once the scene has settled, with the screen after it and what it printed.
+     */
+    fun press(nodeId: Int): CompletableFuture<ActionResult> = act { pressNode(nodeId) }
+
+    /**
+     * Replaces the text of node [nodeId] through its set-text semantics action, as typing does, so the
+     * player's `onValueChange` runs. Not found when the node has no such action.
+     */
+    fun enterText(nodeId: Int, text: String): CompletableFuture<ActionResult> = act { setText(nodeId, text) }
+
+    /**
+     * Runs [perform] on the player thread, then lets the tasks it posted run (click handlers resume as
+     * coroutines on the player thread) before rendering and reading the result.
+     */
+    private fun act(perform: Session.() -> Boolean): CompletableFuture<ActionResult> {
+        val s = session
+        return s.call { Console.text().length to perform() }
+            .thenCompose { (consoleStart, found) -> settle(s, SETTLE_ROUNDS).thenCompose { s.call { actionResult(consoleStart, found) } } }
+    }
+
+    private fun settle(s: Session, rounds: Int): CompletableFuture<Unit> =
+        if (rounds == 0) CompletableFuture.completedFuture(Unit) else s.call { }.thenCompose { settle(s, rounds - 1) }
 
     /** Renders now if the scene has pending changes (e.g. after input), then completes with the state. */
     fun renderNow(): CompletableFuture<PreviewState> = session.call { renderPending(); _state.value }
@@ -251,16 +290,49 @@ class PreviewEngine(
         }
 
         fun click(text: String): Boolean {
-            val s = scene ?: return false
-            val node = s.semanticsOwners.asSequence()
-                .flatMap { owner -> descendants(owner.rootSemanticsNode) }
-                .firstOrNull { node -> node.config.getOrNull(SemanticsProperties.Text)?.any { text in it.text } == true }
+            val node = mergedNodes().firstOrNull { node -> node.config.getOrNull(SemanticsProperties.Text)?.any { text in it.text } == true }
                 ?: return false
-            val center = node.boundsInRoot.center
+            pressAt(node.boundsInRoot.center)
+            return true
+        }
+
+        private fun pressAt(center: Offset) {
             pointer(PointerEventType.Move, center, Offset.Zero)
             pointer(PointerEventType.Press, center, Offset.Zero)
             pointer(PointerEventType.Release, center, Offset.Zero)
+        }
+
+        private fun mergedNodes(): Sequence<SemanticsNode> =
+            scene?.semanticsOwners?.asSequence()?.flatMap { owner -> descendants(owner.rootSemanticsNode) }.orEmpty()
+
+        private fun node(id: Int) = mergedNodes().firstOrNull { it.id == id }
+
+        fun pressNode(id: Int): Boolean {
+            val node = node(id) ?: return false
+            pressAt(node.boundsInRoot.center)
             return true
+        }
+
+        fun setText(id: Int, text: String): Boolean {
+            val setText = node(id)?.config?.getOrNull(SemanticsActions.SetText)?.action ?: return false
+            try {
+                setText(AnnotatedString(text))
+            } catch (t: Throwable) {
+                crash(t)
+            }
+            return true
+        }
+
+        /** After an action: renders what it changed, then the screen and what was printed since [consoleStart]. */
+        fun actionResult(consoleStart: Int, found: Boolean): ActionResult {
+            try {
+                renderPending()
+            } catch (t: Throwable) {
+                crash(t)
+            }
+            val console = Console.text()
+            val start = consoleStart.coerceAtMost(console.length)
+            return ActionResult(found, snapshot(), console.substring(start), start)
         }
 
         fun snapshot(): SemanticsSnapshot? {
@@ -277,7 +349,10 @@ class PreviewEngine(
             val config = node.config
             val b = node.boundsInRoot
             return SnapshotNode(
-                texts = config.getOrNull(SemanticsProperties.Text)?.map { it.text }.orEmpty(),
+                id = node.id,
+                // A text field's content is its editable text; the player sees it like any other text.
+                texts = config.getOrNull(SemanticsProperties.Text)?.map { it.text }.orEmpty() +
+                    listOfNotNull(config.getOrNull(SemanticsProperties.EditableText)?.text?.takeIf { it.isNotEmpty() }),
                 contentDescriptions = config.getOrNull(SemanticsProperties.ContentDescription)?.toList().orEmpty(),
                 role = config.getOrNull(SemanticsProperties.Role)?.let(::roleName),
                 bounds = DpBounds(b.left / density, b.top / density, b.right / density, b.bottom / density),
@@ -355,5 +430,10 @@ class PreviewEngine(
             ),
             console = Console.text(),
         )
+    }
+
+    private companion object {
+        /** Round trips through the player thread after an action, so the continuations it posted run first. */
+        const val SETTLE_ROUNDS = 4
     }
 }

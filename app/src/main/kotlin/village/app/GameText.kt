@@ -1,6 +1,8 @@
 package village.app
 
+import village.levels.Action
 import village.levels.Level
+import village.levels.Selector
 import village.levels.Verdict
 
 /** What a villager says after a Run, and whether it's a happy line (the bubble's outline turns green). */
@@ -25,6 +27,22 @@ object GameText {
     const val START_OVER = "Start over"
     const val STREET = "Main Street"
     const val CONSOLE_EMPTY = "Anything your code prints shows up here after Run."
+
+    // The customer (customer-bot design D6).
+    const val CONSOLE_EMPTY_CUSTOMER = "A customer will press your buttons here after Run."
+    const val NOTHING_PRINTED = "(nothing printed)"
+    /** `customer › pressed [Order]`, `customer › typed "Rosa" into [Your name]`. */
+    fun customerLine(action: Action) = when (action) {
+        is Action.Press -> "customer › pressed [${action.node.name()}]"
+        is Action.EnterText -> "customer › typed \"${action.text}\" into [${action.node.name()}]"
+    }
+    /** The preview's caption after the customer's last step: "A customer pressed Order". */
+    fun customerCaption(action: Action) = when (action) {
+        is Action.Press -> "A customer pressed ${action.node.name()}"
+        is Action.EnterText -> "A customer typed into ${action.node.name()}"
+    }
+    /** A step's target as the Console names it: its text, or its role when it has none. */
+    private fun Selector.name() = text?.trim() ?: role ?: contentDescription?.trim() ?: "something"
 
     // The home screen (home-screen spec).
     const val HOME_TAGLINE = "A cozy game for learning Jetpack Compose"
