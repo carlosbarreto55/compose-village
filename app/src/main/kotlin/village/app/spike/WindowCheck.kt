@@ -19,6 +19,7 @@ import village.app.ProgressStore
 import village.app.Samples
 import village.app.Screen
 import village.app.SpikeController
+import village.app.reactionFor
 import village.app.ui.offsetOf
 import village.app.ui.villagers.BIG_DIALOGUE_TAG
 import village.app.ui.theme.VillageTheme
@@ -257,7 +258,7 @@ internal fun window(report: Report) = report.section("Spike window", Criterion.R
         clickText("Main Street")
         check("home: after the first level, its shop is lit and the street welcomes the player back",
             onScreen("Welcome back") && onScreen("1 of 2 shops open") && onScreen("Rosa's Bakery is open. Tom is still waiting for a sign.") &&
-                onScreen("Up next") && onScreen("Continue: Open Sign") && onScreen("0 of 3 wishes") && onScreen("Starter code is ready") &&
+                onScreen("Up next") && onScreen("Continue: Open Sign") && onScreen("0 of 4 wishes") && onScreen("Starter code is ready") &&
                 onScreen("Open shops") && onScreen("3 tries") && onScreen("Visit")) { texts().joinToString(" | ") }
         shot("8a-home-welcome-back")
         clickText("Rosa's Bakery")
@@ -305,6 +306,27 @@ internal fun window(report: Report) = report.section("Spike window", Criterion.R
         check("home: Continue brings the edited code back", controller.screen == Screen.PLAY && controller.code.text == tomEdit) { controller.code.text }
 
         val openSign = openSign()
+        // The customer presses Order (customer-bot): with an empty onClick, Tom's bell stays quiet.
+        runCode(openSign.starterCode.replace("Text(\"Tom's Flowers\")", "Text(\"Tom's Flowers\")\n        Button(onClick = { }) { Text(\"Order\") }"))
+        settle { onScreen("(nothing printed)") }
+        val bell = (controller.verdict as? Verdict.Evaluated)?.results?.singleOrNull { it.id == "bell" }
+        check("customer: an empty onClick fails only the bell, with the customer in the Console and on the preview",
+            bell?.passed == false && bell.detail == "A customer pressed \"Order\", but nothing was printed." &&
+                (controller.verdict as Verdict.Evaluated).results.count { it.passed } == 3 &&
+                onScreen("customer › pressed [Order]") && onScreen("(nothing printed)") && onScreen("A customer pressed Order") &&
+                reactionFor(openSign, controller.verdict)?.text == "The sign looks lovely! But a customer pressed Order and my bell stayed quiet…") {
+            "$bell / ${texts().joinToString(" | ")}"
+        }
+        shot("9c-silent-bell")
+        // The player presses their own screen in the preview (where the button is drawn).
+        val yourScreen = nodes().first { n -> n.config.getOrNull(SemanticsProperties.ContentDescription)?.contains("Your screen") == true }.boundsInRoot.center
+        scene.sendPointerEvent(PointerEventType.Press, yourScreen, buttons = PointerButtons(isPrimaryPressed = true), button = PointerButton.Primary)
+        scene.sendPointerEvent(PointerEventType.Release, yourScreen, buttons = PointerButtons(), button = PointerButton.Primary)
+        settle { controller.customerCaption == null }
+        check("customer: clicking the preview hands it back to the player", controller.customerCaption == null && !onScreen("A customer pressed Order")) {
+            texts().joinToString(" | ")
+        }
+
         runCode(openSign.starterCode.replace("Text(\"Tom's Flowers\")", "Text(\"Tom's Flowers\")\n        Button(onClick = { println(\"New order!\") }) { Text(\"Order\") }"))
         check("celebration: Tom celebrates his first completion", controller.bigDialogue?.kind == BigDialogue.Kind.CELEBRATION &&
             onScreen(openSign.celebration[0])) { texts().joinToString(" | ") }
@@ -312,6 +334,7 @@ internal fun window(report: Report) = report.section("Spike window", Criterion.R
         check("level: solving the last level says more is coming instead of Continue",
             onScreen("Tom's Flowers is open!") && onScreen("More of Main Street is coming soon.") && !onScreen("Next:") &&
                 onScreen("2 of 2 shops open")) { texts().joinToString(" | ") }
+        check("customer: the bell rings in the Console", onScreen("customer › pressed [Order]\nNew order!")) { texts().joinToString(" | ") }
         shot("10-open-sign-complete")
         clickText("Keep tinkering")
         settle { true }

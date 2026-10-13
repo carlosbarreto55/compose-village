@@ -73,6 +73,7 @@ internal object Protocol {
     }
 
     private fun DataOutputStream.writeNode(n: SnapshotNode) {
+        writeInt(n.id)
         writeInt(n.texts.size); n.texts.forEach { writeText(it) }
         writeInt(n.contentDescriptions.size); n.contentDescriptions.forEach { writeText(it) }
         writeBoolean(n.role != null); n.role?.let { writeText(it) }
@@ -84,6 +85,7 @@ internal object Protocol {
     fun DataInputStream.readSnapshot() = SemanticsSnapshot(Viewport(readFloat(), readFloat()), List(readInt()) { readNode() })
 
     private fun DataInputStream.readNode(): SnapshotNode = SnapshotNode(
+        id = readInt(),
         texts = List(readInt()) { readText() },
         contentDescriptions = List(readInt()) { readText() },
         role = if (readBoolean()) readText() else null,

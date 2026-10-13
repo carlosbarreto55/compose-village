@@ -15,6 +15,7 @@ import kotlinx.coroutines.withContext
 import village.compiler.Diagnostic
 import village.compiler.PlayerPipeline
 import village.compiler.Timings
+import village.levels.Customer
 import village.levels.Evaluator
 import village.levels.Level
 import village.levels.LevelRepository
@@ -40,8 +41,14 @@ class SpikeController(private val scope: CoroutineScope, density: Float, private
 
     val engine = PreviewEngine(width = (PREVIEW_WIDTH_DP * density).roundToInt(), height = (PREVIEW_HEIGHT_DP * density).roundToInt(), density = density)
 
-    /** The editor's content. */
-    var code by mutableStateOf(TextFieldValue(Samples.BAKERY))
+    /** The editor's content. Editing it clears the customer's caption on the preview. */
+    var code: TextFieldValue
+        get() = codeState
+        set(value) {
+            if (value.text != codeState.text) customerCaption = null
+            codeState = value
+        }
+    private var codeState by mutableStateOf(TextFieldValue(Samples.BAKERY))
 
     var warmingUp by mutableStateOf(true)
         private set
@@ -84,6 +91,22 @@ class SpikeController(private val scope: CoroutineScope, density: Float, private
     /** The latest Run's verdict for the open level. */
     var verdict by mutableStateOf<Verdict?>(null)
         private set
+
+    /** Where each of the latest Run's customer steps printed in the console, for the Console's customer lines. */
+    var customerMarks by mutableStateOf(emptyList<Customer.Mark>())
+        private set
+
+    /**
+     * "A customer pressed Order" on the preview after a Run whose customer acted, until the player clicks
+     * the preview, edits the code or runs again (customer-bot D6).
+     */
+    var customerCaption by mutableStateOf<String?>(null)
+        private set
+
+    /** The player pressed on their own screen in the preview: it's theirs again. */
+    fun notePreviewInput() {
+        customerCaption = null
+    }
 
     /** Whether the latest verdict passed every criterion. */
     val complete: Boolean get() = (verdict as? Verdict.Evaluated)?.passed == true
@@ -215,6 +238,8 @@ class SpikeController(private val scope: CoroutineScope, density: Float, private
 
     /** Forgets this visit's Runs: verdict, build status, preview, and the sketch overlay back on. */
     private fun resetVisit() {
+        customerMarks = emptyList()
+        customerCaption = null
         diagnostics = emptyList()
         timings = null
         lastRunCompiled = null
@@ -294,6 +319,8 @@ class SpikeController(private val scope: CoroutineScope, density: Float, private
             revisiting = false
         }
         dismissedCompletion = false
+        customerMarks = emptyList()
+        customerCaption = null
         scope.launch {
             try {
                 val result = withContext(compileDispatcher) { pipeline().run(source, level?.entryFunction ?: "PlayerScreen") }
@@ -306,8 +333,11 @@ class SpikeController(private val scope: CoroutineScope, density: Float, private
                     overlayTurnsOffOnFirstFrame = false
                 }
                 if (level != null) {
-                    val snapshot = if (result.entry != null) engine.snapshot().await() else null
-                    verdict = Evaluator.verdict(level, compiled = result.entry != null, snapshot)
+                    // The customer acts after the first frame, before judging (customer-bot D4). It blocks, so not on the UI thread.
+                    val visit = if (result.entry != null) withContext(compileDispatcher) { Customer.visit(engine, level.actions) } else null
+                    verdict = Evaluator.verdict(level, compiled = result.entry != null, visit?.attempt)
+                    customerMarks = visit?.marks.orEmpty()
+                    customerCaption = visit?.marks?.lastOrNull()?.let { GameText.customerCaption(it.action) }
                     if (!replay) {
                         runsThisVisit++
                         val met = (verdict as? Verdict.Evaluated)?.results?.count { it.passed } ?: 0

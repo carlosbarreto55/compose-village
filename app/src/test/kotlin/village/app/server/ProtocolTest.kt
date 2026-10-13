@@ -22,7 +22,7 @@ class ProtocolTest {
                 SnapshotNode(
                     bounds = DpBounds(0f, 0f, 400f, 300f),
                     children = listOf(
-                        SnapshotNode(texts = listOf("Rosa's Bakery"), bounds = DpBounds(16f, 16f, 180.5f, 52f)),
+                        SnapshotNode(id = 7, texts = listOf("Rosa's Bakery"), bounds = DpBounds(16f, 16f, 180.5f, 52f)),
                         SnapshotNode(texts = listOf("Order", "now"), role = "Button", bounds = DpBounds(16f, 60f, 120f, 100f),
                             children = listOf(SnapshotNode(contentDescriptions = listOf("bread ✓"), role = "Image", bounds = DpBounds(20f, 64f, 44f, 88f)))),
                     ),
