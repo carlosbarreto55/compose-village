@@ -2,11 +2,19 @@
 
 A cozy desktop game for learning Jetpack Compose. The villagers of Main Street each ask for a sign for their shop. You write real Kotlin + Compose code. The game compiles it inside the app, shows your screen in a preview, and checks it against the villager's wishes. Finish a level and their shop lights up on the street.
 
-![A level before the first Run: Rosa's request, the code editor, her sketch faded in the preview, and her checklist](docs/screenshots/level-before-run.png)
+![Main Street on first launch: the welcome, one building per shop with Rosa's marked Start here, the Sandbox at the end of the street, and Rosa's first request](docs/screenshots/home-first-launch.png)
+
+## Main Street
+
+The game opens on Main Street. Each building is a level; the Sandbox is at the end of the street. When you come back, the street shows the shops you've opened and who is still waiting, and **Continue** picks up where you left off. "Main Street" in a level's header takes you back.
+
+![Welcome back: Rosa's Bakery is lit, Tom's Flowers is up next with Continue, and Open shops lists Rosa's stats](docs/screenshots/home-welcome-back.png)
 
 ## How a level plays
 
 Every level is a villager with a request, starter code and a checklist.
+
+![A level before the first Run: Rosa's request, the code editor, her sketch faded in the preview, and her checklist](docs/screenshots/level-before-run.png)
 
 | | |
 |---|---|
@@ -14,6 +22,8 @@ Every level is a villager with a request, starter code and a checklist.
 | **Run** (⌘↵) compiles your code. Each wish on the checklist is then ticked or explained, and the villager reacts. | When every wish comes true, the sign glows, the shop opens and the next villager is waiting. |
 | ![Open Sign: Tom's request introduces Row, Button and onClick, and unlocks the Console with a short explanation](docs/screenshots/panel-unlock.png) | ![Coming back to a finished level: your code, your sign, and a welcome back card with Play again](docs/screenshots/welcome-back.png) |
 | New tools, like the Console, unlock when a level first needs them. | Progress is saved. A finished level reopens with your code and your sign, and you can play it again. |
+| ![Tom introduces himself in a dialogue box beside his talking bust, with Skip intro and 1 of 4](docs/screenshots/villager-intro.png) | ![Rosa celebrates her finished sign: a delighted bust with sparkles beside a glowing dialogue box](docs/screenshots/villager-celebration.png) |
+| Villagers talk. The first time a level opens, its villager introduces themselves and their wish; **Talk to** replays it. | When their shop first opens, they celebrate before the completion card appears. |
 
 The **Sandbox**, at the end of the street, is a free editor with every panel. Compile errors, sandbox violations and runtime crashes point at the line that caused them:
 
