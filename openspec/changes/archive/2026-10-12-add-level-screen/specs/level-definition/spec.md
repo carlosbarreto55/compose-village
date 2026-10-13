@@ -70,7 +70,7 @@ The game SHALL ship two levels, in this order:
 - `000-hello-main-street`: Rosa the baker asks for a sign with "Rosa's Bakery" on top and "Fresh bread daily" below it. It has two criteria, "Rosa's Bakery" is on screen and "Fresh bread daily" appears below "Rosa's Bakery", and lists no panels.
 - `001-open-sign`: Tom the florist asks for "Tom's Flowers" with an "Order" button to its right, and to print a line when the button is pressed. Its criteria check the text, the button (by role and text) and that the button is to the right of the text. It lists the `console` panel.
 
-#### Scenario: Solving the first level
+#### Scenario: Solving the test level
 - **WHEN** the player writes a `PlayerScreen` that shows `Text("Rosa's Bakery")` above `Text("Fresh bread daily")` in a `Column`
 - **THEN** the verdict passes both criteria
 
