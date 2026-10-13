@@ -1,5 +1,10 @@
 package village.app.ui
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.ExitTransition
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.core.Transition
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.tween
@@ -39,10 +44,18 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import village.app.SpikeController
 import village.app.countCodeLines
+import village.app.expressionFor
 import village.app.reactionFor
 import village.app.ui.theme.Village
 import village.app.ui.theme.VillageShapes
 import village.levels.Panel
+import village.app.ui.villagers.BigDialogueOverlay
+import village.app.ui.theme.LocalReducedMotion
+import village.app.BigDialogue
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.foundation.layout.Box
 
 /** Below this content width the right column moves under the left one (design D5). */
 val TWO_COLUMNS_MIN_WIDTH = 1180.dp
@@ -59,52 +72,79 @@ fun SpikeScreen(controller: SpikeController) {
     }
 
     // One transition drives the level-complete moment: the sign's glow and the completion card (design D11).
-    val completion = updateTransition(controller.complete, "complete")
+    // A first completion's celebration plays first; the moment starts when it closes (talking-villagers D3).
+    val celebrating = controller.bigDialogue?.kind == BigDialogue.Kind.CELEBRATION
+    val completion = updateTransition(controller.complete && !celebrating, "complete")
 
-    Column(
-        Modifier.fillMaxSize()
-            .background(Village.colors.ground)
-            .onPreviewKeyEvent { e ->
-                if (e.type == KeyEventType.KeyDown) controller.noteInteraction()
-                val runShortcut = e.type == KeyEventType.KeyDown && e.key == Key.Enter && (e.isMetaPressed || e.isCtrlPressed)
-                if (runShortcut) controller.run()
-                runShortcut
-            }
-            .pointerInput(controller) {
-                awaitPointerEventScope {
-                    while (true) {
-                        if (awaitPointerEvent(PointerEventPass.Initial).type == PointerEventType.Press) controller.noteInteraction()
-                    }
+    Box(Modifier.fillMaxSize()) {
+        Column(
+            Modifier.fillMaxSize()
+                .background(Village.colors.ground)
+                .onPreviewKeyEvent { e ->
+                    if (e.type == KeyEventType.KeyDown) controller.noteInteraction()
+                    val runShortcut = e.type == KeyEventType.KeyDown && e.key == Key.Enter && (e.isMetaPressed || e.isCtrlPressed)
+                    if (runShortcut) controller.run()
+                    runShortcut
                 }
-            },
-    ) {
-        Header(controller)
-        BoxWithConstraints(Modifier.weight(1f).fillMaxWidth()) {
-            val padding = Modifier.padding(horizontal = VillageShapes.pagePaddingH, vertical = VillageShapes.pagePaddingV)
-            val rightWidth = maxOf(460.dp, previewCardWidth(controller.level?.viewport?.widthDp ?: SpikeController.PREVIEW_WIDTH_DP.toFloat()))
-            if (maxWidth >= TWO_COLUMNS_MIN_WIDTH) {
-                Row(padding.fillMaxSize(), horizontalArrangement = Arrangement.spacedBy(VillageShapes.columnGap)) {
-                    Column(Modifier.weight(1f).fillMaxHeight(), verticalArrangement = Arrangement.spacedBy(VillageShapes.cardGap)) {
-                        LeftColumn(controller, editorFocus, ::moveCaret, editorHeight = null)
+                .pointerInput(controller) {
+                    awaitPointerEventScope {
+                        while (true) {
+                            if (awaitPointerEvent(PointerEventPass.Initial).type == PointerEventType.Press) controller.noteInteraction()
+                        }
                     }
+                },
+        ) {
+            Header(controller)
+            BoxWithConstraints(Modifier.weight(1f).fillMaxWidth()) {
+                val padding = Modifier.padding(horizontal = VillageShapes.pagePaddingH, vertical = VillageShapes.pagePaddingV)
+                val rightWidth = maxOf(460.dp, previewCardWidth(controller.level?.viewport?.widthDp ?: SpikeController.PREVIEW_WIDTH_DP.toFloat()))
+                if (maxWidth >= TWO_COLUMNS_MIN_WIDTH) {
+                    Row(padding.fillMaxSize(), horizontalArrangement = Arrangement.spacedBy(VillageShapes.columnGap)) {
+                        Column(Modifier.weight(1f).fillMaxHeight(), verticalArrangement = Arrangement.spacedBy(VillageShapes.cardGap)) {
+                            LeftColumn(controller, editorFocus, ::moveCaret, editorHeight = null)
+                        }
+                        Column(
+                            Modifier.width(rightWidth).fillMaxHeight().verticalScroll(rememberScrollState()),
+                            verticalArrangement = Arrangement.spacedBy(VillageShapes.cardGap),
+                        ) {
+                            RightColumn(controller, completion, ::moveCaret)
+                        }
+                    }
+                } else {
                     Column(
-                        Modifier.width(rightWidth).fillMaxHeight().verticalScroll(rememberScrollState()),
+                        Modifier.fillMaxSize().verticalScroll(rememberScrollState()).then(padding),
                         verticalArrangement = Arrangement.spacedBy(VillageShapes.cardGap),
                     ) {
+                        LeftColumn(controller, editorFocus, ::moveCaret, editorHeight = 460.dp)
                         RightColumn(controller, completion, ::moveCaret)
                     }
                 }
-            } else {
-                Column(
-                    Modifier.fillMaxSize().verticalScroll(rememberScrollState()).then(padding),
-                    verticalArrangement = Arrangement.spacedBy(VillageShapes.cardGap),
-                ) {
-                    LeftColumn(controller, editorFocus, ::moveCaret, editorHeight = 460.dp)
-                    RightColumn(controller, completion, ::moveCaret)
-                }
             }
+            StreetFooter(controller)
         }
-        StreetFooter(controller)
+        DialogueLayer(controller, onClosed = { runCatching { editorFocus.requestFocus() } })
+    }
+}
+
+/** The big dialogue over the whole screen: the scrim fades while the bust and box slide up 24 dp (spec: Big dialogue). */
+@Composable
+private fun DialogueLayer(controller: SpikeController, onClosed: () -> Unit) {
+    val reduced = LocalReducedMotion.current
+    val level = controller.level
+    val dialogue = controller.bigDialogue
+    // Keep the last dialogue while it fades out.
+    var shown by remember { mutableStateOf(dialogue) }
+    if (dialogue != null) shown = dialogue
+    val slide = with(LocalDensity.current) { 24.dp.roundToPx() }
+    AnimatedVisibility(dialogue != null && level != null, enter = fadeIn(tween(300)), exit = fadeOut(tween(200))) {
+        val last = shown ?: return@AnimatedVisibility
+        val content = if (reduced) Modifier else Modifier.animateEnterExit(enter = slideInVertically(tween(300)) { slide }, exit = ExitTransition.None)
+        if (level != null) {
+            BigDialogueOverlay(
+                level.villager, last, level.shop, contentModifier = content,
+                onClose = { controller.closeDialogue(); onClosed() },
+            )
+        }
     }
 }
 
@@ -112,7 +152,12 @@ fun SpikeScreen(controller: SpikeController) {
 @Composable
 private fun ColumnScope.LeftColumn(controller: SpikeController, editorFocus: FocusRequester, moveCaret: (Int, Int) -> Unit, editorHeight: Dp?) {
     val level = controller.level
-    level?.let { VillagerCard(it, reactionFor(it, controller.verdict)) }
+    level?.let {
+        VillagerCard(
+            it, reactionFor(it, controller.verdict), expressionFor(controller.verdict), controller.runCount,
+            onTalk = if (controller.running) null else controller::talk,
+        )
+    }
     EditorCard(
         fileName = "${level?.entryFunction ?: "PlayerScreen"}.kt",
         value = controller.code, onValueChange = { controller.code = it },

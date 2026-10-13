@@ -24,7 +24,7 @@ class LevelRepositoryTest {
     private val exists = """{ "type": "exists", "id": "title", "description": "The text \"Rosa's Bakery\" is on screen", "node": { "text": "Rosa's Bakery" } }"""
 
     private fun minimal(id: String = "sign", criteria: String = exists, extra: String = "") =
-        """{ "formatVersion": 1, "id": "$id", "title": "Sign", "villager": { "name": "Rosa", "profession": "baker" }, "shop": "Rosa's Bakery", "request": "Make me a sign." $extra, "criteria": [ $criteria ] }"""
+        """{ "formatVersion": 1, "id": "$id", "title": "Sign", "villager": { "id": "rosa", "name": "Rosa", "profession": "baker" }, "shop": "Rosa's Bakery", "request": "Make me a sign." $extra, "criteria": [ $criteria ] }"""
 
     @Test fun minimalLevelGetsDefaults() {
         val level = level("sign", minimal())
@@ -34,7 +34,9 @@ class LevelRepositoryTest {
         assertEquals(Viewport(360f, 640f), level.viewport)
         assertEquals(emptyList(), level.panels)
         assertEquals("Sign", level.title)
-        assertEquals(Villager("Rosa", Profession.BAKER), level.villager)
+        assertEquals(Villager("rosa", "Rosa", Profession.BAKER), level.villager)
+        assertEquals(emptyList(), level.intro)
+        assertEquals(emptyList(), level.celebration)
         assertEquals("Rosa's Bakery", level.shop)
         assertEquals(emptyList(), level.concepts)
         assertNull(level.thanks)
@@ -126,10 +128,37 @@ class LevelRepositoryTest {
     }
 
     @Test fun oldResidentFieldIsRejected() {
-        val old = minimal().replace(""""villager": { "name": "Rosa", "profession": "baker" }""", """"resident": "Rosa, the baker"""")
+        val old = minimal().replace(""""villager": { "id": "rosa", "name": "Rosa", "profession": "baker" }""", """"resident": "Rosa, the baker"""")
         val message = problems("sign", old)
         assertContains(message, "resident")
         assertContains(message, "villager")
+    }
+
+    @Test fun villagerWithoutId() =
+        assertContains(problems("sign", minimal().replace(""""id": "rosa", """, "")), "villager.id is missing")
+
+    @Test fun badVillagerId() = assertContains(problems("sign", minimal().replace(""""id": "rosa"""", """"id": "Rosa 1"""")), "villager.id 'Rosa 1' must be lowercase")
+
+    @Test fun introAndCelebrationLines() {
+        val level = level("sign", minimal(extra = """, "intro": [" Hello! ", "A sign, please."], "celebration": ["Wow!"] """))
+        assertEquals(listOf("Hello!", "A sign, please."), level.intro)
+        assertEquals(listOf("Wow!"), level.celebration)
+    }
+
+    @Test fun tooManyIntroLines() {
+        val lines = (1..5).joinToString { "\"Line $it\"" }
+        assertContains(problems("sign", minimal(extra = """, "intro": [$lines]""")), "intro has 5 lines; at most 4 are allowed")
+    }
+
+    @Test fun tooLongIntroLine() {
+        val long = "a".repeat(141)
+        assertContains(problems("sign", minimal(extra = """, "intro": ["Hi", "$long"]""")), "intro line 2 is 141 characters; a line can have at most 140")
+    }
+
+    @Test fun blankCelebrationLineAndLongThanks() {
+        val message = problems("sign", minimal(extra = """, "celebration": [" "], "thanks": "${"b".repeat(141)}" """))
+        assertContains(message, "celebration line 1 must not be blank")
+        assertContains(message, "thanks is 141 characters")
     }
 
     @Test fun repeatedPanel() = assertContains(problems("sign", minimal(extra = """, "panels": ["console", "console"]""")), "panel 'console' is listed more than once")

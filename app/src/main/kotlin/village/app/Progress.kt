@@ -17,6 +17,10 @@ data class LevelProgress(
     val lines: Int? = null,
     /** The player's latest code, or null when it is the starter code. */
     val draft: String? = null,
+    /** Requirements the player's latest Run met: the home screen's "N of M wishes" (home-screen D5). */
+    val met: Int = 0,
+    /** Whether the player has closed the level's intro; it then only plays on request (talking-villagers D9). */
+    val introSeen: Boolean = false,
 )
 
 /** The player's progress per level id, as saved in `progress.json` (village-progress D1, D3). */
@@ -30,14 +34,23 @@ data class Progress(val version: Int = VERSION, val levels: Map<String, LevelPro
     /** Records [code] as [id]'s draft; code equal to the [starter] is no draft at all. */
     fun withDraft(id: String, code: String, starter: String): Progress = update(id) { it.copy(draft = code.takeIf { c -> c != starter }) }
 
-    /** Records a Run of [id]: one more try until the first completion, which also saves [lines]. */
-    fun afterRun(id: String, passed: Boolean, lines: Int): Progress = update(id) {
+    /**
+     * Records a Run of [id] that met [met] requirements: one more try until the first completion, which
+     * also saves [lines]. [met] is recorded after completion too, so it always describes the latest Run.
+     */
+    fun afterRun(id: String, passed: Boolean, lines: Int, met: Int): Progress = update(id) {
         when {
             it.completed -> it
             passed -> it.copy(completed = true, tries = it.tries + 1, lines = lines)
             else -> it.copy(tries = it.tries + 1)
-        }
+        }.copy(met = met)
     }
+
+    /** The player closed [id]'s intro, by skipping it or reaching its end. */
+    fun withIntroSeen(id: String): Progress = update(id) { it.copy(introSeen = true) }
+
+    /** "Start over" and "Play again": the starter code has met nothing yet; completion, tries and the intro stay. */
+    fun withStartOver(id: String): Progress = update(id) { it.copy(met = 0) }
 
     private fun update(id: String, change: (LevelProgress) -> LevelProgress): Progress {
         val updated = change(get(id))

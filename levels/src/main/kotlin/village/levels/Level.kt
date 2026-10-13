@@ -20,6 +20,10 @@ class Level(
     val concepts: List<String> = emptyList(),
     /** The villager's line when the level is complete, or null for the game's own thank-you. */
     val thanks: String? = null,
+    /** What the villager says when the level first opens (1–4 lines), or none for no intro. */
+    val intro: List<String> = emptyList(),
+    /** What the villager says on the level's first completion, before [thanks] (up to 3 lines). */
+    val celebration: List<String> = emptyList(),
     /** The composable the player must write. */
     val entryFunction: String,
     /** The code the editor starts with. */
@@ -34,8 +38,8 @@ class Level(
     override fun toString() = "Level($id)"
 }
 
-/** Who asks for a level: [name] (e.g. "Tom") and their [profession], which picks their badge. */
-data class Villager(val name: String, val profession: Profession)
+/** Who asks for a level: [id] (e.g. "tom") picks their bust, [name] is shown, and [profession] picks their badge. */
+data class Villager(val id: String, val name: String, val profession: Profession)
 
 /** Villager professions; each has a glyph and badge tint in the game. [label] is player-facing. */
 enum class Profession(val jsonName: String, val label: String) {

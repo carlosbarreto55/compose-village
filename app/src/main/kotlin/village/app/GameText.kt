@@ -25,6 +25,46 @@ object GameText {
     const val START_OVER = "Start over"
     const val STREET = "Main Street"
     const val CONSOLE_EMPTY = "Anything your code prints shows up here after Run."
+
+    // The home screen (home-screen spec).
+    const val HOME_TAGLINE = "A cozy game for learning Jetpack Compose"
+    const val WELCOME = "Welcome to Compose Village"
+    const val WELCOME_INTRO = "The shops on Main Street need signs. Write real Kotlin and Compose code to build each one, and watch the street light up."
+    const val WELCOME_BACK = "Welcome back"
+    const val EVERY_SHOP_OPEN = "Every shop on Main Street is open."
+    fun stillWaiting(name: String) = "$name is still waiting for a sign."
+    fun openAndWaiting(shop: String, name: String) = "$shop is open. ${stillWaiting(name)}"
+    fun shopsOpen(open: Int, total: Int) = "$open of $total shops open"
+    const val STATUS_OPEN = "Open"
+    const val STATUS_START_HERE = "Start here"
+    const val STATUS_UP_NEXT = "Up next"
+    const val STATUS_NOT_YET = "Not open yet"
+    const val STATUS_COMING_SOON = "Coming soon"
+    const val SANDBOX = "The Sandbox"
+    const val SANDBOX_PLACE = "End of the street"
+    const val SANDBOX_STATUS = "Free play"
+    const val SANDBOX_BLURB = "A free editor with every panel. Nothing to pass, just try things."
+    const val FIRST_VILLAGER = "Your first villager"
+    const val STARTER_READY_FIRST = "Starter code is ready for you. No setup needed."
+    const val PICK_UP = "Pick up where you left off"
+    const val CODE_SAVED = "Your code is saved"
+    const val STARTER_READY = "Starter code is ready"
+    fun wishes(met: Int, total: Int) = "$met of $total wishes"
+    const val OR_PICK_ANY = "Or pick any shop on the street."
+    const val ALL_OPEN_TITLE = "Every shop is open"
+    const val ALL_OPEN_BODY = "You built every sign on Main Street. More shops are coming soon."
+    const val OPEN_SHOPS = "Open shops"
+    fun shopStats(lines: Int?, tries: Int) = listOfNotNull(lines?.let { "$it ${if (it == 1) "line" else "lines"}" }, "$tries ${if (tries == 1) "try" else "tries"}").joinToString(" · ")
+    const val VISIT = "Visit"
+    const val OPEN = "Open"
+    const val HOW_A_LEVEL_WORKS = "How a level works"
+    val HOW_STEPS = listOf(
+        "Read the wish" to "Each villager asks for a sign and brings a checklist of what it needs.",
+        "Write the code" to "Real Kotlin and Compose, starting from code that already compiles.",
+        "Run it" to "When every wish comes true, the shop opens and its sign lights up.",
+    )
+    const val JUST_EXPERIMENT = "Just want to experiment?"
+    const val OPEN_THE_SANDBOX = "Open the Sandbox"
 }
 
 /** The villager's reaction bubble for the latest [verdict], or null before the first Run (design D7). */

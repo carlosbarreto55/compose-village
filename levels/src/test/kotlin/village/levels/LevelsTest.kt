@@ -38,6 +38,16 @@ class LevelsTest {
         if (problems.isNotEmpty()) fail(problems.joinToString("\n"))
     }
 
+    @Test fun bundledVillagersTalk() {
+        val hello = repository.load("000-hello-main-street")
+        val openSign = repository.load("001-open-sign")
+        assertEquals("rosa" to 3, hello.villager.id to hello.intro.size)
+        assertEquals("tom" to 4, openSign.villager.id to openSign.intro.size)
+        assertTrue(openSign.intro.first().startsWith("Oh, hi! You must be the new sign maker."))
+        assertEquals(1, hello.celebration.size)
+        assertEquals(1, openSign.celebration.size)
+    }
+
     @Test fun everyLevelHasATargetAtTwiceItsViewport() = forEachLevel { level ->
         val png = level.targetPng ?: return@forEachLevel "${level.id}: no target.png (rendered by :levels:renderTargets)"
         val image = ImageIO.read(png.inputStream()) ?: return@forEachLevel "${level.id}: target.png is not an image"

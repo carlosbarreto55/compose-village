@@ -2,9 +2,17 @@
   "formatVersion": 1,
   "id": "000-hello-main-street",
   "title": "Hello Main Street",
-  "villager": { "name": "Rosa", "profession": "baker" },
+  "villager": { "id": "rosa", "name": "Rosa", "profession": "baker" },
   "shop": "Rosa's Bakery",
   "concepts": ["Text", "Column"],
+  "intro": [
+    "Good morning! Smell that? Fresh bread, right out of the oven. Now my bakery just needs a sign.",
+    "Could you put my shop's name, “Rosa's Bakery”, on top, and “Fresh bread daily” underneath?",
+    "My sketch is up on the sign board. Press Run whenever you want me to take a look!"
+  ],
+  "celebration": [
+    "Oh! Look at that, it's beautiful!"
+  ],
   "thanks": "That's my sign! Now everyone will know where the bread is.",
   "request": "Could you make me a sign? Put my shop's name, \"Rosa's Bakery\", on top, and \"Fresh bread daily\" underneath.",
   "viewport": { "widthDp": 400, "heightDp": 300 },

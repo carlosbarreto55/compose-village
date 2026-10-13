@@ -85,7 +85,9 @@ class LevelRepository(private val files: LevelFiles = LevelFiles.BUNDLED) {
             invalid()
         }
         // Level files written before the cozy screen: decoding only says the key is unknown, so say what replaced it.
-        if ("resident" in tree) problems += "resident was replaced by villager { name, profession }, title and shop"
+        if ("resident" in tree) problems += "resident was replaced by villager { id, name, profession }, title and shop"
+        // Level files written before talking villagers: name the missing field the way authors write it.
+        if ((tree["villager"] as? JsonObject)?.containsKey("id") == false) problems += "villager.id is missing: a lowercase id like \"tom\" picks the villager's bust"
         val file = decode(LevelFile.serializer(), tree, problems) ?: invalid()
         // Criteria one at a time, so an error names the criterion (decoding a tree has no useful path).
         val criteria = file.criteria.mapIndexedNotNull { i, element ->
@@ -115,8 +117,9 @@ class LevelRepository(private val files: LevelFiles = LevelFiles.BUNDLED) {
         if (problems.isNotEmpty()) invalid()
 
         return Level(
-            id = file.id, title = file.title.trim(), villager = Villager(file.villager.name.trim(), profession!!), shop = file.shop.trim(),
-            request = file.request.trim(), concepts = file.concepts.map(String::trim), thanks = file.thanks?.trim(), entryFunction = file.entryFunction,
+            id = file.id, title = file.title.trim(), villager = Villager(file.villager.id, file.villager.name.trim(), profession!!), shop = file.shop.trim(),
+            request = file.request.trim(), concepts = file.concepts.map(String::trim), thanks = file.thanks?.trim(),
+            intro = file.intro.map(String::trim), celebration = file.celebration.map(String::trim), entryFunction = file.entryFunction,
             starterCode = starter!!, viewport = Viewport(file.viewport.widthDp, file.viewport.heightDp), criteria = criteria,
             panels = panels, targetPng = files.readBytes("$folder/$TARGET_FILE"),
         )
@@ -139,9 +142,13 @@ class LevelRepository(private val files: LevelFiles = LevelFiles.BUNDLED) {
         if (!ID.matches(file.id)) add("id '${file.id}' must be lowercase words and digits separated by '-'")
         if (file.id != folder) add("id '${file.id}' must equal its folder name '$folder'")
         if (file.title.isBlank()) add("title must not be blank")
+        if (!VILLAGER_ID.matches(file.villager.id)) add("villager.id '${file.villager.id}' must be lowercase words separated by '-', e.g. 'tom'")
         if (file.villager.name.isBlank()) add("villager.name must not be blank")
         if (file.shop.isBlank()) add("shop must not be blank")
         if (file.thanks?.isBlank() == true) add("thanks must not be blank (leave it out instead)")
+        if ((file.thanks?.trim()?.length ?: 0) > MAX_LINE) add("thanks is ${file.thanks!!.trim().length} characters; a line can have at most $MAX_LINE")
+        addAll(validateLines("intro", file.intro, max = 4))
+        addAll(validateLines("celebration", file.celebration, max = 3))
         if (file.concepts.any { it.isBlank() }) add("concepts must not contain blank names")
         file.concepts.groupingBy { it.trim() }.eachCount().filterValues { it > 1 }.keys.forEach { add("concept '$it' is listed more than once") }
         if (file.request.isBlank()) add("request must not be blank")
@@ -170,6 +177,15 @@ class LevelRepository(private val files: LevelFiles = LevelFiles.BUNDLED) {
         }
     }
 
+    /** Dialogue lines: at most [max] of them, each non-blank and short enough for three lines of the dialogue box. */
+    private fun validateLines(field: String, lines: List<String>, max: Int) = buildList {
+        if (lines.size > max) add("$field has ${lines.size} lines; at most $max are allowed")
+        lines.forEachIndexed { i, line ->
+            if (line.isBlank()) add("$field line ${i + 1} must not be blank")
+            else if (line.trim().length > MAX_LINE) add("$field line ${i + 1} is ${line.trim().length} characters; a line can have at most $MAX_LINE")
+        }
+    }
+
     private fun validate(criterion: String, field: String, s: Selector) = buildList {
         if (s.text == null && s.role == null && s.contentDescription == null) {
             add("$criterion: $field must set at least one of text, role, contentDescription")
@@ -189,6 +205,9 @@ class LevelRepository(private val files: LevelFiles = LevelFiles.BUNDLED) {
         const val TARGET_FILE = "target.png"
         private val ID = Regex("^[a-z0-9]+(-[a-z0-9]+)*$")
         private val IDENTIFIER = Regex("^[A-Za-z_][A-Za-z0-9_]*$")
+        private val VILLAGER_ID = Regex("^[a-z]+(-[a-z]+)*$")
+        /** The longest dialogue line: three lines of 24 sp text in the narrowest dialogue box (talking-villagers D8). */
+        const val MAX_LINE = 140
         private val CRITERION_TYPES = listOf("exists", "absent", "above", "below", "leftOf", "rightOf")
 
         // Strict: unknown keys are errors (a typo must not silently drop a field). "type" picks the criterion.
@@ -207,6 +226,8 @@ private class LevelFile(
     val request: String,
     val concepts: List<String> = emptyList(),
     val thanks: String? = null,
+    val intro: List<String> = emptyList(),
+    val celebration: List<String> = emptyList(),
     val entryFunction: String = "PlayerScreen",
     val starter: String = "Starter.kt",
     val viewport: ViewportFile = ViewportFile(),
@@ -218,7 +239,7 @@ private class LevelFile(
 
 /** [profession] by name; checked in [LevelRepository.load] so an unknown name lists the valid ones. */
 @Serializable
-private class VillagerFile(val name: String, val profession: String)
+private class VillagerFile(val id: String, val name: String, val profession: String)
 
 @Serializable
 private class ViewportFile(val widthDp: Float = 360f, val heightDp: Float = 640f)

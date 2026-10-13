@@ -1,5 +1,9 @@
 package village.app
 
+import androidx.compose.animation.Crossfade
+import androidx.compose.animation.core.snap
+import androidx.compose.animation.core.tween
+import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
@@ -10,6 +14,8 @@ import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
 import androidx.compose.ui.window.rememberWindowState
 import village.app.ui.SpikeScreen
+import village.app.ui.home.HomeScreen
+import village.app.ui.theme.LocalReducedMotion
 import village.app.ui.theme.ReducedMotion
 import village.app.ui.theme.VillageTheme
 import java.awt.Dimension
@@ -30,7 +36,19 @@ fun main(args: Array<String>) {
             val controller = remember { SpikeController(scope, density, ProgressStore.default()) }
             LaunchedEffect(controller) { controller.warmUp() }
             DisposableEffect(controller) { onDispose { controller.close() } }
-            VillageTheme { SpikeScreen(controller) }
+            VillageTheme { GameScreens(controller) }
+        }
+    }
+}
+
+/** The home street or the level screen, cross-fading in 200 ms; instant under reduced motion (home-screen D1). */
+@Composable
+fun GameScreens(controller: SpikeController) {
+    val spec = if (LocalReducedMotion.current) snap() else tween<Float>(200)
+    Crossfade(controller.screen, animationSpec = spec, label = "screen") { screen ->
+        when (screen) {
+            Screen.HOME -> HomeScreen(controller)
+            Screen.PLAY -> SpikeScreen(controller)
         }
     }
 }

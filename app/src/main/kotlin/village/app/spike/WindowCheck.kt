@@ -13,13 +13,17 @@ import androidx.compose.ui.unit.Density
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import org.jetbrains.skia.EncodedImageFormat
+import village.app.BigDialogue
+import village.app.GameScreens
 import village.app.ProgressStore
 import village.app.Samples
+import village.app.Screen
 import village.app.SpikeController
-import village.app.ui.SpikeScreen
 import village.app.ui.offsetOf
+import village.app.ui.villagers.BIG_DIALOGUE_TAG
 import village.app.ui.theme.VillageTheme
 import village.compiler.Diagnostic
+import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsNode
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.semantics.getOrNull
@@ -37,8 +41,8 @@ internal fun window(report: Report) = report.section("Spike window", Criterion.R
     // A fresh progress file per check, so the street starts dark (village-progress).
     val progressFile = File(out, "progress.json").apply { delete() }
     val controller = SpikeController(CoroutineScope(Dispatchers.Unconfined), density = 1f, ProgressStore(progressFile))
-    fun newScene(width: Int) = ImageComposeScene(width, 860, Density(1f)) {
-        VillageTheme(reducedMotion = true) { SpikeScreen(controller) }
+    fun newScene(width: Int, of: SpikeController = controller, reducedMotion: Boolean = true) = ImageComposeScene(width, 860, Density(1f)) {
+        VillageTheme(reducedMotion = reducedMotion) { GameScreens(of) }
     }
     val scene = newScene(1280)
     // Frame times advance with the wall clock, so animations (fades, the checklist stagger) play out.
@@ -66,7 +70,7 @@ internal fun window(report: Report) = report.section("Spike window", Criterion.R
         walk(owner.rootSemanticsNode)
     }
     fun texts(on: ImageComposeScene = scene): List<String> = nodes(on).flatMap { n -> n.config.getOrNull(SemanticsProperties.Text).orEmpty().map { it.text } }.toList()
-    fun onScreen(text: String) = texts().any { text in it }
+    fun onScreen(text: String, on: ImageComposeScene = scene) = texts(on).any { text in it }
     fun node(text: String, on: ImageComposeScene = scene) =
         nodes(on).first { n -> n.config.getOrNull(SemanticsProperties.Text)?.any { it.text == text } == true }
     fun clickText(text: String) {
@@ -75,10 +79,60 @@ internal fun window(report: Report) = report.section("Spike window", Criterion.R
         scene.sendPointerEvent(PointerEventType.Release, center, buttons = PointerButtons(), button = PointerButton.Primary)
         settle { true }
     }
+    /** The line the big dialogue shows: the last node with one of its lines, since the bubble may say the same. */
+    fun dialogueNode(on: ImageComposeScene = scene) = controller.bigDialogue?.lines?.let { lines ->
+        nodes(on).lastOrNull { n -> n.config.getOrNull(SemanticsProperties.Text)?.any { it.text in lines } == true }
+    }
+    /** Clicks the dialogue box, like a player reading on (talking-villagers D10). */
+    fun advanceDialogue(on: ImageComposeScene = scene) {
+        val center = dialogueNode(on)!!.boundsInRoot.center
+        on.sendPointerEvent(PointerEventType.Press, center, buttons = PointerButtons(isPrimaryPressed = true), button = PointerButton.Primary)
+        on.sendPointerEvent(PointerEventType.Release, center, buttons = PointerButtons(), button = PointerButton.Primary)
+        settle { true }
+    }
+    /** Whether the big dialogue is on screen, fading out included. */
+    fun dialogueShown() = nodes().any { it.config.getOrNull(SemanticsProperties.TestTag) == BIG_DIALOGUE_TAG }
+    /** Presses [button] of the big dialogue (a closing button or Skip intro), then waits for it to fade out. */
+    fun closeDialogue(button: String) {
+        clickText(button)
+        settle { !dialogueShown() }
+    }
+    /** Reads every line of the open dialogue, then presses its closing button [closing]. */
+    fun readThrough(closing: String) {
+        repeat(controller.bigDialogue!!.lines.size - 1) { advanceDialogue() }
+        closeDialogue(closing)
+    }
+    /** Presses the button showing [text] through its click action, like a keyboard user; it works below the fold too. */
+    fun activate(text: String) {
+        node(text).config[SemanticsActions.OnClick].action!!.invoke()
+        settle { true }
+    }
 
     try {
+        castSheet(File(out, "0-cast.png"))
         controller.warmUp()
         settle { !controller.warmingUp }
+
+        // The home street (home-screen): the game opens on it, in its first-launch form.
+        check("home: the game opens on the street in its first-launch form", controller.screen == Screen.HOME &&
+            onScreen("Welcome to Compose Village") && onScreen("Start: 1 · Hello Main Street") && onScreen("How a level works") &&
+            onScreen("Start here") && onScreen("Not open yet") && onScreen("Coming soon") && onScreen("5 · Ferry Times") &&
+            !onScreen("shops open")) { texts().joinToString(" | ") }
+        shot("0-home-first-launch")
+        val narrowHome = newScene(900)
+        try {
+            shot("0-home-narrow", narrowHome)
+            val shops = listOf("Rosa's Bakery", "Tom's Flowers", "Marco's Kitchen", "Dona Lúcia's School", "Iara's Ferry", "The Sandbox")
+            val boxes = shops.map { shop -> node(shop, narrowHome).let { Rect(it.positionInRoot, it.size.toSize()) } }
+            check("home: at 900 dp every building is on screen, wrapping instead of scrolling sideways",
+                boxes.all { it.left >= 0f && it.right <= 900f }) { "$boxes" }
+        } finally {
+            narrowHome.close()
+        }
+        activate("Open the Sandbox")
+        check("home: Open the Sandbox opens the sandbox", controller.screen == Screen.PLAY && controller.level == null &&
+            onScreen("Run")) { texts().joinToString(" | ") }
+
         controller.run()
         settle { !controller.running && controller.engine.state.value.frame != null }
         controller.engine.click("Sell").get()
@@ -118,11 +172,40 @@ internal fun window(report: Report) = report.section("Spike window", Criterion.R
         fun details() = (controller.verdict as? Verdict.Evaluated)?.results?.map { it.detail }
 
         val hello = controller.levels.single { it.id == "000-hello-main-street" }
+        fun openSign() = controller.levels.single { it.id == "001-open-sign" }
         clickText("Sandbox") // the sandbox is open; this only checks the footer entry is there and harmless
         check("level: the street shows one shop per level, none open yet, and the sandbox breadcrumb",
             onScreen("0 of 2 shops open") && texts().count { it == "Sandbox" } == 2) { texts().joinToString(" | ") }
-        controller.open(hello)
+        clickText("Main Street")
+        check("home: the breadcrumb's Main Street goes home", controller.screen == Screen.HOME && onScreen("Welcome to Compose Village")) {
+            texts().joinToString(" | ")
+        }
+        activate("Start: 1 · Hello Main Street")
+        check("home: Start opens the first level", controller.screen == Screen.PLAY && controller.level == hello) { "${controller.level}" }
+
+        // Talking villagers (talking-villagers): Rosa's intro plays on the first opening.
+        val rosaIntro = hello.intro
+        check("intro: the first opening dims the screen and Rosa says her first line, whole under reduced motion",
+            controller.bigDialogue?.kind == BigDialogue.Kind.INTRO && onScreen(rosaIntro[0]) && onScreen("1 of 3") && onScreen("Skip intro")) {
+            "${controller.bigDialogue} / ${texts().takeLast(8).joinToString(" | ")}"
+        }
+        shot("5a-intro")
+        val runsBefore = controller.runCount
+        controller.run()
         settle { true }
+        check("intro: Run does nothing while the intro is open", controller.runCount == runsBefore && !controller.running && controller.verdict == null) {
+            "runCount ${controller.runCount}"
+        }
+        advanceDialogue()
+        check("intro: clicking the box moves to the next line", onScreen(rosaIntro[1]) && onScreen("2 of 3")) { texts().joinToString(" | ") }
+        closeDialogue("Skip intro")
+        check("intro: Skip closes it and saves it as seen", controller.bigDialogue == null && controller.progress[hello.id].introSeen &&
+            !onScreen("Skip intro")) { "${controller.bigDialogue} / ${texts().takeLast(8).joinToString(" | ")}" }
+        clickText("Talk to Rosa")
+        check("intro: Talk to Rosa plays it again from the first line", controller.bigDialogue?.kind == BigDialogue.Kind.INTRO &&
+            onScreen(rosaIntro[0]) && onScreen("1 of 3")) { texts().joinToString(" | ") }
+        readThrough("Let's build it!")
+        check("intro: Let's build it! closes it on the level", controller.bigDialogue == null && onScreen("Rosa's checklist")) { texts().joinToString(" | ") }
         check("level: the sketch shows as an overlay ghost before the first Run, with the switch", controller.target != null &&
             controller.engine.state.value.frame == null && controller.overlaySketch &&
             onScreen("This is Rosa's sketch. Press Run to build yours on top of it.") && onScreen("Rosa's sketch") && onScreen("Your screen")) {
@@ -159,14 +242,52 @@ internal fun window(report: Report) = report.section("Spike window", Criterion.R
         runCode(hello.starterCode.replace("Text(\"Your sign goes here\")", "Text(\"Rosa's Bakery\")\n        Text(\"Fresh bread daily\")"))
         check("level: Run switches the preview back to the player's screen",
             !controller.showTarget && controller.engine.state.value.frame != null) { "showTarget=${controller.showTarget}" }
+        check("celebration: the first completion opens Rosa's celebration before the completion card",
+            controller.bigDialogue?.kind == BigDialogue.Kind.CELEBRATION && onScreen(hello.celebration[0]) && onScreen("1 of 2") &&
+                !onScreen("Rosa's Bakery is open!") && onScreen("0 of 2 shops open") && controller.completed == setOf(hello.id)) { texts().joinToString(" | ") }
+        shot("8-celebration")
+        readThrough("See Rosa's Bakery")
         check("level: the solution completes the level", (controller.verdict as? Verdict.Evaluated)?.passed == true &&
             onScreen("Rosa's Bakery is open!") && onScreen("All 2 of Rosa's wishes came true.") && onScreen("Next: 2 · Open Sign") &&
                 onScreen("1 of 2 shops open") && onScreen("2 of 2") && onScreen("That's my sign!")) { texts().joinToString(" | ") }
         check("level: the preview renders at the level's 400 x 300 dp viewport",
             controller.engine.state.value.frame?.let { it.width to it.height } == (400 to 300)) { "${controller.engine.state.value.frame?.let { "${it.width}x${it.height}" }}" }
-        shot("8-level-complete")
+        shot("8b-level-complete")
+
+        clickText("Main Street")
+        check("home: after the first level, its shop is lit and the street welcomes the player back",
+            onScreen("Welcome back") && onScreen("1 of 2 shops open") && onScreen("Rosa's Bakery is open. Tom is still waiting for a sign.") &&
+                onScreen("Up next") && onScreen("Continue: Open Sign") && onScreen("0 of 3 wishes") && onScreen("Starter code is ready") &&
+                onScreen("Open shops") && onScreen("3 tries") && onScreen("Visit")) { texts().joinToString(" | ") }
+        shot("8a-home-welcome-back")
+        clickText("Rosa's Bakery")
+        check("home: clicking the open level's shop goes back to it as it was",
+            controller.screen == Screen.PLAY && controller.level == hello && onScreen("Rosa's Bakery is open!")) { texts().joinToString(" | ") }
 
         clickText("Next: 2 · Open Sign")
+        check("intro: Next opens Open Sign with Tom's four-line intro", controller.bigDialogue?.kind == BigDialogue.Kind.INTRO &&
+            onScreen("Oh, hi! You must be the new sign maker.") && onScreen("1 of 4")) { texts().joinToString(" | ") }
+        shot("9a-open-sign-intro")
+        // At 900 dp, the narrowest window, each of Tom's lines (the longest bundled ones) fits the box's three lines.
+        val narrowDialogue = newScene(900)
+        try {
+            fun render() = repeat(5) { Snapshot.sendApplyNotifications(); frame(narrowDialogue); Thread.sleep(30) }
+            // The line's own text node: the merged tree only has the whole clickable box.
+            fun lineHeight() = narrowDialogue.semanticsOwners.asSequence().flatMap { owner ->
+                fun walk(n: SemanticsNode): Sequence<SemanticsNode> = sequenceOf(n) + n.children.asSequence().flatMap(::walk)
+                walk(owner.unmergedRootSemanticsNode)
+            }.last { n -> n.config.getOrNull(SemanticsProperties.Text)?.any { it.text in openSign().intro } == true }.size.height
+            render()
+            val heights = openSign().intro.indices.map { page ->
+                if (page > 0) { advanceDialogue(narrowDialogue); render() }
+                lineHeight()
+            }
+            check("intro: every line fits three lines of the dialogue box at 900 dp", heights.all { it <= 3 * 36 + 1 }) { "$heights" }
+            shot("9b-intro-narrow", narrowDialogue)
+        } finally {
+            narrowDialogue.close()
+        }
+        closeDialogue("Skip intro")
         check("level: Next opens Open Sign with the Console unlocked, and the opening click doesn't dismiss the tip",
             controller.level?.id == "001-open-sign" && onScreen("CONSOLE") && !onScreen("RECOMPOSITIONS") &&
                 onScreen("New: Console") && controller.highlighted.isNotEmpty()) { "${controller.level}, ${texts().joinToString(" | ")}" }
@@ -174,8 +295,20 @@ internal fun window(report: Report) = report.section("Spike window", Criterion.R
         clickText("Got it")
         check("level: \"Got it\" dismisses the unlock explanation", !onScreen("New: Console") && onScreen("CONSOLE"))
 
-        val openSign = controller.levels.single { it.id == "001-open-sign" }
+        val tomEdit = controller.code.text + "\n// the bell comes next\n"
+        controller.code = TextFieldValue(tomEdit)
+        clickText("Main Street")
+        check("home: an edited level shows as saved on the pick-up card", onScreen("Your code is saved") && onScreen("Continue: Open Sign")) {
+            texts().joinToString(" | ")
+        }
+        activate("Continue: Open Sign")
+        check("home: Continue brings the edited code back", controller.screen == Screen.PLAY && controller.code.text == tomEdit) { controller.code.text }
+
+        val openSign = openSign()
         runCode(openSign.starterCode.replace("Text(\"Tom's Flowers\")", "Text(\"Tom's Flowers\")\n        Button(onClick = { println(\"New order!\") }) { Text(\"Order\") }"))
+        check("celebration: Tom celebrates his first completion", controller.bigDialogue?.kind == BigDialogue.Kind.CELEBRATION &&
+            onScreen(openSign.celebration[0])) { texts().joinToString(" | ") }
+        readThrough("See Tom's Flowers")
         check("level: solving the last level says more is coming instead of Continue",
             onScreen("Tom's Flowers is open!") && onScreen("More of Main Street is coming soon.") && !onScreen("Next:") &&
                 onScreen("2 of 2 shops open")) { texts().joinToString(" | ") }
@@ -202,7 +335,11 @@ internal fun window(report: Report) = report.section("Spike window", Criterion.R
 
         // Saved progress (village-progress): coming back to a finished level, playing again, drafts, a relaunch.
         val helloSolution = hello.starterCode.replace("Text(\"Your sign goes here\")", "Text(\"Rosa's Bakery\")\n        Text(\"Fresh bread daily\")")
-        controller.open(hello)
+        clickText("Main Street")
+        check("home: with every shop open, the street says so and lists both open shops",
+            onScreen("Every shop is open") && onScreen("2 of 2 shops open") && texts().count { it == "Visit" } == 2) { texts().joinToString(" | ") }
+        shot("12a-home-all-open")
+        activate("Visit")
         settle { !controller.running }
         check("progress: reopening a finished level replays its code and shows the welcome back card",
             controller.code.text == helloSolution && (controller.verdict as? Verdict.Evaluated)?.passed == true && controller.revisiting &&
@@ -213,6 +350,10 @@ internal fun window(report: Report) = report.section("Spike window", Criterion.R
         check("progress: Play again restores the starter code and the sketch, and the shop stays lit",
             controller.code.text == hello.starterCode && controller.verdict == null && controller.overlaySketch &&
                 !onScreen("Start over") && onScreen("2 of 2 shops open")) { texts().joinToString(" | ") }
+        check("intro: a finished level reopens without its intro", controller.bigDialogue == null) { "${controller.bigDialogue}" }
+        runCode(helloSolution)
+        check("celebration: passing again after Play again shows the completion card without the celebration",
+            controller.bigDialogue == null && onScreen("Rosa's Bakery is open!")) { texts().joinToString(" | ") }
         val edited = hello.starterCode.replace("Your sign goes here", "Rosa's")
         controller.code = TextFieldValue(edited)
         settle { true }
@@ -222,13 +363,30 @@ internal fun window(report: Report) = report.section("Spike window", Criterion.R
         settle { !controller.running }
         check("progress: unfinished code comes back after switching levels", controller.code.text == edited) { controller.code.text }
 
+        // With motion on, Talk to Rosa types her first line: a frame 300 ms in, for a visual check.
+        val motion = newScene(1280, reducedMotion = false)
+        try {
+            controller.talk()
+            repeat(10) { Snapshot.sendApplyNotifications(); frame(motion); Thread.sleep(30) }
+            File(out, "14-typing.png").writeBytes(frame(motion).encodeToData(EncodedImageFormat.PNG)!!.bytes)
+        } finally {
+            motion.close()
+            controller.closeDialogue()
+            settle { !dialogueShown() }
+        }
+
         val relaunched = SpikeController(CoroutineScope(Dispatchers.Unconfined), density = 1f, ProgressStore(progressFile))
+        val relaunchedScene = newScene(1280, relaunched)
         try {
             check("progress: a relaunch reads the street and the saved tries from the file",
                 relaunched.completed == setOf("000-hello-main-street", "001-open-sign") && relaunched.progress["000-hello-main-street"].tries == 3) {
                 "${relaunched.progress}"
             }
+            frame(relaunchedScene)
+            check("home: a relaunch opens on the street's welcome back form", relaunched.screen == Screen.HOME &&
+                onScreen("Welcome back", relaunchedScene) && onScreen("2 of 2 shops open", relaunchedScene)) { texts(relaunchedScene).joinToString(" | ") }
         } finally {
+            relaunchedScene.close()
             relaunched.close()
         }
         text("Screenshots of each state: `app/build/spike/window/*.png` (not committed).")

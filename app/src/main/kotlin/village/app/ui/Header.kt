@@ -7,6 +7,9 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.TooltipArea
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsHoveredAsState
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
@@ -19,6 +22,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -31,6 +36,7 @@ import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import village.app.BuildStatus
@@ -67,11 +73,11 @@ fun Header(controller: SpikeController) {
                 Text("Compose Village", style = Village.type.wordmark, color = c.woodDark, maxLines = 1)
             }
             Row(Modifier.weight(1f), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                StreetLink(onClick = controller::goHome, enabled = !controller.running)
+                Chevron(c.inkMuted)
                 if (level == null) {
                     Text("Sandbox", style = Village.type.body.copy(fontWeight = FontWeight.Bold), color = c.ink)
                 } else {
-                    Text(GameText.STREET, style = Village.type.body, color = c.inkMuted, maxLines = 1)
-                    Chevron(c.inkMuted)
                     Text(
                         numbered(controller.levels, level), style = Village.type.body.copy(fontWeight = FontWeight.Bold), color = c.ink,
                         maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f, fill = false),
@@ -96,6 +102,24 @@ fun Header(controller: SpikeController) {
     }
 }
 
+/** "Main Street" in the breadcrumb: a link back to the home street, underlined on hover (home-screen D7). */
+@Composable
+private fun StreetLink(onClick: () -> Unit, enabled: Boolean) {
+    val c = Village.colors
+    val interaction = remember { MutableInteractionSource() }
+    val hovered by interaction.collectIsHoveredAsState()
+    Box(
+        Modifier.heightIn(min = 44.dp).clip(RoundedCornerShape(8.dp))
+            .clickable(interaction, indication = null, enabled = enabled, role = Role.Button, onClick = onClick),
+        contentAlignment = Alignment.Center,
+    ) {
+        Text(
+            GameText.STREET, color = c.inkMuted, maxLines = 1,
+            style = Village.type.body.copy(textDecoration = if (hovered && enabled) TextDecoration.Underline else null),
+        )
+    }
+}
+
 /** One dot per level: filled when completed this session, ringed for the open level, muted otherwise. */
 @Composable
 private fun ProgressDots(controller: SpikeController) {
@@ -104,7 +128,7 @@ private fun ProgressDots(controller: SpikeController) {
         for (l in controller.levels) {
             val current = l == controller.level
             val color = when {
-                l.id in controller.completed -> c.primary
+                l.id in controller.litShops -> c.primary
                 current -> c.wood
                 else -> c.muted
             }
@@ -119,7 +143,7 @@ private fun ProgressDots(controller: SpikeController) {
 /** "Built in 412 ms" with a dot; hovering shows compile / guard / load (design D9). */
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-private fun BuildStatusLabel(status: BuildStatus) {
+internal fun BuildStatusLabel(status: BuildStatus) {
     val c = Village.colors
     val (text, dot) = when (status) {
         BuildStatus.WarmingUp -> "Compiler warming up…" to c.muted
@@ -150,7 +174,7 @@ private fun BuildStatusLabel(status: BuildStatus) {
 @Composable
 fun StreetFooter(controller: SpikeController) {
     val c = Village.colors
-    val open = controller.levels.count { it.id in controller.completed }
+    val open = controller.levels.count { it.id in controller.litShops }
     Row(
         Modifier.fillMaxWidth().background(c.groundRaised).drawBehind {
             drawLine(c.outline, Offset(0f, 0.5f), Offset(size.width, 0.5f), 1.dp.toPx())
@@ -168,7 +192,7 @@ fun StreetFooter(controller: SpikeController) {
                     )
                 }) {
                     Shop(
-                        lit = level.id in controller.completed, current = level == controller.level,
+                        lit = level.id in controller.litShops, current = level == controller.level,
                         enabled = !controller.running, onClick = { controller.open(level) },
                     )
                 }

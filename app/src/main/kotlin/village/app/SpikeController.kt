@@ -74,6 +74,10 @@ class SpikeController(private val scope: CoroutineScope, density: Float, private
     /** The bundled levels. They are checked by the build's level tests, so a failure here is a packaging bug. */
     val levels: List<Level> = runCatching { LevelRepository().all() }.getOrElse { e -> System.err.println(e.message); emptyList() }
 
+    /** Which screen is shown: the home street, or the open level or sandbox (home-screen D1). */
+    var screen by mutableStateOf(Screen.HOME)
+        private set
+
     /** The open level, or null in the free sandbox. */
     var level by mutableStateOf<Level?>(null)
         private set
@@ -91,12 +95,40 @@ class SpikeController(private val scope: CoroutineScope, density: Float, private
     /** Ids of the completed levels, in this session or an earlier one. */
     val completed: Set<String> get() = progress.completed
 
+    /** Completed levels whose shop is lit: all of them, except the one whose celebration is still on (talking-villagers D3). */
+    val litShops: Set<String>
+        get() = level?.id?.takeIf { bigDialogue?.kind == BigDialogue.Kind.CELEBRATION }?.let { completed - it } ?: completed
+
     /**
      * The open level was already completed when it was opened: its saved code is replayed once and the
      * completion card takes its welcome back form, until the player's own Run (village-progress D6).
      */
     var revisiting by mutableStateOf(false)
         private set
+
+    /**
+     * The big dialogue over the level screen (talking-villagers D2): the intro on a level's first opening,
+     * or the celebration on its first completion. Run and ⌘↵ do nothing while it is open.
+     */
+    var bigDialogue by mutableStateOf<BigDialogue?>(null)
+        private set
+
+    val dialogueOpen: Boolean get() = bigDialogue != null
+
+    /** "Talk to <name>": plays the open level's intro again. Ignored while a run is in progress. */
+    fun talk() {
+        val level = level ?: return
+        if (running || level.intro.isEmpty()) return
+        bigDialogue = BigDialogue(BigDialogue.Kind.INTRO, level.intro)
+    }
+
+    /** Skip intro, Let's build it! or See <shop>: closes the big dialogue; a closed intro is seen for good. */
+    fun closeDialogue() {
+        val dialogue = bigDialogue ?: return
+        bigDialogue = null
+        val level = level ?: return
+        if (dialogue.kind == BigDialogue.Kind.INTRO) record(progress.withIntroSeen(level.id))
+    }
 
     /** Whether "Start over" is offered: a level is open and the editor differs from its starter code. */
     val canStartOver: Boolean get() = level?.let { code.text != it.starterCode } ?: false
@@ -141,10 +173,13 @@ class SpikeController(private val scope: CoroutineScope, density: Float, private
 
     /**
      * Opens [level] (null for the sandbox) with the player's saved code for it, or its starter code. The
-     * outgoing level's code is saved first. A completed level replays its code once. Ignored while a run is in progress.
+     * outgoing level's code is saved first. A completed level replays its code once. Opening what was open
+     * before going home just shows it again. Ignored while a run is in progress.
      */
     fun open(level: Level?) {
-        if (running || level == this.level) return
+        if (running) return
+        screen = Screen.PLAY
+        if (level == this.level) return // back from home to what was open: the visit goes on
         saveDraft()
         this.level = level
         val saved = level?.let { progress[it.id] }
@@ -157,6 +192,16 @@ class SpikeController(private val scope: CoroutineScope, density: Float, private
             revisiting = true
             start(replay = true)
         }
+        // A level's intro plays once, unless it was finished in an earlier session (talking-villagers D2).
+        bigDialogue = level?.takeIf { it.intro.isNotEmpty() && saved?.completed != true && saved?.introSeen != true }
+            ?.let { BigDialogue(BigDialogue.Kind.INTRO, it.intro) }
+    }
+
+    /** "Main Street" in the header: shows the home street, saving the open level's code. Ignored while a run is in progress. */
+    fun goHome() {
+        if (running) return
+        saveDraft()
+        screen = Screen.HOME
     }
 
     /** "Start over" and "Play again": the starter code, as if the level had just been opened; completion stays (village-progress D7). */
@@ -165,7 +210,7 @@ class SpikeController(private val scope: CoroutineScope, density: Float, private
         if (running) return
         code = TextFieldValue(level.starterCode)
         resetVisit()
-        saveDraft()
+        record(progress.withDraft(level.id, code.text, level.starterCode).withStartOver(level.id))
     }
 
     /** Forgets this visit's Runs: verdict, build status, preview, and the sketch overlay back on. */
@@ -241,7 +286,7 @@ class SpikeController(private val scope: CoroutineScope, density: Float, private
     private fun start(replay: Boolean) {
         val source = code.text
         val level = level
-        if (running) return
+        if (running || (!replay && dialogueOpen)) return
         running = true
         showTarget = false // a Run always shows its result
         if (!replay) {
@@ -265,7 +310,11 @@ class SpikeController(private val scope: CoroutineScope, density: Float, private
                     verdict = Evaluator.verdict(level, compiled = result.entry != null, snapshot)
                     if (!replay) {
                         runsThisVisit++
-                        record(progress.withDraft(level.id, source, level.starterCode).afterRun(level.id, complete, countCodeLines(source)))
+                        val met = (verdict as? Verdict.Evaluated)?.results?.count { it.passed } ?: 0
+                        if (complete && !progress[level.id].completed) {
+                            bigDialogue = BigDialogue(BigDialogue.Kind.CELEBRATION, level.celebration + (level.thanks ?: GameText.THANKS))
+                        }
+                        record(progress.withDraft(level.id, source, level.starterCode).afterRun(level.id, complete, countCodeLines(source), met))
                     }
                 }
             } finally {
@@ -292,6 +341,9 @@ class SpikeController(private val scope: CoroutineScope, density: Float, private
         const val PREVIEW_HEIGHT_DP = 640
     }
 }
+
+/** The game's two screens (home-screen D1). */
+enum class Screen { HOME, PLAY }
 
 /** The header's build status (design D9). */
 sealed interface BuildStatus {

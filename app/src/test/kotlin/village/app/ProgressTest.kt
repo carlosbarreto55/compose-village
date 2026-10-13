@@ -13,10 +13,33 @@ class ProgressTest {
     private val file = File(dir, "progress.json")
 
     @Test fun triesCountUntilTheFirstCompletion() {
-        val p = Progress().afterRun("a", passed = false, lines = 3).afterRun("a", passed = true, lines = 5)
-            .afterRun("a", passed = false, lines = 9).afterRun("a", passed = true, lines = 7)
-        assertEquals(LevelProgress(completed = true, tries = 2, lines = 5), p["a"])
+        val p = Progress().afterRun("a", passed = false, lines = 3, met = 1).afterRun("a", passed = true, lines = 5, met = 2)
+            .afterRun("a", passed = false, lines = 9, met = 1).afterRun("a", passed = true, lines = 7, met = 2)
+        assertEquals(LevelProgress(completed = true, tries = 2, lines = 5, met = 2), p["a"])
         assertEquals(setOf("a"), p.completed)
+    }
+
+    @Test fun metFollowsTheLatestRunAfterCompletion() {
+        val p = Progress().afterRun("a", passed = true, lines = 5, met = 3).afterRun("a", passed = false, lines = 6, met = 1)
+        assertEquals(LevelProgress(completed = true, tries = 1, lines = 5, met = 1), p["a"])
+    }
+
+    @Test fun startOverResetsMetOnly() {
+        val p = Progress().afterRun("a", passed = true, lines = 5, met = 3).withStartOver("a")
+        assertEquals(LevelProgress(completed = true, tries = 1, lines = 5, met = 0), p["a"])
+    }
+
+    @Test fun introSeenRoundTripsAndSurvivesStartOver() {
+        val store = ProgressStore(file)
+        store.save(Progress().withIntroSeen("a").withStartOver("a"))
+        assertTrue(store.load()["a"].introSeen)
+    }
+
+    @Test fun fileWithoutMetLoadsWithZero() {
+        file.writeText("""{ "version": 1, "levels": { "a": { "completed": true, "tries": 2, "lines": 6 } } }""")
+        val loaded = ProgressStore(file).load()
+        assertEquals(LevelProgress(completed = true, tries = 2, lines = 6, met = 0, introSeen = false), loaded["a"])
+        assertEquals(1, loaded.version)
     }
 
     @Test fun starterCodeIsNoDraft() {
@@ -30,7 +53,7 @@ class ProgressTest {
     @Test fun roundTripKeepsUnknownLevels() {
         val store = ProgressStore(file)
         store.save(Progress(levels = mapOf("gone" to LevelProgress(completed = true, tries = 4))))
-        val loaded = store.load().afterRun("a", passed = true, lines = 2)
+        val loaded = store.load().afterRun("a", passed = true, lines = 2, met = 1)
         store.save(loaded)
         assertEquals(setOf("gone", "a"), ProgressStore(file).load().completed)
         assertFalse(File(dir, "progress.json.tmp").exists())
