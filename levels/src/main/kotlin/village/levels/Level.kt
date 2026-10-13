@@ -8,10 +8,18 @@ import village.preview.Viewport
 class Level(
     /** Stable key for player progress; equals the level's folder name. Never changes once released. */
     val id: String,
-    /** The villager who asks, e.g. "Rosa, the baker". */
-    val resident: String,
-    /** The villager's request: the task shown to the player. */
+    /** The level's short name, e.g. "Open Sign": breadcrumb, street and Next button. */
+    val title: String,
+    /** The villager who asks. */
+    val villager: Villager,
+    /** The villager's shop, e.g. "Tom's Flowers": "<shop> is open!" when the level is complete. */
+    val shop: String,
+    /** The villager's request: the task shown to the player. Phrases in double quotes are its key texts. */
     val request: String,
+    /** The Compose concepts this level introduces, e.g. `Row`: the "New: Row" chips. */
+    val concepts: List<String> = emptyList(),
+    /** The villager's line when the level is complete, or null for the game's own thank-you. */
+    val thanks: String? = null,
     /** The composable the player must write. */
     val entryFunction: String,
     /** The code the editor starts with. */
@@ -24,6 +32,25 @@ class Level(
     val targetPng: ByteArray? = null,
 ) {
     override fun toString() = "Level($id)"
+}
+
+/** Who asks for a level: [name] (e.g. "Tom") and their [profession], which picks their badge. */
+data class Villager(val name: String, val profession: Profession)
+
+/** Villager professions; each has a glyph and badge tint in the game. [label] is player-facing. */
+enum class Profession(val jsonName: String, val label: String) {
+    BAKER("baker", "Baker"),
+    FLORIST("florist", "Florist"),
+    CHEF("chef", "Chef"),
+    TEACHER("teacher", "Teacher"),
+    BOAT_CAPTAIN("boat-captain", "Boat captain"),
+    FISHMONGER("fishmonger", "Fishmonger"),
+    MAIL_CARRIER("mail-carrier", "Mail carrier"),
+    MAYOR("mayor", "Mayor");
+
+    companion object {
+        fun fromJson(name: String) = entries.firstOrNull { it.jsonName == name }
+    }
 }
 
 /** Panels a level can opt in to. The first level in play order that lists one unlocks it. */
@@ -58,7 +85,7 @@ data class Selector(
 
 /**
  * One acceptance check. [description] is the checklist line the player always sees; [message], if
- * set, is an extra line in the resident's voice shown when it fails.
+ * set, is an extra line in the villager's voice shown when it fails.
  */
 @Serializable
 sealed interface Criterion {

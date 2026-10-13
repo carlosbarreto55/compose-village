@@ -7,9 +7,7 @@ import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.toComposeImageBitmap
 import androidx.compose.ui.text.input.TextFieldValue
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.asCoroutineDispatcher
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.future.await
 import kotlinx.coroutines.launch
 import org.jetbrains.skia.Image
@@ -30,11 +28,12 @@ import kotlin.math.roundToInt
 /**
  * The spike window's logic: compiles on one background thread (the compiler is not thread-safe)
  * and hands successful attempts to the [PreviewEngine]. With a [level] open, each Run is also
- * judged against the level's criteria. State is Compose state, written on [scope].
+ * judged against the level's criteria, and the player's progress is saved to [store]. State is
+ * Compose state, written on [scope].
  *
  * @param density the window's density; the scene renders at the same pixel density, so frames are sharp.
  */
-class SpikeController(private val scope: CoroutineScope, density: Float) : AutoCloseable {
+class SpikeController(private val scope: CoroutineScope, density: Float, private val store: ProgressStore) : AutoCloseable {
     private val compileExecutor = Executors.newSingleThreadExecutor { r -> Thread(r, "player-compiler").apply { isDaemon = true } }
     private val compileDispatcher = compileExecutor.asCoroutineDispatcher()
     private var pipeline: PlayerPipeline? = null // created and used on the compile thread only
@@ -54,6 +53,23 @@ class SpikeController(private val scope: CoroutineScope, density: Float) : AutoC
         private set
     var timings by mutableStateOf<Timings?>(null)
         private set
+    /** Whether the latest Run since opening compiled, or null before the first Run. */
+    var lastRunCompiled by mutableStateOf<Boolean?>(null)
+        private set
+
+    /** What the header's build status says (design D9). */
+    val buildStatus: BuildStatus
+        get() = when {
+            warmingUp -> BuildStatus.WarmingUp
+            running -> BuildStatus.Building
+            lastRunCompiled == false -> BuildStatus.DidNotBuild(timings)
+            lastRunCompiled == true -> timings?.let(BuildStatus::Built) ?: BuildStatus.Ready
+            else -> BuildStatus.Ready
+        }
+
+    /** Counts every finished Run; keys the checklist's resolve animation so each Run replays it. */
+    var runCount by mutableStateOf(0)
+        private set
 
     /** The bundled levels. They are checked by the build's level tests, so a failure here is a packaging bug. */
     val levels: List<Level> = runCatching { LevelRepository().all() }.getOrElse { e -> System.err.println(e.message); emptyList() }
@@ -64,6 +80,42 @@ class SpikeController(private val scope: CoroutineScope, density: Float) : AutoC
     /** The latest Run's verdict for the open level. */
     var verdict by mutableStateOf<Verdict?>(null)
         private set
+
+    /** Whether the latest verdict passed every criterion. */
+    val complete: Boolean get() = (verdict as? Verdict.Evaluated)?.passed == true
+
+    /** The player's saved progress (village-progress D3): read once, saved after every change. */
+    var progress by mutableStateOf(store.load())
+        private set
+
+    /** Ids of the completed levels, in this session or an earlier one. */
+    val completed: Set<String> get() = progress.completed
+
+    /**
+     * The open level was already completed when it was opened: its saved code is replayed once and the
+     * completion card takes its welcome back form, until the player's own Run (village-progress D6).
+     */
+    var revisiting by mutableStateOf(false)
+        private set
+
+    /** Whether "Start over" is offered: a level is open and the editor differs from its starter code. */
+    val canStartOver: Boolean get() = level?.let { code.text != it.starterCode } ?: false
+
+    /** Runs since the open level was opened: the completion card's Tries. */
+    var runsThisVisit by mutableStateOf(0)
+        private set
+
+    /** The player chose "Keep tinkering": the completion card stays hidden until the next Run or opening. */
+    var dismissedCompletion by mutableStateOf(false)
+        private set
+
+    /**
+     * Whether the level's sketch is drawn over the preview (design D6): on when a level opens, so it is
+     * the ghost before the first Run, and turned off once by the opening's first rendered frame.
+     */
+    var overlaySketch by mutableStateOf(false)
+        private set
+    private var overlayTurnsOffOnFirstFrame = false
 
     /** The open level's target, decoded once per level from its build-rendered PNG. */
     var target by mutableStateOf<ImageBitmap?>(null)
@@ -79,7 +131,7 @@ class SpikeController(private val scope: CoroutineScope, density: Float) : AutoC
     /** Panels being highlighted because the open level unlocks them. */
     var highlighted by mutableStateOf(emptySet<Panel>())
         private set
-    private var highlightJob: Job? = null
+    private var highlightedSince = 0L
 
     /** The level after the open one in play order, or null on the last level (and in the sandbox). */
     val nextLevel: Level? get() = level?.let { levels.getOrNull(levels.indexOf(it) + 1) }
@@ -87,20 +139,79 @@ class SpikeController(private val scope: CoroutineScope, density: Float) : AutoC
     /** Whether [panel] is on screen: the sandbox shows every panel, a level only the ones it lists. */
     fun shows(panel: Panel) = level?.let { panel in it.panels } ?: true
 
-    /** Opens [level] (null for the sandbox): its starter code replaces the editor's content. Ignored while a run is in progress. */
+    /**
+     * Opens [level] (null for the sandbox) with the player's saved code for it, or its starter code. The
+     * outgoing level's code is saved first. A completed level replays its code once. Ignored while a run is in progress.
+     */
     fun open(level: Level?) {
         if (running || level == this.level) return
+        saveDraft()
         this.level = level
-        code = TextFieldValue(level?.starterCode ?: Samples.BAKERY)
+        val saved = level?.let { progress[it.id] }
+        code = TextFieldValue(saved?.draft ?: level?.starterCode ?: Samples.BAKERY)
+        target = level?.let { l -> decodedTargets.getOrPut(l.id) { l.targetPng?.let { Image.makeFromEncoded(it).toComposeImageBitmap() } } }
+        resetVisit()
+        highlighted = level?.let { l -> unlocks.filterValues { it == l.id }.keys } ?: emptySet()
+        highlightedSince = System.nanoTime()
+        if (saved?.completed == true && saved.draft != null) {
+            revisiting = true
+            start(replay = true)
+        }
+    }
+
+    /** "Start over" and "Play again": the starter code, as if the level had just been opened; completion stays (village-progress D7). */
+    fun startOver() {
+        val level = level ?: return
+        if (running) return
+        code = TextFieldValue(level.starterCode)
+        resetVisit()
+        saveDraft()
+    }
+
+    /** Forgets this visit's Runs: verdict, build status, preview, and the sketch overlay back on. */
+    private fun resetVisit() {
         diagnostics = emptyList()
         timings = null
+        lastRunCompiled = null
         verdict = null
+        runsThisVisit = 0
+        revisiting = false
+        dismissedCompletion = false
         showTarget = false
-        target = level?.let { l -> decodedTargets.getOrPut(l.id) { l.targetPng?.let { Image.makeFromEncoded(it).toComposeImageBitmap() } } }
+        overlaySketch = target != null
+        overlayTurnsOffOnFirstFrame = overlaySketch
         engine.unload()
-        highlightJob?.cancel()
-        highlighted = level?.let { l -> unlocks.filterValues { it == l.id }.keys } ?: emptySet()
-        if (highlighted.isNotEmpty()) highlightJob = scope.launch { delay(HIGHLIGHT_MILLIS); highlighted = emptySet() }
+    }
+
+    /** Saves the editor's code as the open level's draft, if it changed. */
+    private fun saveDraft() {
+        val level = level ?: return
+        record(progress.withDraft(level.id, code.text, level.starterCode))
+    }
+
+    private fun record(updated: Progress) {
+        if (updated == progress) return
+        progress = updated
+        store.save(updated)
+    }
+
+    /** The player toggled "Overlay sketch"; from now on only they change it in this opening. */
+    fun toggleOverlay(on: Boolean) {
+        overlaySketch = on
+        overlayTurnsOffOnFirstFrame = false
+    }
+
+    /** "Keep tinkering": hides the completion card and keeps the level open. */
+    fun keepTinkering() {
+        dismissedCompletion = true
+    }
+
+    /**
+     * A key or mouse press anywhere in the window (design D8b). It dismisses unlock tips, but only once
+     * their pulse has finished, so the click that opened the level doesn't dismiss its own tip.
+     */
+    fun noteInteraction() {
+        if (highlighted.isNotEmpty() && System.nanoTime() - highlightedSince >= UNLOCK_PULSE_MILLIS * 1_000_000) highlighted = emptySet()
     }
 
     /** Opens the next level; used by the "Level complete" state. */
@@ -124,23 +235,41 @@ class SpikeController(private val scope: CoroutineScope, density: Float) : AutoC
     }
 
     /** Compiles the editor's code and, if it compiles, shows it in the preview. Ignored while a run is in progress. */
-    fun run() {
+    fun run() = start(replay = false)
+
+    /** A Run; a [replay] of a completed level's code is not the player's, so it isn't counted or saved. */
+    private fun start(replay: Boolean) {
         val source = code.text
         val level = level
         if (running) return
         running = true
         showTarget = false // a Run always shows its result
+        if (!replay) {
+            highlighted = emptySet()
+            revisiting = false
+        }
+        dismissedCompletion = false
         scope.launch {
             try {
                 val result = withContext(compileDispatcher) { pipeline().run(source, level?.entryFunction ?: "PlayerScreen") }
                 diagnostics = result.diagnostics
                 timings = result.timings
-                result.entry?.let { engine.load(it, source.lines().size, result.loader, level?.viewport).await() }
+                lastRunCompiled = result.entry != null
+                val state = result.entry?.let { engine.load(it, source.lines().size, result.loader, level?.viewport).await() }
+                if (state?.frame != null && overlayTurnsOffOnFirstFrame) {
+                    overlaySketch = false
+                    overlayTurnsOffOnFirstFrame = false
+                }
                 if (level != null) {
                     val snapshot = if (result.entry != null) engine.snapshot().await() else null
                     verdict = Evaluator.verdict(level, compiled = result.entry != null, snapshot)
+                    if (!replay) {
+                        runsThisVisit++
+                        record(progress.withDraft(level.id, source, level.starterCode).afterRun(level.id, complete, countCodeLines(source)))
+                    }
                 }
             } finally {
+                runCount++
                 running = false
             }
         }
@@ -149,16 +278,26 @@ class SpikeController(private val scope: CoroutineScope, density: Float) : AutoC
     private fun pipeline() = pipeline ?: PlayerPipeline().also { pipeline = it }
 
     override fun close() {
+        saveDraft()
         engine.close()
         compileExecutor.shutdownNow()
     }
 
     companion object {
-        /** How long an unlocked panel stays highlighted unless dismissed. */
-        const val HIGHLIGHT_MILLIS = 8_000L
+        /** How long a panel unlock pulses (two 600 ms rings); presses before then don't dismiss its tip. */
+        const val UNLOCK_PULSE_MILLIS = 1_200L
 
         /** A phone-sized preview. */
         const val PREVIEW_WIDTH_DP = 360
         const val PREVIEW_HEIGHT_DP = 640
     }
+}
+
+/** The header's build status (design D9). */
+sealed interface BuildStatus {
+    data object WarmingUp : BuildStatus
+    data object Ready : BuildStatus
+    data object Building : BuildStatus
+    data class Built(val timings: Timings) : BuildStatus
+    data class DidNotBuild(val timings: Timings?) : BuildStatus
 }

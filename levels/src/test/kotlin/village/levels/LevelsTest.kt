@@ -111,7 +111,7 @@ class LevelScenariosTest {
         assertEquals(listOf("order"), verdict.results.filterNot { it.passed }.map { it.id })
         val order = verdict.results.single { it.id == "order" }
         assertEquals("\"Fresh bread daily\" is above \"Rosa's Bakery\".", order.detail)
-        assertEquals("Rosa wants her name on top.", order.message)
+        assertEquals("I'd like my name on top, please!", order.message)
     }
 
     @Test fun starterFailsBothWithCantFindDetails() {
@@ -133,7 +133,7 @@ class LevelScenariosTest {
 
     @Test fun buttonIsMatchedByRoleAndText() {
         val order = listOf(Criterion.Exists("order", "m", Selector(role = "Button", text = "Order")))
-        fun passes(body: String) = Attempts.verdict(Level(level.id, "", "", "PlayerScreen", "", level.viewport, order), screen(body))
+        fun passes(body: String) = Attempts.verdict(Level(level.id, "", level.villager, "", "", entryFunction = "PlayerScreen", starterCode = "", viewport = level.viewport, criteria = order), screen(body))
             .let { assertIs<Verdict.Evaluated>(it).passed }
         assertTrue(passes("""Button(onClick = {}) { Row { Text("Order") } }"""))
         assertTrue(!passes("""Text("Order")"""))

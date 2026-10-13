@@ -84,6 +84,8 @@ class LevelRepository(private val files: LevelFiles = LevelFiles.BUNDLED) {
                 "formatVersion is $version, but this game supports format version $FORMAT_VERSION"
             invalid()
         }
+        // Level files written before the cozy screen: decoding only says the key is unknown, so say what replaced it.
+        if ("resident" in tree) problems += "resident was replaced by villager { name, profession }, title and shop"
         val file = decode(LevelFile.serializer(), tree, problems) ?: invalid()
         // Criteria one at a time, so an error names the criterion (decoding a tree has no useful path).
         val criteria = file.criteria.mapIndexedNotNull { i, element ->
@@ -104,12 +106,17 @@ class LevelRepository(private val files: LevelFiles = LevelFiles.BUNDLED) {
             Panel.fromJson(name) ?: run { problems += "panel '$name' is unknown; valid panels are ${Panel.entries.joinToString { it.jsonName }}"; null }
         }
         file.panels.groupingBy { it }.eachCount().filterValues { it > 1 }.keys.forEach { problems += "panel '$it' is listed more than once" }
+        val profession = Profession.fromJson(file.villager.profession)
+        if (profession == null) {
+            problems += "villager.profession '${file.villager.profession}' is unknown; valid professions are ${Profession.entries.joinToString { it.jsonName }}"
+        }
         val starter = files.read("$folder/${file.starter}")
         if (starter == null) problems += "starter file '${file.starter}' not found in $folder/"
         if (problems.isNotEmpty()) invalid()
 
         return Level(
-            id = file.id, resident = file.resident.trim(), request = file.request.trim(), entryFunction = file.entryFunction,
+            id = file.id, title = file.title.trim(), villager = Villager(file.villager.name.trim(), profession!!), shop = file.shop.trim(),
+            request = file.request.trim(), concepts = file.concepts.map(String::trim), thanks = file.thanks?.trim(), entryFunction = file.entryFunction,
             starterCode = starter!!, viewport = Viewport(file.viewport.widthDp, file.viewport.heightDp), criteria = criteria,
             panels = panels, targetPng = files.readBytes("$folder/$TARGET_FILE"),
         )
@@ -131,7 +138,12 @@ class LevelRepository(private val files: LevelFiles = LevelFiles.BUNDLED) {
     private fun validate(folder: String, file: LevelFile, criteria: List<Criterion>) = buildList {
         if (!ID.matches(file.id)) add("id '${file.id}' must be lowercase words and digits separated by '-'")
         if (file.id != folder) add("id '${file.id}' must equal its folder name '$folder'")
-        if (file.resident.isBlank()) add("resident must not be blank")
+        if (file.title.isBlank()) add("title must not be blank")
+        if (file.villager.name.isBlank()) add("villager.name must not be blank")
+        if (file.shop.isBlank()) add("shop must not be blank")
+        if (file.thanks?.isBlank() == true) add("thanks must not be blank (leave it out instead)")
+        if (file.concepts.any { it.isBlank() }) add("concepts must not contain blank names")
+        file.concepts.groupingBy { it.trim() }.eachCount().filterValues { it > 1 }.keys.forEach { add("concept '$it' is listed more than once") }
         if (file.request.isBlank()) add("request must not be blank")
         if (!IDENTIFIER.matches(file.entryFunction)) add("entryFunction '${file.entryFunction}' is not a Kotlin function name")
         if (file.viewport.widthDp <= 0 || file.viewport.heightDp <= 0) {
@@ -189,8 +201,12 @@ class LevelRepository(private val files: LevelFiles = LevelFiles.BUNDLED) {
 private class LevelFile(
     val formatVersion: Int,
     val id: String,
-    val resident: String,
+    val title: String,
+    val villager: VillagerFile,
+    val shop: String,
     val request: String,
+    val concepts: List<String> = emptyList(),
+    val thanks: String? = null,
     val entryFunction: String = "PlayerScreen",
     val starter: String = "Starter.kt",
     val viewport: ViewportFile = ViewportFile(),
@@ -199,6 +215,10 @@ private class LevelFile(
     /** Decoded one by one into [Criterion]s, see [LevelRepository.load]. */
     val criteria: List<JsonElement>,
 )
+
+/** [profession] by name; checked in [LevelRepository.load] so an unknown name lists the valid ones. */
+@Serializable
+private class VillagerFile(val name: String, val profession: String)
 
 @Serializable
 private class ViewportFile(val widthDp: Float = 360f, val heightDp: Float = 640f)

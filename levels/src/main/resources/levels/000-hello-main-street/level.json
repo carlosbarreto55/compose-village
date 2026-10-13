@@ -1,7 +1,11 @@
 {
   "formatVersion": 1,
   "id": "000-hello-main-street",
-  "resident": "Rosa, the baker",
+  "title": "Hello Main Street",
+  "villager": { "name": "Rosa", "profession": "baker" },
+  "shop": "Rosa's Bakery",
+  "concepts": ["Text", "Column"],
+  "thanks": "That's my sign! Now everyone will know where the bread is.",
   "request": "Could you make me a sign? Put my shop's name, \"Rosa's Bakery\", on top, and \"Fresh bread daily\" underneath.",
   "viewport": { "widthDp": 400, "heightDp": 300 },
   "criteria": [
@@ -10,7 +14,7 @@
       "id": "title",
       "description": "The text \"Rosa's Bakery\" is on screen",
       "node": { "text": "Rosa's Bakery" },
-      "message": "Rosa doesn't see her shop's name yet."
+      "message": "I don't see my shop's name yet."
     },
     {
       "type": "below",
@@ -18,7 +22,7 @@
       "description": "\"Fresh bread daily\" appears below \"Rosa's Bakery\"",
       "a": { "text": "Fresh bread daily" },
       "b": { "text": "Rosa's Bakery" },
-      "message": "Rosa wants her name on top."
+      "message": "I'd like my name on top, please!"
     }
   ]
 }

@@ -1,30 +1,27 @@
 package village.app.ui
 
+import androidx.compose.animation.core.Transition
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.core.updateTransition
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Button
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.FilterChip
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.input.key.Key
@@ -34,17 +31,26 @@ import androidx.compose.ui.input.key.isMetaPressed
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.key.type
+import androidx.compose.ui.input.pointer.PointerEventPass
+import androidx.compose.ui.input.pointer.PointerEventType
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.TextRange
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import village.app.SpikeController
+import village.app.countCodeLines
+import village.app.reactionFor
+import village.app.ui.theme.Village
+import village.app.ui.theme.VillageShapes
 import village.levels.Panel
-import village.compiler.Severity
 
-/** The spike window: code editor and diagnostics on the left, the live preview and its panels on the right. */
+/** Below this content width the right column moves under the left one (design D5). */
+val TWO_COLUMNS_MIN_WIDTH = 1180.dp
+
+/** The level screen (spec: Screen layout): header, the villager and editor beside the preview and its cards, the street. */
 @Composable
 fun SpikeScreen(controller: SpikeController) {
     val editorFocus = remember { FocusRequester() }
-    val preview by controller.engine.state.collectAsState()
 
     fun moveCaret(line: Int, column: Int) {
         val code = controller.code
@@ -52,84 +58,105 @@ fun SpikeScreen(controller: SpikeController) {
         runCatching { editorFocus.requestFocus() }
     }
 
-    Row(
+    // One transition drives the level-complete moment: the sign's glow and the completion card (design D11).
+    val completion = updateTransition(controller.complete, "complete")
+
+    Column(
         Modifier.fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
+            .background(Village.colors.ground)
             .onPreviewKeyEvent { e ->
+                if (e.type == KeyEventType.KeyDown) controller.noteInteraction()
                 val runShortcut = e.type == KeyEventType.KeyDown && e.key == Key.Enter && (e.isMetaPressed || e.isCtrlPressed)
                 if (runShortcut) controller.run()
                 runShortcut
             }
-            .padding(12.dp),
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
+            .pointerInput(controller) {
+                awaitPointerEventScope {
+                    while (true) {
+                        if (awaitPointerEvent(PointerEventPass.Initial).type == PointerEventType.Press) controller.noteInteraction()
+                    }
+                }
+            },
     ) {
-        Column(Modifier.weight(1f).fillMaxHeight(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            Toolbar(controller, onRun = controller::run)
-            controller.level?.let { LevelRequest(it) }
-            val errorLines = controller.diagnostics.filter { it.severity == Severity.ERROR && it.line > 0 }.map { it.line }.toSet()
-            CodeEditor(controller.code, { controller.code = it }, errorLines, editorFocus, Modifier.weight(1f).fillMaxWidth())
-            DiagnosticsList(controller.diagnostics, onSelect = { moveCaret(it.line, it.column) }, Modifier.fillMaxWidth().heightIn(max = 160.dp))
-        }
-        val level = controller.level
-        val target = controller.target
-        val viewportWidth = level?.viewport?.widthDp ?: SpikeController.PREVIEW_WIDTH_DP.toFloat()
-        Column(
-            Modifier.width((maxOf(SpikeController.PREVIEW_WIDTH_DP.toFloat(), viewportWidth) + 24).dp)
-                .fillMaxHeight().verticalScroll(rememberScrollState()),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            if (level != null && target != null) TargetSwitch(controller.showTarget, onChange = { controller.showTarget = it })
-            PreviewPane(
-                preview, controller.engine, viewport = level?.viewport,
-                target = target, ghostCaption = level?.let { "${it.resident.substringBefore(',')}'s sketch: press Run to build it" }.orEmpty(),
-                showTarget = controller.showTarget,
-            )
-            level?.let { Checklist(it, controller.verdict, hasNext = controller.nextLevel != null, onContinue = controller::continueToNext) }
-            preview.error?.let { RuntimeErrorPanel(it, onSelectLine = { line -> moveCaret(line, 1) }) }
-            if (controller.shows(Panel.CONSOLE)) {
-                Unlockable(Panel.CONSOLE, Panel.CONSOLE in controller.highlighted, { controller.dismissHighlight(Panel.CONSOLE) }) {
-                    ConsolePanel(preview.console)
+        Header(controller)
+        BoxWithConstraints(Modifier.weight(1f).fillMaxWidth()) {
+            val padding = Modifier.padding(horizontal = VillageShapes.pagePaddingH, vertical = VillageShapes.pagePaddingV)
+            val rightWidth = maxOf(460.dp, previewCardWidth(controller.level?.viewport?.widthDp ?: SpikeController.PREVIEW_WIDTH_DP.toFloat()))
+            if (maxWidth >= TWO_COLUMNS_MIN_WIDTH) {
+                Row(padding.fillMaxSize(), horizontalArrangement = Arrangement.spacedBy(VillageShapes.columnGap)) {
+                    Column(Modifier.weight(1f).fillMaxHeight(), verticalArrangement = Arrangement.spacedBy(VillageShapes.cardGap)) {
+                        LeftColumn(controller, editorFocus, ::moveCaret, editorHeight = null)
+                    }
+                    Column(
+                        Modifier.width(rightWidth).fillMaxHeight().verticalScroll(rememberScrollState()),
+                        verticalArrangement = Arrangement.spacedBy(VillageShapes.cardGap),
+                    ) {
+                        RightColumn(controller, completion, ::moveCaret)
+                    }
                 }
-            }
-            if (controller.shows(Panel.RECOMPOSITIONS)) {
-                Unlockable(Panel.RECOMPOSITIONS, Panel.RECOMPOSITIONS in controller.highlighted, { controller.dismissHighlight(Panel.RECOMPOSITIONS) }) {
-                    RecompositionPanel(preview.recompositions)
+            } else {
+                Column(
+                    Modifier.fillMaxSize().verticalScroll(rememberScrollState()).then(padding),
+                    verticalArrangement = Arrangement.spacedBy(VillageShapes.cardGap),
+                ) {
+                    LeftColumn(controller, editorFocus, ::moveCaret, editorHeight = 460.dp)
+                    RightColumn(controller, completion, ::moveCaret)
                 }
             }
         }
+        StreetFooter(controller)
     }
 }
 
+/** The villager card above the editor; the editor fills the rest, or [editorHeight] when the page scrolls. */
 @Composable
-private fun Toolbar(controller: SpikeController, onRun: () -> Unit) {
-    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-        FilterChip(selected = controller.level == null, onClick = { controller.open(null) }, label = { Text("Sandbox") }, enabled = !controller.running)
-        for (level in controller.levels) {
-            FilterChip(selected = controller.level == level, onClick = { controller.open(level) }, label = { Text(level.displayName()) }, enabled = !controller.running)
-        }
-        Spacer(Modifier.width(4.dp))
-        Button(onClick = onRun, enabled = !controller.running) { Text("Run") }
-        Text("⌘↩", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        Spacer(Modifier.width(4.dp))
-        when {
-            controller.running || controller.warmingUp -> {
-                CircularProgressIndicator(Modifier.size(16.dp), strokeWidth = 2.dp)
-                Text(
-                    if (controller.warmingUp) "Compiler warming up…" else "Compiling…",
-                    style = MaterialTheme.typography.bodyMedium,
-                )
-            }
-            else -> controller.timings?.let { t ->
-                Text(
-                    "compile ${t.compileMs} ms · guard ${t.guardMs} ms · load ${t.loadMs} ms",
-                    style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            } ?: controller.warmUpMillis?.let {
-                Text("Compiler ready (warm-up $it ms)", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+private fun ColumnScope.LeftColumn(controller: SpikeController, editorFocus: FocusRequester, moveCaret: (Int, Int) -> Unit, editorHeight: Dp?) {
+    val level = controller.level
+    level?.let { VillagerCard(it, reactionFor(it, controller.verdict)) }
+    EditorCard(
+        fileName = "${level?.entryFunction ?: "PlayerScreen"}.kt",
+        value = controller.code, onValueChange = { controller.code = it },
+        diagnostics = controller.diagnostics, compiled = controller.lastRunCompiled,
+        onSelectProblem = { moveCaret(it.line, it.column) },
+        focusRequester = editorFocus,
+        onStartOver = if (controller.canStartOver && !controller.running) controller::startOver else null,
+        modifier = Modifier.fillMaxWidth().then(if (editorHeight == null) Modifier.weight(1f) else Modifier.height(editorHeight)),
+    )
+}
+
+/** The preview card, then the completion card, checklist, runtime error and the level's panels. */
+@Composable
+private fun RightColumn(controller: SpikeController, completion: Transition<Boolean>, moveCaret: (Int, Int) -> Unit) {
+    val preview by controller.engine.state.collectAsState()
+    val level = controller.level
+    val glow by completion.animateFloat({ tween(600) }, label = "glow") { if (it) 1f else 0f }
+    PreviewCard(
+        preview, controller.engine, viewport = level?.viewport,
+        villagerName = level?.villager?.name, target = controller.target,
+        showTarget = controller.showTarget, onShowTarget = { controller.showTarget = it },
+        overlay = controller.overlaySketch, onOverlay = controller::toggleOverlay,
+        building = controller.running, complete = controller.complete, glow = glow,
+    )
+    if (level != null) {
+        CompletionCard(
+            completion, controller.dismissedCompletion, level,
+            lines = countCodeLines(controller.code.text), tries = controller.runsThisVisit,
+            next = controller.nextLevel?.let { numbered(controller.levels, it) },
+            onNext = controller::continueToNext, onKeepTinkering = controller::keepTinkering,
+            welcomeBack = if (controller.revisiting) controller.progress[level.id] else null, onPlayAgain = controller::startOver,
+        )
+        ChecklistCard(level, controller.verdict, reactionFor(level, controller.verdict), controller.runCount)
+    }
+    preview.error?.let { RuntimeErrorPanel(it, onSelectLine = { line -> moveCaret(line, 1) }) }
+    for (panel in Panel.entries) {
+        if (!controller.shows(panel)) continue
+        Unlockable(panel, panel in controller.highlighted, { controller.dismissHighlight(panel) }) {
+            when (panel) {
+                Panel.CONSOLE -> ConsolePanel(preview.console)
+                Panel.RECOMPOSITIONS -> RecompositionPanel(preview.recompositions)
             }
         }
     }
-    Spacer(Modifier.height(0.dp))
 }
 
 /** Character offset of 1-based [line] and [column] in [text], clamped to the text. */

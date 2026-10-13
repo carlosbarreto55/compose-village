@@ -24,7 +24,7 @@ class LevelRepositoryTest {
     private val exists = """{ "type": "exists", "id": "title", "description": "The text \"Rosa's Bakery\" is on screen", "node": { "text": "Rosa's Bakery" } }"""
 
     private fun minimal(id: String = "sign", criteria: String = exists, extra: String = "") =
-        """{ "formatVersion": 1, "id": "$id", "resident": "Rosa, the baker", "request": "Make me a sign." $extra, "criteria": [ $criteria ] }"""
+        """{ "formatVersion": 1, "id": "$id", "title": "Sign", "villager": { "name": "Rosa", "profession": "baker" }, "shop": "Rosa's Bakery", "request": "Make me a sign." $extra, "criteria": [ $criteria ] }"""
 
     @Test fun minimalLevelGetsDefaults() {
         val level = level("sign", minimal())
@@ -33,6 +33,11 @@ class LevelRepositoryTest {
         assertEquals("fun PlayerScreen() {}", level.starterCode)
         assertEquals(Viewport(360f, 640f), level.viewport)
         assertEquals(emptyList(), level.panels)
+        assertEquals("Sign", level.title)
+        assertEquals(Villager("Rosa", Profession.BAKER), level.villager)
+        assertEquals("Rosa's Bakery", level.shop)
+        assertEquals(emptyList(), level.concepts)
+        assertNull(level.thanks)
         assertNull(level.targetPng)
         val c = assertIs<Criterion.Exists>(level.criteria.single())
         assertEquals(Selector(text = "Rosa's Bakery"), c.node)
@@ -100,6 +105,31 @@ class LevelRepositoryTest {
     @Test fun unknownPanelListsValidPanels() {
         val message = problems("sign", minimal(extra = """, "panels": ["consol"]"""))
         assertContains(message, "panel 'consol' is unknown; valid panels are console, recompositions")
+    }
+
+    @Test fun conceptsAndThanks() {
+        val level = level("sign", minimal(extra = """, "concepts": ["Text", "Column"], "thanks": "Lovely!" """))
+        assertEquals(listOf("Text", "Column"), level.concepts)
+        assertEquals("Lovely!", level.thanks)
+    }
+
+    @Test fun repeatedOrBlankConceptAndBlankThanks() {
+        val message = problems("sign", minimal(extra = """, "concepts": ["Row", "Row", " "], "thanks": "" """))
+        assertContains(message, "concept 'Row' is listed more than once")
+        assertContains(message, "concepts must not contain blank names")
+        assertContains(message, "thanks must not be blank")
+    }
+
+    @Test fun unknownProfessionListsValidProfessions() {
+        val message = problems("sign", minimal().replace("\"baker\"", "\"gardener\""))
+        assertContains(message, "villager.profession 'gardener' is unknown; valid professions are baker, florist, chef, teacher, boat-captain")
+    }
+
+    @Test fun oldResidentFieldIsRejected() {
+        val old = minimal().replace(""""villager": { "name": "Rosa", "profession": "baker" }""", """"resident": "Rosa, the baker"""")
+        val message = problems("sign", old)
+        assertContains(message, "resident")
+        assertContains(message, "villager")
     }
 
     @Test fun repeatedPanel() = assertContains(problems("sign", minimal(extra = """, "panels": ["console", "console"]""")), "panel 'console' is listed more than once")
