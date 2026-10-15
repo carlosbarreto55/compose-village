@@ -109,6 +109,31 @@ internal fun window(report: Report) = report.section("Spike window", Criterion.R
         settle { true }
     }
 
+    /**
+     * At 900 dp, the narrowest window, each of [level]'s intro lines fits the dialogue box's three
+     * lines. Call it with [level]'s intro open on its first line.
+     */
+    fun introFitsAt900(level: village.levels.Level, screenshot: String) {
+        val narrowDialogue = newScene(900)
+        try {
+            fun render() = repeat(5) { Snapshot.sendApplyNotifications(); frame(narrowDialogue); Thread.sleep(30) }
+            // The line's own text node: the merged tree only has the whole clickable box.
+            fun lineHeight() = narrowDialogue.semanticsOwners.asSequence().flatMap { owner ->
+                fun walk(n: SemanticsNode): Sequence<SemanticsNode> = sequenceOf(n) + n.children.asSequence().flatMap(::walk)
+                walk(owner.unmergedRootSemanticsNode)
+            }.last { n -> n.config.getOrNull(SemanticsProperties.Text)?.any { it.text in level.intro } == true }.size.height
+            render()
+            val heights = level.intro.indices.map { page ->
+                if (page > 0) { advanceDialogue(narrowDialogue); render() }
+                lineHeight()
+            }
+            check("intro: every one of ${level.villager.name}'s lines fits three lines of the dialogue box at 900 dp", heights.all { it <= 3 * 36 + 1 }) { "$heights" }
+            shot(screenshot, narrowDialogue)
+        } finally {
+            narrowDialogue.close()
+        }
+    }
+
     try {
         castSheet(File(out, "0-cast.png"))
         controller.warmUp()
@@ -269,25 +294,7 @@ internal fun window(report: Report) = report.section("Spike window", Criterion.R
         check("intro: Next opens Open Sign with Tom's four-line intro", controller.bigDialogue?.kind == BigDialogue.Kind.INTRO &&
             onScreen("Oh, hi! You must be the new sign maker.") && onScreen("1 of 4")) { texts().joinToString(" | ") }
         shot("9a-open-sign-intro")
-        // At 900 dp, the narrowest window, each of Tom's lines (the longest bundled ones) fits the box's three lines.
-        val narrowDialogue = newScene(900)
-        try {
-            fun render() = repeat(5) { Snapshot.sendApplyNotifications(); frame(narrowDialogue); Thread.sleep(30) }
-            // The line's own text node: the merged tree only has the whole clickable box.
-            fun lineHeight() = narrowDialogue.semanticsOwners.asSequence().flatMap { owner ->
-                fun walk(n: SemanticsNode): Sequence<SemanticsNode> = sequenceOf(n) + n.children.asSequence().flatMap(::walk)
-                walk(owner.unmergedRootSemanticsNode)
-            }.last { n -> n.config.getOrNull(SemanticsProperties.Text)?.any { it.text in openSign().intro } == true }.size.height
-            render()
-            val heights = openSign().intro.indices.map { page ->
-                if (page > 0) { advanceDialogue(narrowDialogue); render() }
-                lineHeight()
-            }
-            check("intro: every line fits three lines of the dialogue box at 900 dp", heights.all { it <= 3 * 36 + 1 }) { "$heights" }
-            shot("9b-intro-narrow", narrowDialogue)
-        } finally {
-            narrowDialogue.close()
-        }
+        introFitsAt900(openSign(), "9b-intro-narrow")
         closeDialogue("Skip intro")
         check("level: Next opens Open Sign with the Console unlocked, and the opening click doesn't dismiss the tip",
             controller.level?.id == "001-open-sign" && onScreen("CONSOLE") && !onScreen("RECOMPOSITIONS") &&

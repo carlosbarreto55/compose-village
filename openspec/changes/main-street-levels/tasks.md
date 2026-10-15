@@ -45,7 +45,7 @@
 
 - [x] 7.1 In `LevelsTest`, fail when a concept is listed by more than one level, naming both levels and the concept
 - [x] 7.2 In `LevelsTest`, fail when one level is the first to list more than one panel, naming the level
-- [ ] 7.3 Check that every intro, celebration and thanks line of the new levels fits the 140-character limit (the loader rejects them otherwise) and reads well in the dialogue box at three lines
+- [x] 7.3 Check that every intro, celebration and thanks line of the new levels fits the 140-character limit (the loader rejects them otherwise) and reads well in the dialogue box at three lines
 
 ## 8. The game
 
