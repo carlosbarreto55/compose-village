@@ -406,11 +406,14 @@ internal fun window(report: Report) = report.section("Spike window", Criterion.R
                 reactionFor(lucia, controller.verdict)?.text == "The children cheered, but the board didn't count it…" &&
                 onScreen("customer › pressed [+1 Blue]")) { "${controller.verdict} / ${texts().joinToString(" | ")}" }
         shot("16b-scoreboard-unchanged")
+        val runStart = System.nanoTime()
         runCode(solution(lucia.id))
-        check("scoreboard: remembered scores pass, and PlayerScreen recomposes after each press",
+        val scoreboardRunMillis = (System.nanoTime() - runStart) / 1_000_000
+        text("Contest Scoreboard: a Run with four customer presses took $scoreboardRunMillis ms (warm compiler, ${controller.timings}).")
+        check("scoreboard: remembered scores pass, PlayerScreen recomposes after each press, and the Run stays under 3 s",
             controller.bigDialogue?.kind == BigDialogue.Kind.CELEBRATION &&
-                (controller.engine.state.value.recompositions["PlayerScreen"] ?: 0) >= 4) {
-            "${controller.engine.state.value.recompositions}"
+                (controller.engine.state.value.recompositions["PlayerScreen"] ?: 0) >= 4 && scoreboardRunMillis < 3_000) {
+            "$scoreboardRunMillis ms, ${controller.engine.state.value.recompositions}"
         }
         readThrough("See Dona Lúcia's School")
         check("scoreboard: Dona Lúcia's School opens at the level's viewport, with Iara next",
