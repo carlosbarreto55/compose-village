@@ -187,7 +187,8 @@ object Evaluator {
             is Criterion.Absent -> if (matching(c.node).isEmpty()) null else Failure.Present(c.node)
             is Criterion.Order -> checkOrder(c)
             is Criterion.Prints -> error("prints is checked against the moment's output, not its nodes")
-            is Criterion.All -> error("'all' criteria are not loaded yet")
+            // The first failing check, in the order the author wrote them, explains the whole row.
+            is Criterion.All -> c.checks.firstNotNullOfOrNull { check(it) }
         }
 
         private fun checkOrder(c: Criterion.Order): Failure? {
