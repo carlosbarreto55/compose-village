@@ -17,7 +17,7 @@
 
 - [x] 3.1 Add a pure "same screen" comparison of two snapshots (visible nodes in tree order: texts, content descriptions, roles, bounds; ids ignored)
 - [x] 3.2 In `Evaluator`, for a failing non-`prints` criterion with `after` whose step was performed: use "A customer pressed X, but the screen didn't change." when the step's screen equals the one before it, otherwise prefix the usual detail with "After a customer pressed X: " (and the `typed "T" into X` forms)
-- [ ] 3.3 Evaluator tests with hand-built attempts: unchanged press, unchanged typing, a changed screen with a missing text, `prints` and not-found details unchanged, first-frame criteria unchanged
+- [x] 3.3 Evaluator tests with hand-built attempts: unchanged press, unchanged typing, a changed screen with a missing text, `prints` and not-found details unchanged, first-frame criteria unchanged
 - [ ] 3.4 Re-run `001-open-sign`'s tests to confirm Tom's details are unchanged
 
 ## 4. Level 3 · Restaurant Menu
