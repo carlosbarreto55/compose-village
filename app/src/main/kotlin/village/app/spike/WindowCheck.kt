@@ -142,7 +142,7 @@ internal fun window(report: Report) = report.section("Spike window", Criterion.R
         // The home street (home-screen): the game opens on it, in its first-launch form.
         check("home: the game opens on the street in its first-launch form", controller.screen == Screen.HOME &&
             onScreen("Welcome to Compose Village") && onScreen("Start: 1 · Hello Main Street") && onScreen("How a level works") &&
-            onScreen("Start here") && onScreen("Not open yet") && onScreen("Coming soon") && onScreen("5 · Ferry Times") &&
+            onScreen("Start here") && onScreen("Not open yet") && !onScreen("Coming soon") && onScreen("5 · Ferry Times") &&
             !onScreen("shops open")) { texts().joinToString(" | ") }
         shot("0-home-first-launch")
         val narrowHome = newScene(900)
@@ -201,7 +201,7 @@ internal fun window(report: Report) = report.section("Spike window", Criterion.R
         fun openSign() = controller.levels.single { it.id == "001-open-sign" }
         clickText("Sandbox") // the sandbox is open; this only checks the footer entry is there and harmless
         check("level: the street shows one shop per level, none open yet, and the sandbox breadcrumb",
-            onScreen("0 of 2 shops open") && texts().count { it == "Sandbox" } == 2) { texts().joinToString(" | ") }
+            onScreen("0 of 5 shops open") && texts().count { it == "Sandbox" } == 2) { texts().joinToString(" | ") }
         clickText("Main Street")
         check("home: the breadcrumb's Main Street goes home", controller.screen == Screen.HOME && onScreen("Welcome to Compose Village")) {
             texts().joinToString(" | ")
@@ -270,19 +270,19 @@ internal fun window(report: Report) = report.section("Spike window", Criterion.R
             !controller.showTarget && controller.engine.state.value.frame != null) { "showTarget=${controller.showTarget}" }
         check("celebration: the first completion opens Rosa's celebration before the completion card",
             controller.bigDialogue?.kind == BigDialogue.Kind.CELEBRATION && onScreen(hello.celebration[0]) && onScreen("1 of 2") &&
-                !onScreen("Rosa's Bakery is open!") && onScreen("0 of 2 shops open") && controller.completed == setOf(hello.id)) { texts().joinToString(" | ") }
+                !onScreen("Rosa's Bakery is open!") && onScreen("0 of 5 shops open") && controller.completed == setOf(hello.id)) { texts().joinToString(" | ") }
         shot("8-celebration")
         readThrough("See Rosa's Bakery")
         check("level: the solution completes the level", (controller.verdict as? Verdict.Evaluated)?.passed == true &&
             onScreen("Rosa's Bakery is open!") && onScreen("All 2 of Rosa's wishes came true.") && onScreen("Next: 2 · Open Sign") &&
-                onScreen("1 of 2 shops open") && onScreen("2 of 2") && onScreen("That's my sign!")) { texts().joinToString(" | ") }
+                onScreen("1 of 5 shops open") && onScreen("2 of 2") && onScreen("That's my sign!")) { texts().joinToString(" | ") }
         check("level: the preview renders at the level's 400 x 300 dp viewport",
             controller.engine.state.value.frame?.let { it.width to it.height } == (400 to 300)) { "${controller.engine.state.value.frame?.let { "${it.width}x${it.height}" }}" }
         shot("8b-level-complete")
 
         clickText("Main Street")
         check("home: after the first level, its shop is lit and the street welcomes the player back",
-            onScreen("Welcome back") && onScreen("1 of 2 shops open") && onScreen("Rosa's Bakery is open. Tom is still waiting for a sign.") &&
+            onScreen("Welcome back") && onScreen("1 of 5 shops open") && onScreen("Rosa's Bakery is open. Tom is still waiting for a sign.") &&
                 onScreen("Up next") && onScreen("Continue: Open Sign") && onScreen("0 of 4 wishes") && onScreen("Starter code is ready") &&
                 onScreen("Open shops") && onScreen("3 tries") && onScreen("Visit")) { texts().joinToString(" | ") }
         shot("8a-home-welcome-back")
@@ -338,15 +338,14 @@ internal fun window(report: Report) = report.section("Spike window", Criterion.R
         check("celebration: Tom celebrates his first completion", controller.bigDialogue?.kind == BigDialogue.Kind.CELEBRATION &&
             onScreen(openSign.celebration[0])) { texts().joinToString(" | ") }
         readThrough("See Tom's Flowers")
-        check("level: solving the last level says more is coming instead of Continue",
-            onScreen("Tom's Flowers is open!") && onScreen("More of Main Street is coming soon.") && !onScreen("Next:") &&
-                onScreen("2 of 2 shops open")) { texts().joinToString(" | ") }
+        check("level: solving Open Sign offers Marco's level next",
+            onScreen("Tom's Flowers is open!") && onScreen("Next: 3 · Restaurant Menu") && onScreen("2 of 5 shops open")) { texts().joinToString(" | ") }
         check("customer: the bell rings in the Console", onScreen("customer › pressed [Order]\nNew order!")) { texts().joinToString(" | ") }
         shot("10-open-sign-complete")
         clickText("Keep tinkering")
         settle { true }
         check("level: Keep tinkering hides the completion card and keeps the level open and its shop lit",
-            !onScreen("Tom's Flowers is open!") && controller.level == openSign && onScreen("2 of 2 shops open")) { texts().joinToString(" | ") }
+            !onScreen("Tom's Flowers is open!") && controller.level == openSign && onScreen("2 of 5 shops open")) { texts().joinToString(" | ") }
 
         // A narrow window: the right column wraps under the editor (design D5).
         val narrow = newScene(1000)
@@ -401,20 +400,20 @@ internal fun window(report: Report) = report.section("Spike window", Criterion.R
         // Saved progress (village-progress): coming back to a finished level, playing again, drafts, a relaunch.
         val helloSolution = hello.starterCode.replace("Text(\"Your sign goes here\")", "Text(\"Rosa's Bakery\")\n        Text(\"Fresh bread daily\")")
         clickText("Main Street")
-        check("home: with every shop open, the street says so and lists both open shops",
-            onScreen("Every shop is open") && onScreen("2 of 2 shops open") && texts().count { it == "Visit" } == 2) { texts().joinToString(" | ") }
+        check("home: with every shop open, the street says so and lists all five open shops",
+            onScreen("Every shop is open") && onScreen("5 of 5 shops open") && texts().count { it == "Visit" } == 5) { texts().joinToString(" | ") }
         shot("12a-home-all-open")
         activate("Visit")
         settle { !controller.running }
         check("progress: reopening a finished level replays its code and shows the welcome back card",
             controller.code.text == helloSolution && (controller.verdict as? Verdict.Evaluated)?.passed == true && controller.revisiting &&
                 controller.runsThisVisit == 0 && onScreen("Rosa's Bakery is open!") && onScreen("You finished this in 3 tries.") &&
-                onScreen("Play again") && onScreen("Next: 2 · Open Sign") && onScreen("2 of 2 shops open")) { texts().joinToString(" | ") }
+                onScreen("Play again") && onScreen("Next: 2 · Open Sign") && onScreen("5 of 5 shops open")) { texts().joinToString(" | ") }
         shot("12-welcome-back")
         clickText("Play again")
         check("progress: Play again restores the starter code and the sketch, and the shop stays lit",
             controller.code.text == hello.starterCode && controller.verdict == null && controller.overlaySketch &&
-                !onScreen("Start over") && onScreen("2 of 2 shops open")) { texts().joinToString(" | ") }
+                !onScreen("Start over") && onScreen("5 of 5 shops open")) { texts().joinToString(" | ") }
         check("intro: a finished level reopens without its intro", controller.bigDialogue == null) { "${controller.bigDialogue}" }
         runCode(helloSolution)
         check("celebration: passing again after Play again shows the completion card without the celebration",
@@ -444,12 +443,12 @@ internal fun window(report: Report) = report.section("Spike window", Criterion.R
         val relaunchedScene = newScene(1280, relaunched)
         try {
             check("progress: a relaunch reads the street and the saved tries from the file",
-                relaunched.completed == setOf("000-hello-main-street", "001-open-sign") && relaunched.progress["000-hello-main-street"].tries == 3) {
+                relaunched.completed == controller.levels.map { it.id }.toSet() && relaunched.progress["000-hello-main-street"].tries == 3) {
                 "${relaunched.progress}"
             }
             frame(relaunchedScene)
             check("home: a relaunch opens on the street's welcome back form", relaunched.screen == Screen.HOME &&
-                onScreen("Welcome back", relaunchedScene) && onScreen("2 of 2 shops open", relaunchedScene)) { texts(relaunchedScene).joinToString(" | ") }
+                onScreen("Welcome back", relaunchedScene) && onScreen("5 of 5 shops open", relaunchedScene)) { texts(relaunchedScene).joinToString(" | ") }
         } finally {
             relaunchedScene.close()
             relaunched.close()
