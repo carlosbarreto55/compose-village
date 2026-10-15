@@ -363,6 +363,38 @@ internal fun window(report: Report) = report.section("Spike window", Criterion.R
             narrow.close()
         }
 
+        // The rest of Main Street (main-street-levels): Marco, Dona Lúcia and Iara, each harder than the last.
+        fun level(id: String) = controller.levels.single { it.id == id }
+        fun solution(id: String) = File("levels/src/test/resources/levels/$id/Solution.kt").readText()
+        fun result(id: String) = (controller.verdict as? Verdict.Evaluated)?.results?.single { it.id == id }
+
+        val marco = level("002-restaurant-menu")
+        controller.open(marco)
+        settle { controller.bigDialogue != null }
+        check("intro: Marco introduces himself and his menu", controller.bigDialogue?.kind == BigDialogue.Kind.INTRO &&
+            onScreen(marco.intro[0]) && onScreen("1 of 4")) { texts().joinToString(" | ") }
+        closeDialogue("Skip intro")
+        check("level: Restaurant Menu lists no panels and shows its concept chips",
+            !onScreen("CONSOLE") && !onScreen("RECOMPOSITIONS") && onScreen("New: forEach")) { texts().joinToString(" | ") }
+        runCode(marco.starterCode)
+        check("menu: the starter shows only the first dish", result("name")?.passed == true &&
+            result("dishes")?.detail == "I can't find \"Lasagna\" on the screen.") { "${controller.verdict}" }
+        shot("15-menu-starter")
+        runCode(solution(marco.id))
+        readThrough("See Marco's Kitchen")
+        check("menu: the solution opens Marco's Kitchen and offers Dona Lúcia next",
+            onScreen("Marco's Kitchen is open!") && onScreen("Next: 4 · Contest Scoreboard") && onScreen("3 of 5 shops open")) { texts().joinToString(" | ") }
+        shot("15b-menu-complete")
+
+        val lucia = level("003-contest-scoreboard")
+        clickText("Next: 4 · Contest Scoreboard")
+        check("intro: Dona Lúcia introduces the scoreboard", controller.bigDialogue?.kind == BigDialogue.Kind.INTRO &&
+            onScreen(lucia.intro[0]) && onScreen("1 of 4")) { texts().joinToString(" | ") }
+        closeDialogue("Skip intro")
+        check("level: the scoreboard unlocks Recompositions, and the Console comes without a tip",
+            controller.level == lucia && onScreen("RECOMPOSITIONS") && onScreen("CONSOLE") && onScreen("New: Recompositions") &&
+                !onScreen("New: Console")) { texts().joinToString(" | ") }
+        shot("16-scoreboard-unlock")
         // Saved progress (village-progress): coming back to a finished level, playing again, drafts, a relaunch.
         val helloSolution = hello.starterCode.replace("Text(\"Your sign goes here\")", "Text(\"Rosa's Bakery\")\n        Text(\"Fresh bread daily\")")
         clickText("Main Street")
