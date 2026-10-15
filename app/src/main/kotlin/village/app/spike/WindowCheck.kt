@@ -418,6 +418,27 @@ internal fun window(report: Report) = report.section("Spike window", Criterion.R
                 previewSize() == viewportOf(lucia)) { "${previewSize()} / ${texts().joinToString(" | ")}" }
         shot("16c-scoreboard-complete")
 
+        val iara = level("004-ferry-times")
+        clickText("Next: 5 · Ferry Times")
+        check("intro: Iara introduces the timetable", controller.bigDialogue?.kind == BigDialogue.Kind.INTRO &&
+            onScreen(iara.intro[0]) && onScreen("1 of 4")) { texts().joinToString(" | ") }
+        introFitsAt900(iara, "17a-ferry-intro-narrow")
+        closeDialogue("Skip intro")
+        check("level: Ferry Times shows both panels without unlock tips", onScreen("CONSOLE") && onScreen("RECOMPOSITIONS") &&
+            !onScreen("New: Recompositions") && !onScreen("New: Console")) { texts().joinToString(" | ") }
+        runCode(solution(iara.id).replace("contains(query, ignoreCase = true)", "contains(query)"))
+        settle { onScreen("customer › typed \"Moon Bay\" into [Where to?]") }
+        check("ferry: a case-sensitive filter fails only the coral search, with the customer's typing in the Console",
+            (controller.verdict as? Verdict.Evaluated)?.results?.filterNot { it.passed }?.map { it.id } == listOf("coral") &&
+                onScreen("customer › typed \"coral\" into [Where to?]")) { "${controller.verdict} / ${texts().joinToString(" | ")}" }
+        shot("17b-ferry-case-sensitive")
+        runCode(solution(iara.id))
+        readThrough("See Iara's Ferry")
+        check("ferry: the last level completes Main Street", onScreen("Iara's Ferry is open!") &&
+            onScreen("Main Street is complete! More of the village is coming soon.") && !onScreen("Next:") &&
+            onScreen("5 of 5 shops open") && previewSize() == viewportOf(iara)) { "${previewSize()} / ${texts().joinToString(" | ")}" }
+        shot("17c-main-street-complete")
+
         // Saved progress (village-progress): coming back to a finished level, playing again, drafts, a relaunch.
         val helloSolution = hello.starterCode.replace("Text(\"Your sign goes here\")", "Text(\"Rosa's Bakery\")\n        Text(\"Fresh bread daily\")")
         clickText("Main Street")
