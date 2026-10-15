@@ -397,6 +397,27 @@ internal fun window(report: Report) = report.section("Spike window", Criterion.R
             controller.level == lucia && onScreen("RECOMPOSITIONS") && onScreen("CONSOLE") && onScreen("New: Recompositions") &&
                 !onScreen("New: Console")) { texts().joinToString(" | ") }
         shot("16-scoreboard-unlock")
+        clickText("Got it")
+        runCode(lucia.starterCode)
+        settle { onScreen("customer › pressed [Reset]") || onScreen("customer › pressed [+1 Blue]") }
+        check("scoreboard: plain variables leave the board unchanged, and Dona Lúcia says so",
+            result("board")?.passed == true &&
+                result("blue-point")?.detail == "A customer pressed \"+1 Blue\", but the screen didn't change." &&
+                reactionFor(lucia, controller.verdict)?.text == "The children cheered, but the board didn't count it…" &&
+                onScreen("customer › pressed [+1 Blue]")) { "${controller.verdict} / ${texts().joinToString(" | ")}" }
+        shot("16b-scoreboard-unchanged")
+        runCode(solution(lucia.id))
+        check("scoreboard: remembered scores pass, and PlayerScreen recomposes after each press",
+            controller.bigDialogue?.kind == BigDialogue.Kind.CELEBRATION &&
+                (controller.engine.state.value.recompositions["PlayerScreen"] ?: 0) >= 4) {
+            "${controller.engine.state.value.recompositions}"
+        }
+        readThrough("See Dona Lúcia's School")
+        check("scoreboard: Dona Lúcia's School opens at the level's viewport, with Iara next",
+            onScreen("Dona Lúcia's School is open!") && onScreen("Next: 5 · Ferry Times") && onScreen("4 of 5 shops open") &&
+                previewSize() == viewportOf(lucia)) { "${previewSize()} / ${texts().joinToString(" | ")}" }
+        shot("16c-scoreboard-complete")
+
         // Saved progress (village-progress): coming back to a finished level, playing again, drafts, a relaunch.
         val helloSolution = hello.starterCode.replace("Text(\"Your sign goes here\")", "Text(\"Rosa's Bakery\")\n        Text(\"Fresh bread daily\")")
         clickText("Main Street")

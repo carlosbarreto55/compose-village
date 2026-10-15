@@ -57,7 +57,7 @@
 ## 9. Window check and docs
 
 - [x] 9.1 Update `WindowCheck` for a street of five shops and "N of 5 shops open"
-- [ ] 9.2 Window check: the scoreboard starter shows "the screen didn't change" in the reaction and the checklist; the solution completes the level
+- [x] 9.2 Window check: the scoreboard starter shows "the screen didn't change" in the reaction and the checklist; the solution completes the level
 - [ ] 9.3 Window check: Ferry Times with a case-sensitive filter fails `coral`; the solution completes the level and the card says Main Street is complete
 - [ ] 9.4 Window check: measure Run time for the four-press scoreboard and note it if it is over 3 s
 - [ ] 9.5 README: mention the five levels and the `all` criterion under "How a level plays", and regenerate the home screenshots
