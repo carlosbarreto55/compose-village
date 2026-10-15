@@ -62,4 +62,4 @@
 - [x] 9.4 Window check: measure Run time for the four-press scoreboard and note it if it is over 3 s
 - [x] 9.5 README: mention the five levels and the `all` criterion under "How a level plays", and regenerate the home screenshots
 - [x] 9.6 Cozy README: remove "Shops 3–5 use placeholder names" from the Home screen section
-- [ ] 9.7 `./gradlew build` passes
+- [x] 9.7 `./gradlew build` passes
