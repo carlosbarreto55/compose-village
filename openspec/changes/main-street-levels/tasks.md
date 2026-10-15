@@ -23,7 +23,7 @@
 ## 4. Level 3 · Restaurant Menu
 
 - [x] 4.1 Add `002-restaurant-menu/level.json`: Marco (`marco`, chef, "Marco's Kitchen"), request, concepts `List` and `forEach`, viewport 400 × 260, the four intro lines, the celebration and thanks lines, and the `name`, `dishes`, `order` and `prices` criteria
-- [ ] 4.2 Add `Starter.kt` with `Dish`, the `menu` list (prices in €), "Marco's Kitchen" and a hand-typed "Spaghetti", and a `forEach` tip
+- [x] 4.2 Add `Starter.kt` with `Dish`, the `menu` list (prices in €), "Marco's Kitchen" and a hand-typed "Spaghetti", and a `forEach` tip
 - [ ] 4.3 Add `Solution.kt`: a `Column` with the name and `menu.forEach` rows, prices pushed right with `fillMaxWidth` and `Arrangement.SpaceBetween`
 - [ ] 4.4 Add it to `index.json`; tests for the spec's scenarios (only the first dish, prices under the dishes)
 
