@@ -205,18 +205,26 @@ class LevelRepository(private val files: LevelFiles = LevelFiles.BUNDLED) {
             if (c.id.isBlank()) add("$name: id must not be blank")
             if (c.description.isBlank()) add("$name: description must not be blank")
             if (c.message?.isBlank() == true) add("$name: message must not be blank (leave it out instead)")
-            when (c) {
-                is Criterion.Exists -> {
-                    addAll(validate(name, "node", c.node))
-                    if (c.count != null && c.count < 1) add("$name: count must be at least 1 (use 'absent' for none)")
-                }
-                is Criterion.Absent -> addAll(validate(name, "node", c.node))
-                is Criterion.Order -> {
-                    addAll(validate(name, "a", c.a) + validate(name, "b", c.b))
-                    if (c.toleranceDp < 0) add("$name: toleranceDp must not be negative")
-                }
-                is Criterion.Prints -> if (c.text.isBlank()) add("$name: text must not be blank")
-                is Criterion.All -> if (c.checks.size < 2) add("$name: an 'all' criterion needs at least two checks; use the check on its own instead")
+            addAll(validateCheck(name, c))
+        }
+    }
+
+    /** What a criterion of [c]'s type needs, whether it stands alone or is grouped. */
+    private fun validateCheck(name: String, c: Criterion): List<String> = buildList {
+        when (c) {
+            is Criterion.Exists -> {
+                addAll(validate(name, "node", c.node))
+                if (c.count != null && c.count < 1) add("$name: count must be at least 1 (use 'absent' for none)")
+            }
+            is Criterion.Absent -> addAll(validate(name, "node", c.node))
+            is Criterion.Order -> {
+                addAll(validate(name, "a", c.a) + validate(name, "b", c.b))
+                if (c.toleranceDp < 0) add("$name: toleranceDp must not be negative")
+            }
+            is Criterion.Prints -> if (c.text.isBlank()) add("$name: text must not be blank")
+            is Criterion.All -> {
+                if (c.checks.size < 2) add("$name: an 'all' criterion needs at least two checks; use the check on its own instead")
+                c.checks.forEachIndexed { i, check -> addAll(validateCheck("$name, check ${i + 1}", check)) }
             }
         }
     }
