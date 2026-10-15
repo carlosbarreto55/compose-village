@@ -71,7 +71,7 @@ The preview engine SHALL count how many times each player composable function ex
 - **THEN** the per-function counts show the counter composable recomposing on each click, and the counts are available to the host for a heatmap
 
 ### Requirement: Semantics snapshot
-The preview engine SHALL produce, on request, a snapshot of the running attempt's **merged** semantics tree. For each node, the snapshot records its text values, content descriptions, role name (if any), its bounds in the scene in dp, and its children. It also records the viewport size in dp. The snapshot SHALL be taken on the player thread after pending invalidations are rendered, inside a guard slice. It SHALL be plain immutable data holding no reference to Compose objects or to the player's classes or class loader, so it stays valid after the attempt is unloaded and can be serialized across the helper-process boundary. When there is no running scene (nothing loaded, or the attempt crashed), the engine SHALL report no snapshot.
+The preview engine SHALL produce, on request, a snapshot of the running attempt's **merged** semantics tree. For each node, the snapshot records its id in the merged tree, its text values, content descriptions, role name (if any), its bounds in the scene in dp, and its children. It also records the viewport size in dp. The snapshot SHALL be taken on the player thread after pending invalidations are rendered, inside a guard slice. It SHALL be plain immutable data holding no reference to Compose objects or to the player's classes or class loader, so it stays valid after the attempt is unloaded and can be serialized across the helper-process boundary. When there is no running scene (nothing loaded, or the attempt crashed), the engine SHALL report no snapshot.
 
 #### Scenario: Snapshot of a column
 - **WHEN** an attempt showing `Text("Rosa's Bakery")` above `Text("Fresh bread daily")` is loaded and a snapshot is requested
@@ -95,4 +95,23 @@ Loading an attempt SHALL accept the viewport size in dp to render it at, so each
 #### Scenario: Level viewport
 - **WHEN** an attempt is loaded with a 400 × 300 dp viewport at density 2
 - **THEN** the scene renders 800 × 600 pixel frames, and the snapshot reports a 400 × 300 dp viewport
+
+### Requirement: Acting on a snapshot node
+The preview engine SHALL offer two actions on a node of the running attempt, named by the id the latest snapshot gave it, each run on the player thread inside a guard slice:
+- **press:** a pointer move, press and release at the centre of the node's bounds, through the same path as forwarded mouse input;
+- **enter text:** invoke the node's set-text semantics action with a given text.
+
+After the action, the engine SHALL render pending invalidations and complete with the result: whether the node was found (and, for enter text, had a set-text action), the snapshot after the action, and the console text printed since the action started. If the action or the rendering after it throws, the engine SHALL handle it as a crash, and the result SHALL have no snapshot.
+
+#### Scenario: Press a button by id
+- **WHEN** the host takes a snapshot, finds the node of a button "Order" and presses it by id
+- **THEN** the button's click handler runs once and the result's printed text is what the handler printed
+
+#### Scenario: Enter text by id
+- **WHEN** the host enters "Rosa" into the merged node of a `TextField` bound to a `mutableStateOf`
+- **THEN** the result's snapshot shows a node with the text "Rosa"
+
+#### Scenario: Stale id
+- **WHEN** the host presses an id that is not in the current tree
+- **THEN** the result says the node was not found and nothing is pressed
 

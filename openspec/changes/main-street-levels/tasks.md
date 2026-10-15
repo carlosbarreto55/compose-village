@@ -1,6 +1,6 @@
 ## 1. Groundwork
 
-- [ ] 1.1 Archive `customer-bot` (implemented, all tasks done), so this change's `level-definition` and `level-acceptance` deltas apply to its versions; run `openspec validate main-street-levels`
+- [x] 1.1 Archive `customer-bot` (implemented, all tasks done), so this change's `level-definition` and `level-acceptance` deltas apply to its versions; run `openspec validate main-street-levels`
 - [ ] 1.2 Spike in `preview` tests: an M3 `TextField` with `label = { Text("Where to?") }` keeps "Where to?" in its merged texts after `enterText("coral")`, and a field whose `onValueChange` ignores input leaves an identical snapshot
 - [ ] 1.3 Spike: a `remember`ed counter shows `PlayerScreen` recomposition counts rising after each press in `PreviewState.recompositions`, and a plain `var` counter does not
 

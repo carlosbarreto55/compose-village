@@ -22,13 +22,18 @@ A level SHALL be defined by these fields:
 - `starter` (optional, default `Starter.kt`): the starter code file in the level's folder.
 - `viewport` (optional, default 360 × 640 dp): `widthDp` and `heightDp`, both positive.
 - `panels` (optional, default none): the extra panels the level shows, from `console` and `recompositions`, each listed at most once.
+- `actions` (optional, default none): the customer's steps, in order, as defined by the `customer-actions` capability. Each step has:
+  - an `id` matching `^[a-z0-9]+(-[a-z0-9]+)*$`, unique within the level, which criteria name in `after`;
+  - a `type`, `press` or `enterText`;
+  - a `node` selector for its target;
+  - for `enterText`, the `text` to type (it may be empty).
 - `criteria` (required, at least one): the acceptance criteria defined by the `level-acceptance` capability.
 
-Each criterion SHALL have an `id` that is unique within the level and a non-blank player-facing `description` of what it requires. A criterion MAY have a `message`, an extra line in the villager's voice shown when it fails. If a `message` is given, it SHALL NOT be blank.
+Each criterion SHALL have an `id` that is unique within the level and a non-blank player-facing `description` of what it requires. A criterion MAY have a `message`, an extra line in the villager's voice shown when it fails. If a `message` is given, it SHALL NOT be blank. A criterion MAY have `after`, naming the step whose result it checks.
 
 #### Scenario: Minimal level
 - **WHEN** a `level.json` has `formatVersion`, `id`, `title`, `villager` (with `id`, `name` and `profession`), `shop`, `request` and one valid criterion with an `id` and a `description`
-- **THEN** it loads with `entryFunction` `PlayerScreen`, starter `Starter.kt`, a 360 × 640 dp viewport, no concepts, no intro, no celebration, no thanks line and no extra panels
+- **THEN** it loads with `entryFunction` `PlayerScreen`, starter `Starter.kt`, a 360 × 640 dp viewport, no concepts, no intro, no celebration, no thanks line, no extra panels and no customer steps
 
 #### Scenario: Duplicate criterion ids
 - **WHEN** two criteria of the same level have the id `title`
@@ -45,6 +50,10 @@ Each criterion SHALL have an `id` that is unique within the level and a non-blan
 #### Scenario: Villager without an id
 - **WHEN** a level's villager is `{ "name": "Tom", "profession": "florist" }`
 - **THEN** loading fails, naming the missing field `villager.id`
+
+#### Scenario: A press step
+- **WHEN** a level lists `"actions": [{ "id": "order", "type": "press", "node": { "role": "Button", "text": "Order" } }]`
+- **THEN** it loads with one press step `order` targeting a button "Order"
 
 ### Requirement: Levels are data files
 Each level SHALL live in its own folder named after its `id`, under the `levels/` resource root. The folder contains `level.json` and the starter code file. An `index.json` at the resource root SHALL list the level ids in play order. Adding a level SHALL require only new data files and an index entry, with no code changes.
@@ -67,13 +76,18 @@ Loading SHALL reject level data that is malformed or ambiguous, with an error th
 - unknown role names;
 - unknown professions;
 - a villager id that doesn't match its pattern;
-- selectors with no matching field set;
+- selectors with no matching field set, in criteria and in steps;
 - a non-positive viewport;
 - unknown or repeated panel names;
 - repeated or blank concepts;
 - an empty, blank or too long `intro` line, or more than four of them;
 - a blank or too long `celebration` line, or more than three of them;
 - a too long `thanks` line;
+- unknown step types;
+- step ids that are blank, repeated or don't match their pattern;
+- an `enterText` step without `text`;
+- an `after` that names no step of the level;
+- a `prints` criterion with a blank `text`;
 - a missing starter file.
 
 A level that fails validation SHALL NOT be playable.
@@ -106,6 +120,14 @@ A level that fails validation SHALL NOT be playable.
 - **WHEN** an `intro` line has 141 characters
 - **THEN** loading fails, naming the level, the line's position and the 140-character limit
 
+#### Scenario: After an unknown step
+- **WHEN** a criterion has `"after": "ordr"` and the level's only step is `order`
+- **THEN** loading fails, naming the criterion and saying `ordr` is not one of the level's steps
+
+#### Scenario: Unknown step type
+- **WHEN** a step has `"type": "click"`
+- **THEN** loading fails, naming the step and listing the valid step types `press` and `enterText`
+
 ### Requirement: Starter code
 When a level is opened, the editor SHALL contain the level's starter code. The starter code SHALL compile, and SHALL NOT already satisfy all of the level's criteria.
 
@@ -121,7 +143,7 @@ Each level SHALL have a reference solution `Solution.kt` stored under test resou
 - **THEN** no `Solution.kt` file appears in any jar inside the bundle
 
 ### Requirement: Self-checking levels
-The build's test suite SHALL check every level listed in `index.json` through the real compile pipeline and preview engine:
+The build's test suite SHALL check every level listed in `index.json` through the real compile pipeline, preview engine and customer, exactly as the game runs an attempt:
 - the level loads without validation errors;
 - its `Solution.kt` compiles and passes every criterion;
 - its `Starter.kt` compiles and fails at least one criterion;
@@ -151,7 +173,8 @@ The game SHALL ship two levels, in this order:
   - It has one celebration line before its thanks line.
 - `001-open-sign`, titled "Open Sign":
   - Tom the florist (villager id `tom`, shop "Tom's Flowers") asks for "Tom's Flowers" with an "Order" button to its right, and to print a line when the button is pressed.
-  - Its criteria check the text, the button (by role and text) and that the button is to the right of the text.
+  - Its customer presses the button "Order" once (step `order`).
+  - Its criteria check the text, the button (by role and text), that the button is to the right of the text, and that pressing it prints "New order!" (criterion `bell`, after `order`, with the message "The sign looks lovely! But a customer pressed Order and my bell stayed quiet…").
   - It lists the concepts `Row`, `Button` and `onClick`, has a thanks line, and lists the `console` panel.
   - Its intro is the four lines of `06-level-intro-dialogue.html`: Tom introduces himself as the florist next to Rosa's bakery, asks for the sign and the button, asks for "New order!" to be printed so he hears the bell, and says his sketch is on the sign board.
   - It has one celebration line before its thanks line.
@@ -171,6 +194,10 @@ The game SHALL ship two levels, in this order:
 #### Scenario: Tom's intro
 - **WHEN** `001-open-sign` is loaded
 - **THEN** it has four intro lines, the first starting "Oh, hi! You must be the new sign maker."
+
+#### Scenario: Silent bell
+- **WHEN** the player shows "Tom's Flowers" with an "Order" button to its right whose `onClick` is empty
+- **THEN** the verdict passes three criteria and fails `bell`, and Tom's reaction is "The sign looks lovely! But a customer pressed Order and my bell stayed quiet…"
 
 ### Requirement: Level targets
 For every level, the build SHALL render the level's reference solution through the real compile pipeline and preview engine, at the level's viewport and 2× density, and package the result as `target.png` in the level's folder among the game's resources. The rendered target SHALL be produced as a generated resource that is never committed, so it cannot drift from the solution. The build SHALL fail if a solution does not compile or crashes while rendering. Loading a level SHALL provide its target image if present.
