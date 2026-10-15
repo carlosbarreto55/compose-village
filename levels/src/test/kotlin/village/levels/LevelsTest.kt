@@ -55,11 +55,30 @@ class LevelsTest {
         if (problems.isNotEmpty()) fail(problems.joinToString("\n"))
     }
 
+    @Test fun eachLevelUnlocksAtMostOnePanel() {
+        val problems = crowdedUnlocks(repository.all())
+        if (problems.isNotEmpty()) fail(problems.joinToString("\n"))
+    }
+
     @Test fun theRulesNameTheLevelsAtFault() {
         val levels = repository.all()
         val menu = levels[2]
         val repeated = levels.map { if (it === menu) it.with(concepts = it.concepts + "Row") else it }
         assertEquals(listOf("concept 'Row' is listed by 001-open-sign and 002-restaurant-menu"), conceptRepeats(repeated))
+        val crowded = levels.map { if (it === menu) it.with(panels = listOf(Panel.CONSOLE, Panel.RECOMPOSITIONS)) else it }
+            .map { if (it.id == "001-open-sign") it.with(panels = emptyList()) else it }
+        assertEquals(listOf("002-restaurant-menu unlocks more than one panel: console, recompositions"), crowdedUnlocks(crowded))
+    }
+
+    @Test fun mainStreetHasFiveShops() {
+        val levels = repository.all()
+        assertEquals(
+            listOf("000-hello-main-street", "001-open-sign", "002-restaurant-menu", "003-contest-scoreboard", "004-ferry-times"),
+            levels.map { it.id },
+        )
+        assertEquals(listOf("Rosa", "Tom", "Marco", "Dona Lúcia", "Iara"), levels.map { it.villager.name })
+        assertEquals(mapOf(Panel.CONSOLE to "001-open-sign", Panel.RECOMPOSITIONS to "003-contest-scoreboard"), repository.unlocks())
+        levels.drop(2).forEach { assertEquals(4 to 1, it.intro.size to it.celebration.size, it.id) }
     }
 
     private fun Level.with(concepts: List<String> = this.concepts, panels: List<Panel> = this.panels) = Level(
@@ -72,6 +91,11 @@ class LevelsTest {
         .groupBy({ it.first }, { it.second })
         .filterValues { it.size > 1 }
         .map { (concept, ids) -> "concept '$concept' is listed by ${ids.joinToString(" and ")}" }
+
+    private fun crowdedUnlocks(levels: List<Level>) = panelUnlocks(levels).entries
+        .groupBy({ it.value }, { it.key })
+        .filterValues { it.size > 1 }
+        .map { (id, panels) -> "$id unlocks more than one panel: ${panels.joinToString { it.jsonName }}" }
 
     @Test fun everyLevelHasATargetAtTwiceItsViewport() = forEachLevel { level ->
         val png = level.targetPng ?: return@forEachLevel "${level.id}: no target.png (rendered by :levels:renderTargets)"
