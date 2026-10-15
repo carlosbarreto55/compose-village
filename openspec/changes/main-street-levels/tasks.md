@@ -11,7 +11,7 @@
 - [x] 2.3 Validate selectors inside checks like the selectors of top-level criteria
 - [x] 2.4 Evaluate `all` in `Evaluator` against the parent's moment, with the first failing check's detail; the verdict lists only the parent
 - [x] 2.5 Loader tests for each new validation error (group of one, check with `after`, nested `all`, `prints` inside, bad selector in check 2) and for a valid `all` loading
-- [ ] 2.6 Evaluator tests: every check passes; the first failing check's detail; checks after a step; the verdict has one row
+- [x] 2.6 Evaluator tests: every check passes; the first failing check's detail; checks after a step; the verdict has one row
 
 ## 3. Details after a step
 

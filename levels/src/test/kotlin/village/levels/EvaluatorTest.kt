@@ -291,4 +291,52 @@ class EvaluatorTest {
         val failed = result(bell.copy(message = "My bell stayed quiet."), pressed(""))
         assertEquals("My bell stayed quiet.", failed.message)
     }
+
+    // ---- grouped criteria (main-street-levels) ----
+
+    private fun dishes(vararg names: String) = Criterion.All(
+        "dishes", "Every dish is on screen", message = "Where's my Tiramisu?",
+        checks = names.mapIndexed { i, n -> Criterion.Exists("dishes.${i + 1}", "Every dish is on screen", Selector(text = n)) },
+    )
+
+    private val menu = dishes("Spaghetti", "Lasagna", "Risotto", "Tiramisu")
+
+    @Test fun allPassesWhenEveryCheckPasses() {
+        val verdict = Evaluator.evaluate(listOf(menu), snapshot(text("Spaghetti", 0f), text("Lasagna", 20f), text("Risotto", 40f), text("Tiramisu", 60f)))
+        assertTrue(verdict.passed)
+        assertEquals(listOf("dishes"), verdict.results.map { it.id })
+    }
+
+    @Test fun allExplainsTheFirstFailingCheck() {
+        val row = Evaluator.evaluate(listOf(menu), snapshot(text("Spaghetti", 0f), text("Risotto", 40f))).results.single()
+        assertEquals("dishes" to "I can't find \"Lasagna\" on the screen.", row.id to row.detail)
+        assertEquals("Where's my Tiramisu?", row.message)
+    }
+
+    @Test fun allMixesCheckTypes() {
+        val coral = Criterion.All(
+            "coral", "d",
+            checks = listOf(
+                Criterion.Exists("coral.1", "d", Selector(text = "08:00", contains = true)),
+                Criterion.Absent("coral.2", "d", Selector(text = "10:30", contains = true)),
+            ),
+        )
+        assertTrue(passes(coral, snapshot(text("08:00 Coral Island", 0f))))
+        assertEquals(
+            "A text containing \"10:30\" should not be on the screen.",
+            detail(coral, snapshot(text("08:00 Coral Island", 0f), text("10:30 Lighthouse Point", 20f))),
+        )
+    }
+
+    @Test fun allIsCheckedAfterItsStep() {
+        val coral = Criterion.All(
+            "coral", "d", after = "name",
+            checks = listOf(Criterion.Exists("coral.1", "d", Selector(text = "08:00")), Criterion.Absent("coral.2", "d", Selector(text = "10:30"))),
+        )
+        val everything = snapshot(text("08:00", 0f), text("10:30", 20f))
+        val attempt = Attempt(Moment(everything, ""), listOf(Step(name, Outcome.Done(Moment(snapshot(text("08:00", 0f)), "")))))
+        assertTrue(result(coral, attempt).passed)
+        assertFalse(passes(coral.copy(after = null), everything))
+    }
+
 }
