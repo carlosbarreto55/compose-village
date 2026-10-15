@@ -29,14 +29,14 @@
 
 ## 5. Level 4 · Contest Scoreboard
 
-- [x] 5.1 Add `003-contest-scoreboard/level.json`: Dona Lúcia (`lucia`, teacher, "Dona Lúcia's School"), request, concepts `remember` and `mutableStateOf`, panels `console` and `recompositions`, viewport 400 × 420, the intro, celebration and thanks lines, the steps `blue-1`, `blue-2`, `green-1` and `reset`, and the `board`, `blue-point`, `counts-up`, `teams` and `reset` criteria
+- [x] 5.1 Add `003-contest-scoreboard/level.json`: Dona Lúcia (`lucia`, teacher, "Dona Lúcia's School"), request, concepts `remember` and `mutableStateOf`, panels `console` and `recompositions`, viewport 400 × 300, the intro, celebration and thanks lines, the steps `blue-1`, `blue-2`, `green-1` and `reset`, and the `board`, `blue-point`, `counts-up`, `teams` and `reset` criteria
 - [x] 5.2 Add `Starter.kt`: the board with plain `var` scores, no Reset, and the comment and tip on watched state
 - [x] 5.3 Add `Solution.kt` with `remember { mutableStateOf(0) }` scores and a Reset button
 - [x] 5.4 Add it to `index.json`; tests for the plain-variable starter detail and the one-shared-score detail
 
 ## 6. Level 5 · Ferry Times
 
-- [ ] 6.1 Add `004-ferry-times/level.json`: Iara (`iara`, boat-captain, "Iara's Ferry"), request, concepts `TextField`, `filter` and `if`, panels `console` and `recompositions`, viewport 400 × 300, the intro, celebration and thanks lines (the thanks says Main Street is complete), the steps `coral` and `moon`, and the `field`, `timetable`, `quiet`, `coral` and `nowhere` criteria
+- [x] 6.1 Add `004-ferry-times/level.json`: Iara (`iara`, boat-captain, "Iara's Ferry"), request, concepts `TextField`, `filter` and `if`, panels `console` and `recompositions`, viewport 400 × 300, the intro, celebration and thanks lines (the thanks says Main Street is complete), the steps `coral` and `moon`, and the `field`, `timetable`, `quiet`, `coral` and `nowhere` criteria
 - [ ] 6.2 Add `Starter.kt`: `Departure`, the `departures` list, "Iara's Ferry" and a `forEach` list, with no field and a `TextField` tip
 - [ ] 6.3 Add `Solution.kt`: a remembered query, a `TextField` labelled "Where to?", `filter` ignoring case, and "No ferry goes there" when the result is empty
 - [ ] 6.4 Add it to `index.json`; tests for the starter, a case-sensitive filter, an unbound field and an always-shown message
@@ -52,7 +52,7 @@
 - [ ] 8.1 Empty `Upcoming` in `Home.kt`, keeping `UpcomingShop` and the Coming soon state
 - [ ] 8.2 Last-level completion copy: "Main Street is complete! More of the village is coming soon." on the completion card and its welcome back form; "every shop on Main Street is open" on the pick-up card
 - [ ] 8.3 Check the Recompositions unlock tip opens on `003-contest-scoreboard` and the Console shows no tip there
-- [ ] 8.4 Check that the board, menu and timetable fit their viewports in the preview's sign frame, and that targets render at 800 × 520, 800 × 600 and 800 × 840 px
+- [ ] 8.4 Check that the board, menu and timetable fit their viewports in the preview's sign frame, and that targets render at 800 × 520, 800 × 600 and 800 × 600 px
 
 ## 9. Window check and docs
 

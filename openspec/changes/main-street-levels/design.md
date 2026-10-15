@@ -91,7 +91,7 @@ Panels unlock one at a time: the Console with Tom, Recompositions with Dona Lúc
 
 ### D4. Ferry Times (Iara)
 
-- **Viewport, concepts and panels:** 400 × 420 dp; concepts `TextField`, `filter` and `if`; panels `console` and `recompositions`.
+- **Viewport, concepts and panels:** 400 × 300 dp; concepts `TextField`, `filter` and `if`; panels `console` and `recompositions`.
 - **Starter:**
   - `data class Departure(val time: String, val destination: String)`;
   - `val departures` with 08:00 and 13:15 to Coral Island, 10:30 to Lighthouse Point, and 16:45 to Old Harbor;

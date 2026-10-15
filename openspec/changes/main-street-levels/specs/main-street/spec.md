@@ -151,7 +151,7 @@ The game SHALL ship `003-contest-scoreboard`, titled "Contest Scoreboard", with 
 ### Requirement: Ferry Times
 The game SHALL ship `004-ferry-times`, titled "Ferry Times", with this content:
 - Iara the boat captain (villager id `iara`, shop "Iara's Ferry") asks for a "Where to?" field. Under it, only the departures whose destination contains what was typed are listed, whatever the case. When nothing matches, the screen says "No ferry goes there".
-- Its viewport is 400 × 420 dp. It lists the concepts `TextField`, `filter` and `if`, and the panels `console` and `recompositions`.
+- Its viewport is 400 × 300 dp. It lists the concepts `TextField`, `filter` and `if`, and the panels `console` and `recompositions`.
 - Its starter code defines `data class Departure(val time: String, val destination: String)` and `val departures` with:
   - "08:00" to Coral Island;
   - "10:30" to Lighthouse Point;
