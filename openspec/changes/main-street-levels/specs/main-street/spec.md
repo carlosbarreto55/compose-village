@@ -74,7 +74,7 @@ The game SHALL ship `001-open-sign`, titled "Open Sign", with this content:
 ### Requirement: Restaurant Menu
 The game SHALL ship `002-restaurant-menu`, titled "Restaurant Menu", with this content:
 - Marco the chef (villager id `marco`, shop "Marco's Kitchen") asks for "Marco's Kitchen" on top, then every dish from his menu list, in order, with its price to the right.
-- Its viewport is 400 × 360 dp. It lists the concepts `List` and `forEach`, no panels and no customer steps.
+- Its viewport is 400 × 260 dp. It lists the concepts `List` and `forEach`, no panels and no customer steps.
 - Its starter code defines `data class Dish(val name: String, val price: String)` and `val menu` with:
   - Spaghetti "€12";
   - Lasagna "€14";

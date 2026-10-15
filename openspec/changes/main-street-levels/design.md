@@ -57,7 +57,7 @@ Panels unlock one at a time: the Console with Tom, Recompositions with Dona Lúc
 
 ### D2. Restaurant Menu (Marco)
 
-- **Viewport and concepts:** 400 × 360 dp; concepts `List` and `forEach`; no panels; no steps.
+- **Viewport and concepts:** 400 × 260 dp; concepts `List` and `forEach`; no panels; no steps.
 - **Starter:**
   - `data class Dish(val name: String, val price: String)`;
   - `val menu = listOf(...)` with Spaghetti €12, Lasagna €14, Risotto €15 and Tiramisu €7;

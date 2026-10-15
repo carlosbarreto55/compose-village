@@ -22,7 +22,7 @@
 
 ## 4. Level 3 · Restaurant Menu
 
-- [ ] 4.1 Add `002-restaurant-menu/level.json`: Marco (`marco`, chef, "Marco's Kitchen"), request, concepts `List` and `forEach`, viewport 400 × 360, the four intro lines, the celebration and thanks lines, and the `name`, `dishes`, `order` and `prices` criteria
+- [x] 4.1 Add `002-restaurant-menu/level.json`: Marco (`marco`, chef, "Marco's Kitchen"), request, concepts `List` and `forEach`, viewport 400 × 260, the four intro lines, the celebration and thanks lines, and the `name`, `dishes`, `order` and `prices` criteria
 - [ ] 4.2 Add `Starter.kt` with `Dish`, the `menu` list (prices in €), "Marco's Kitchen" and a hand-typed "Spaghetti", and a `forEach` tip
 - [ ] 4.3 Add `Solution.kt`: a `Column` with the name and `menu.forEach` rows, prices pushed right with `fillMaxWidth` and `Arrangement.SpaceBetween`
 - [ ] 4.4 Add it to `index.json`; tests for the spec's scenarios (only the first dish, prices under the dishes)
@@ -52,7 +52,7 @@
 - [ ] 8.1 Empty `Upcoming` in `Home.kt`, keeping `UpcomingShop` and the Coming soon state
 - [ ] 8.2 Last-level completion copy: "Main Street is complete! More of the village is coming soon." on the completion card and its welcome back form; "every shop on Main Street is open" on the pick-up card
 - [ ] 8.3 Check the Recompositions unlock tip opens on `003-contest-scoreboard` and the Console shows no tip there
-- [ ] 8.4 Check that the board, menu and timetable fit their viewports in the preview's sign frame, and that targets render at 800 × 720, 800 × 600 and 800 × 840 px
+- [ ] 8.4 Check that the board, menu and timetable fit their viewports in the preview's sign frame, and that targets render at 800 × 520, 800 × 600 and 800 × 840 px
 
 ## 9. Window check and docs
 
