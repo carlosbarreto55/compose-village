@@ -137,6 +137,15 @@ object Evaluator {
     /** [node] is null when no visible node matched; then [hidden] says whether an invisible one did. */
     class Target(val node: SnapshotNode?, val hidden: Boolean)
 
+    /**
+     * Whether two screens look the same to the criteria: the same visible nodes, in tree order, with the
+     * same texts, content descriptions, roles and bounds. Node ids don't count.
+     */
+    fun sameScreen(a: SemanticsSnapshot, b: SemanticsSnapshot): Boolean {
+        fun SemanticsSnapshot.look() = nodes().filter { it.isVisibleIn(this) }.map { listOf(it.texts, it.contentDescriptions, it.role, it.bounds) }.toList()
+        return a.viewport == b.viewport && a.look() == b.look()
+    }
+
     private sealed interface Resolution
     /** [action] is null for the first frame. */
     private class Resolved(val moment: Moment, val action: Action?) : Resolution
