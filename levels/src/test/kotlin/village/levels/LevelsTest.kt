@@ -197,6 +197,23 @@ class LevelScenariosTest {
         assertEquals("Hello\n".length to "New order!\n".length, mark.consoleOffset to mark.length)
     }
 
+    @Test fun rememberedStateRecomposesAfterEachPress() {
+        fun recompositionsAfterTwoPresses(score: String): Int {
+            val counter = Level(
+                level.id, "", level.villager, "", "", entryFunction = "PlayerScreen", starterCode = "", viewport = level.viewport,
+                criteria = listOf(Criterion.Exists("x", "x", Selector(text = "Blue: 2"), after = "two")),
+                actions = listOf(Action.Press("one", Selector(text = "+1 Blue")), Action.Press("two", Selector(text = "+1 Blue"))),
+            )
+            Attempts.verdict(counter, screen("""
+                $score
+                Column { Text("Blue: ${'$'}blue"); Button(onClick = { blue++ }) { Text("+1 Blue") } }
+            """))
+            return Attempts.previewState().recompositions["PlayerScreen"] ?: 0
+        }
+        assertEquals(3, recompositionsAfterTwoPresses("var blue by remember { mutableStateOf(0) }"))
+        assertEquals(1, recompositionsAfterTwoPresses("var blue = 0"))
+    }
+
     @Test fun compileErrorIsNotRun() {
         val verdict = Attempts.verdict(level, screen("""Text(42)"""))
         assertEquals(Verdict.NotRun(Verdict.NotRun.Reason.DID_NOT_COMPILE), verdict)
