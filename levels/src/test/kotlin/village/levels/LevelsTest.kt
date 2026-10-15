@@ -48,6 +48,31 @@ class LevelsTest {
         assertEquals(1, openSign.celebration.size)
     }
 
+    // ---- rising difficulty (main-street) ----
+
+    @Test fun noConceptIsIntroducedTwice() {
+        val problems = conceptRepeats(repository.all())
+        if (problems.isNotEmpty()) fail(problems.joinToString("\n"))
+    }
+
+    @Test fun theRulesNameTheLevelsAtFault() {
+        val levels = repository.all()
+        val menu = levels[2]
+        val repeated = levels.map { if (it === menu) it.with(concepts = it.concepts + "Row") else it }
+        assertEquals(listOf("concept 'Row' is listed by 001-open-sign and 002-restaurant-menu"), conceptRepeats(repeated))
+    }
+
+    private fun Level.with(concepts: List<String> = this.concepts, panels: List<Panel> = this.panels) = Level(
+        id, title, villager, shop, request, concepts = concepts, entryFunction = entryFunction, starterCode = starterCode,
+        viewport = viewport, criteria = criteria, panels = panels,
+    )
+
+    private fun conceptRepeats(levels: List<Level>) = levels
+        .flatMap { level -> level.concepts.map { it to level.id } }
+        .groupBy({ it.first }, { it.second })
+        .filterValues { it.size > 1 }
+        .map { (concept, ids) -> "concept '$concept' is listed by ${ids.joinToString(" and ")}" }
+
     @Test fun everyLevelHasATargetAtTwiceItsViewport() = forEachLevel { level ->
         val png = level.targetPng ?: return@forEachLevel "${level.id}: no target.png (rendered by :levels:renderTargets)"
         val image = ImageIO.read(png.inputStream()) ?: return@forEachLevel "${level.id}: target.png is not an image"
