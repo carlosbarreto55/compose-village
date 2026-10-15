@@ -38,7 +38,7 @@
 
 - [x] 6.1 Add `004-ferry-times/level.json`: Iara (`iara`, boat-captain, "Iara's Ferry"), request, concepts `TextField`, `filter` and `if`, panels `console` and `recompositions`, viewport 400 × 300, the intro, celebration and thanks lines (the thanks says Main Street is complete), the steps `coral` and `moon`, and the `field`, `timetable`, `quiet`, `coral` and `nowhere` criteria
 - [x] 6.2 Add `Starter.kt`: `Departure`, the `departures` list, "Iara's Ferry" and a `forEach` list, with no field and a `TextField` tip
-- [ ] 6.3 Add `Solution.kt`: a remembered query, a `TextField` labelled "Where to?", `filter` ignoring case, and "No ferry goes there" when the result is empty
+- [x] 6.3 Add `Solution.kt`: a remembered query, a `TextField` labelled "Where to?", `filter` ignoring case, and "No ferry goes there" when the result is empty
 - [ ] 6.4 Add it to `index.json`; tests for the starter, a case-sensitive filter, an unbound field and an always-shown message
 
 ## 7. Difficulty rules
