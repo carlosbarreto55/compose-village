@@ -282,4 +282,70 @@ class LevelRepositoryTest {
 
     @Test fun blankPrintsText() =
         assertContains(problems("sign", withSteps(press, "$exists, ${bell.replace("New order!", " ")}")), "criterion 'bell': text must not be blank")
+
+    // ---- grouped criteria (main-street-levels) ----
+
+    private fun group(checks: String, extra: String = "") =
+        """{ "type": "all", "id": "dishes", "description": "Every dish is on screen", "message": "m" $extra, "checks": [ $checks ] }"""
+
+    @Test fun allDecodesItsChecks() {
+        val checks = """{ "type": "exists", "node": { "text": "Spaghetti" } }, { "type": "below", "a": { "text": "Lasagna" }, "b": { "text": "Spaghetti" } }"""
+        val level = level("sign", withSteps(press, group(checks, ", \"after\": \"order\"")))
+        assertEquals(
+            Criterion.All(
+                "dishes", "Every dish is on screen", message = "m", after = "order",
+                checks = listOf(
+                    Criterion.Exists("dishes.1", "Every dish is on screen", Selector(text = "Spaghetti")),
+                    Criterion.Below("dishes.2", "Every dish is on screen", Selector(text = "Lasagna"), Selector(text = "Spaghetti")),
+                ),
+            ),
+            level.criteria.single(),
+        )
+    }
+
+    @Test fun aGroupOfOne() =
+        assertContains(
+            problems("sign", minimal(criteria = group("""{ "type": "exists", "node": { "text": "Spaghetti" } }"""))),
+            "criterion 'dishes': an 'all' criterion needs at least two checks",
+        )
+
+    @Test fun aGroupWithoutChecks() =
+        assertContains(problems("sign", minimal(criteria = """{ "type": "all", "id": "dishes", "description": "d" }""")), "criterion 'dishes': checks is missing")
+
+    @Test fun aCheckWithItsOwnStep() {
+        val checks = """{ "type": "exists", "node": { "text": "08:00" } }, { "type": "absent", "after": "order", "node": { "text": "10:30" } }"""
+        assertContains(
+            problems("sign", withSteps(press, group(checks))),
+            "criterion 'dishes', check 2: grouped checks have no after; they use the criterion's after",
+        )
+    }
+
+    @Test fun aCheckWithAnIdOrDescription() {
+        val checks = """{ "type": "exists", "id": "x", "description": "d", "node": { "text": "A" } }, { "type": "exists", "node": { "text": "B" } }"""
+        val message = problems("sign", minimal(criteria = group(checks)))
+        assertContains(message, "criterion 'dishes', check 1: grouped checks have no id")
+        assertContains(message, "criterion 'dishes', check 1: grouped checks have no description")
+    }
+
+    @Test fun nestedGroupsAndPrintsCannotBeGrouped() {
+        val checks = """{ "type": "all", "checks": [] }, { "type": "prints", "text": "New order!" }"""
+        val message = problems("sign", minimal(criteria = group(checks)))
+        assertContains(message, "criterion 'dishes', check 1: type 'all' can't be grouped; a grouped check is one of exists, absent, above, below, leftOf, rightOf")
+        assertContains(message, "criterion 'dishes', check 2: type 'prints' can't be grouped")
+    }
+
+    @Test fun badSelectorInACheck() {
+        val checks = """{ "type": "exists", "node": { "text": "A" } }, { "type": "rightOf", "a": { "ignoreCase": true }, "b": { "text": "A" } }"""
+        assertContains(
+            problems("sign", minimal(criteria = group(checks))),
+            "criterion 'dishes', check 2: a must set at least one of text, role, contentDescription",
+        )
+    }
+
+    @Test fun typoInACheck() {
+        val checks = """{ "type": "exists", "nod": { "text": "A" } }, { "type": "exists", "node": { "text": "B" } }"""
+        val message = problems("sign", minimal(criteria = group(checks)))
+        assertContains(message, "criterion 'dishes', check 1: ")
+        assertContains(message, "nod")
+    }
 }
