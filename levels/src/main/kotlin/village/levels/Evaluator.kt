@@ -71,6 +71,16 @@ sealed interface Failure {
             else "The customer couldn't find ${action.node.phrase()} to ${if (action is Action.Press) "press" else "type into"}."
     }
 
+    /**
+     * A criterion checked after a performed step failed (main-street-levels D6): the step left the
+     * screen as it was ([unchanged]), or [failure] is what's wrong with the screen after it.
+     */
+    data class AfterStep(val action: Action, val failure: Failure, val unchanged: Boolean) : Failure {
+        override val detail get() =
+            if (unchanged) "A customer ${action.did()}, but the screen didn't change."
+            else "After a customer ${action.did()}: ${failure.detail}"
+    }
+
     /** A `prints` criterion's moment printed no line matching [expected]: nothing, or [printed] first. [action] is null for the first frame. */
     data class NotPrinted(val action: Action?, val printed: String?, val expected: String) : Failure {
         override val detail get() = when {
@@ -118,7 +128,9 @@ object Evaluator {
         fun nodes(s: SemanticsSnapshot) = checked.getOrPut(s) { Nodes.of(s) }
         return Verdict.Evaluated(criteria.map { c ->
             val failure = when (val m = moment(c, attempt)) {
-                is Resolved -> if (c is Criterion.Prints) checkPrints(c, m) else nodes(m.moment.snapshot).check(c)
+                is Resolved -> if (c is Criterion.Prints) checkPrints(c, m) else nodes(m.moment.snapshot).check(c)?.let { f ->
+                    if (m.action == null) f else Failure.AfterStep(m.action, f, unchanged = sameScreen(m.before.snapshot, m.moment.snapshot))
+                }
                 is Blocked -> m.failure
             }
             CriterionResult(c.id, c.description, failure == null, failure?.detail, if (failure == null) null else c.message)
@@ -147,16 +159,21 @@ object Evaluator {
     }
 
     private sealed interface Resolution
-    /** [action] is null for the first frame. */
-    private class Resolved(val moment: Moment, val action: Action?) : Resolution
+    /** [action] is null for the first frame; [before] is the screen the step started from (the first frame for none). */
+    private class Resolved(val moment: Moment, val action: Action?, val before: Moment) : Resolution
     /** The step never happened: why the customer stopped. */
     private class Blocked(val failure: Failure) : Resolution
 
     private fun moment(c: Criterion, attempt: Attempt): Resolution {
-        val after = c.after ?: return Resolved(attempt.first, null)
-        val step = attempt.steps.firstOrNull { it.action.id == after }
+        val after = c.after ?: return Resolved(attempt.first, null, attempt.first)
+        val index = attempt.steps.indexOfFirst { it.action.id == after }
+        val step = attempt.steps.getOrNull(index)
         return when (val outcome = step?.outcome) {
-            is Outcome.Done -> Resolved(outcome.moment, step.action)
+            is Outcome.Done -> {
+                // The customer stops at the first step it can't perform, so every earlier step was done.
+                val before = (attempt.steps.getOrNull(index - 1)?.outcome as? Outcome.Done)?.moment ?: attempt.first
+                Resolved(outcome.moment, step.action, before)
+            }
             is Outcome.NotFound -> Blocked(Failure.TargetNotFound(step.action, outcome.hidden))
             // Not reached: the step that stopped the customer explains it.
             Outcome.NotReached -> {
