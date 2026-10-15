@@ -2,6 +2,7 @@ package village.levels
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.Transient
 import village.preview.Viewport
 
 /** A playable level: what a villager asks for, the code the player starts from, and how the attempt is judged. */
@@ -175,6 +176,18 @@ sealed interface Criterion {
         override val id: String, override val description: String, val text: String,
         val ignoreCase: Boolean = false, val contains: Boolean = false,
         override val message: String? = null, override val after: String? = null,
+    ) : Criterion
+
+    /**
+     * Every one of [checks] passes against this criterion's moment: one checklist row for several
+     * checks (main-street-levels D5). Each check is an exists, absent or order criterion with the id
+     * `<id>.<n>` and this criterion's description; the loader decodes them from `checks`.
+     */
+    @Serializable @SerialName("all")
+    data class All(
+        override val id: String, override val description: String,
+        override val message: String? = null, override val after: String? = null,
+        @Transient val checks: List<Criterion> = emptyList(),
     ) : Criterion
 }
 

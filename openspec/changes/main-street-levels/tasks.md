@@ -6,7 +6,7 @@
 
 ## 2. Grouped criteria (`all`)
 
-- [ ] 2.1 Add `Criterion.All(id, description, checks, message, after)` to `Level.kt`
+- [x] 2.1 Add `Criterion.All(id, description, checks, message, after)` to `Level.kt`
 - [ ] 2.2 Decode `checks` in `LevelRepository`: each check is decoded as its criterion type with the id `<parent>.<n>` and the parent's description; reject `id`, `description`, `message` and `after` inside a check, `all` and `prints` as check types, and fewer than two checks; name errors `criterion '<id>', check <n>`
 - [ ] 2.3 Validate selectors inside checks like the selectors of top-level criteria
 - [ ] 2.4 Evaluate `all` in `Evaluator` against the parent's moment, with the first failing check's detail; the verdict lists only the parent

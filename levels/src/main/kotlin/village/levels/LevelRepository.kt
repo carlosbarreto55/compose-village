@@ -187,6 +187,7 @@ class LevelRepository(private val files: LevelFiles = LevelFiles.BUNDLED) {
                     if (c.toleranceDp < 0) add("$name: toleranceDp must not be negative")
                 }
                 is Criterion.Prints -> if (c.text.isBlank()) add("$name: text must not be blank")
+                is Criterion.All -> Unit
             }
         }
     }
