@@ -94,5 +94,58 @@ class MainStreetTest {
         assertTrue(verdict.detail("teams")!!.startsWith("After a customer pressed \"+1 Green\":"), verdict.detail("teams"))
     }
 
+    // ---- 5 · Ferry Times ----
+
+    private val iara by lazy { repository.load("004-ferry-times") }
+
+    /** Iara's starter code (data included) with [body] as `PlayerScreen`'s body. */
+    private fun timetable(body: String) = iara.starterCode.substringBefore("// Tip:") + """
+        @Composable
+        fun PlayerScreen() {
+            $body
+        }
+    """.trimIndent()
+
+    private fun ferries(filter: String, message: String = "if (matches.isEmpty()) Text(\"No ferry goes there\")") = timetable("""
+        var query by remember { mutableStateOf("") }
+        val matches = departures.filter { $filter }
+        Column {
+            TextField(value = query, onValueChange = { query = it }, label = { Text("Where to?") })
+            matches.forEach { Text(it.time + " " + it.destination) }
+            $message
+        }
+    """)
+
+    @Test fun iarasStarterHasNoField() {
+        val verdict = verdict(iara, iara.starterCode)
+        assertEquals(listOf("field", "coral", "nowhere"), verdict.failed())
+        assertEquals("The customer couldn't find \"Where to?\" to type into.", verdict.detail("coral"))
+    }
+
+    @Test fun iarasTimetable() {
+        val verdict = verdict(iara, ferries("it.destination.contains(query, ignoreCase = true)"))
+        assertTrue(verdict.passed, verdict.toString())
+    }
+
+    @Test fun aCaseSensitiveFilter() {
+        val verdict = verdict(iara, ferries("it.destination.contains(query)"))
+        assertEquals(listOf("coral"), verdict.failed())
+    }
+
+    @Test fun aFieldNotBoundToState() {
+        val verdict = verdict(iara, timetable("""
+            Column {
+                TextField(value = "", onValueChange = { }, label = { Text("Where to?") })
+                departures.forEach { Text(it.time + " " + it.destination) }
+            }
+        """))
+        assertEquals("A customer typed \"coral\" into \"Where to?\", but the screen didn't change.", verdict.detail("coral"))
+    }
+
+    @Test fun theMessageAlwaysShown() {
+        val verdict = verdict(iara, ferries("it.destination.contains(query, ignoreCase = true)", message = "Text(\"No ferry goes there\")"))
+        assertEquals(listOf("quiet"), verdict.failed())
+    }
+
     private fun results(verdict: Verdict.Evaluated, id: String) = verdict.results.single { it.id == id }.passed
 }
