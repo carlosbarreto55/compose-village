@@ -21,7 +21,7 @@ object GameText {
     fun checklistTitle(name: String) = "$name's checklist"
     fun shopOpen(shop: String) = "$shop is open!"
     fun wishesCameTrue(count: Int, name: String) = "All $count of $name's wishes came true."
-    const val COMING_SOON = "More of Main Street is coming soon."
+    const val COMING_SOON = "Main Street is complete! More of the village is coming soon."
     fun finishedIn(tries: Int) = "You finished this in $tries ${if (tries == 1) "try" else "tries"}."
     const val PLAY_AGAIN = "Play again"
     const val START_OVER = "Start over"
