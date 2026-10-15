@@ -32,7 +32,7 @@
 - [x] 5.1 Add `003-contest-scoreboard/level.json`: Dona Lúcia (`lucia`, teacher, "Dona Lúcia's School"), request, concepts `remember` and `mutableStateOf`, panels `console` and `recompositions`, viewport 400 × 420, the intro, celebration and thanks lines, the steps `blue-1`, `blue-2`, `green-1` and `reset`, and the `board`, `blue-point`, `counts-up`, `teams` and `reset` criteria
 - [x] 5.2 Add `Starter.kt`: the board with plain `var` scores, no Reset, and the comment and tip on watched state
 - [x] 5.3 Add `Solution.kt` with `remember { mutableStateOf(0) }` scores and a Reset button
-- [ ] 5.4 Add it to `index.json`; tests for the plain-variable starter detail and the one-shared-score detail
+- [x] 5.4 Add it to `index.json`; tests for the plain-variable starter detail and the one-shared-score detail
 
 ## 6. Level 5 · Ferry Times
 

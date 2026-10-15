@@ -56,5 +56,43 @@ class MainStreetTest {
         )
     }
 
+    // ---- 4 · Contest Scoreboard ----
+
+    private val lucia by lazy { repository.load("003-contest-scoreboard") }
+
+    private fun board(state: String, plusGreen: String) = """
+        import androidx.compose.foundation.layout.*
+        import androidx.compose.material3.*
+        import androidx.compose.runtime.*
+
+        @Composable
+        fun PlayerScreen() {
+            $state
+            Column {
+                Row { Text("Blue: ${'$'}blue"); Button(onClick = { blue++ }) { Text("+1 Blue") } }
+                Row { Text("Green: ${'$'}green"); Button(onClick = { $plusGreen }) { Text("+1 Green") } }
+                Button(onClick = { blue = 0; green = 0 }) { Text("Reset") }
+            }
+        }
+    """.trimIndent()
+
+    @Test fun plainVariablesNeverChangeTheBoard() {
+        val verdict = verdict(lucia, lucia.starterCode)
+        assertTrue(results(verdict, "board"))
+        assertEquals("A customer pressed \"+1 Blue\", but the screen didn't change.", verdict.detail("blue-point"))
+    }
+
+    @Test fun rememberedScores() {
+        val verdict = verdict(lucia, board("var blue by remember { mutableStateOf(0) }\nvar green by remember { mutableStateOf(0) }", "green++"))
+        assertTrue(verdict.passed, verdict.toString())
+    }
+
+    @Test fun oneSharedScore() {
+        val shared = "var blue by remember { mutableStateOf(0) }\nvar green by remember { mutableStateOf(0) }"
+        val verdict = verdict(lucia, board(shared, "blue++"))
+        assertEquals(listOf("teams"), verdict.failed())
+        assertTrue(verdict.detail("teams")!!.startsWith("After a customer pressed \"+1 Green\":"), verdict.detail("teams"))
+    }
+
     private fun results(verdict: Verdict.Evaluated, id: String) = verdict.results.single { it.id == id }.passed
 }
