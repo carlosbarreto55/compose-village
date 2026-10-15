@@ -1,18 +1,16 @@
 package village.app
 
 import village.levels.Level
-import village.levels.Profession
 import village.levels.Villager
 
 /** A shop on Main Street whose level isn't bundled yet (home-screen D3). App data, not level data. */
 data class UpcomingShop(val villager: Villager, val shop: String, val title: String)
 
-/** The placeholder shops after the bundled levels, until their levels exist. */
-val Upcoming = listOf(
-    UpcomingShop(Villager("marco", "Marco", Profession.CHEF), "Marco's Kitchen", "Restaurant Menu"),
-    UpcomingShop(Villager("lucia", "Dona Lúcia", Profession.TEACHER), "Dona Lúcia's School", "Contest Scoreboard"),
-    UpcomingShop(Villager("iara", "Iara", Profession.BOAT_CAPTAIN), "Iara's Ferry", "Ferry Times"),
-)
+/**
+ * The placeholder shops after the bundled levels, until their levels exist. Empty while Main Street's
+ * five levels are bundled and no later chapter is announced (main-street-levels D8).
+ */
+val Upcoming: List<UpcomingShop> = emptyList()
 
 /** How a building on the home street looks and what its status says (spec: Shop states). */
 enum class ShopState { OPEN, START_HERE, UP_NEXT, NOT_YET, COMING_SOON }

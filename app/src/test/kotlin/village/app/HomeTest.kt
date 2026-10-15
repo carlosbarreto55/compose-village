@@ -33,7 +33,7 @@ class HomeTest {
         assertEquals(ShopState.UP_NEXT, home.state("Tom's Flowers"))
         assertEquals(openSign, home.current)
         assertEquals(listOf(OpenShop(hello, lines = 6, tries = 1)), home.openShops)
-        assertEquals(1 to 2, home.shopsOpen to home.shopsTotal)
+        assertEquals(1 to 5, home.shopsOpen to home.shopsTotal)
         assertEquals("Rosa's Bakery is open. Tom is still waiting for a sign.", home.welcomeLine)
     }
 
@@ -41,7 +41,7 @@ class HomeTest {
         val home = homeModel(levels, levels.fold(Progress()) { p, l -> p.completing(l.id) })
         assertNull(home.current)
         assertEquals(GameText.EVERY_SHOP_OPEN, home.welcomeLine)
-        assertEquals(2, home.shopsOpen)
+        assertEquals(5, home.shopsOpen)
     }
 
     @Test fun aDraftIsNotFirstLaunch() {
@@ -51,18 +51,35 @@ class HomeTest {
         assertTrue(home.openShops.isEmpty())
     }
 
-    @Test fun placeholdersComeAfterTheLevelsAndDontCount() {
+    @Test fun mainStreetHasNoPlaceholders() {
         val home = homeModel(levels, Progress())
+        assertEquals(
+            listOf("Rosa's Bakery", "Tom's Flowers", "Marco's Kitchen", "Dona Lúcia's School", "Iara's Ferry"),
+            home.buildings.map { it.shop },
+        )
+        assertTrue(home.buildings.none { it.state == ShopState.COMING_SOON })
+        assertEquals(5, home.shopsTotal)
+    }
+
+    @Test fun upNextAfterOpenSign() {
+        val home = homeModel(levels, Progress().completing(hello.id).completing(openSign.id))
+        assertEquals("002-restaurant-menu", home.current?.id)
+        assertEquals(ShopState.UP_NEXT, home.state("Marco's Kitchen"))
+    }
+
+    @Test fun placeholdersComeAfterTheLevelsAndDontCount() {
+        val market = UpcomingShop(Villager("raimundo", "Seu Raimundo", Profession.FISHMONGER), "Seu Raimundo's Fish", "Catch of the Day")
+        val home = homeModel(levels, Progress(), listOf(market))
         val soon = home.buildings.filter { it.state == ShopState.COMING_SOON }
-        assertEquals(listOf("3 · Restaurant Menu", "4 · Contest Scoreboard", "5 · Ferry Times"), soon.map { it.numbered })
+        assertEquals(listOf("6 · Catch of the Day"), soon.map { it.numbered })
         assertTrue(soon.all { it.level == null })
-        assertEquals(2, home.shopsTotal)
+        assertEquals(5, home.shopsTotal)
     }
 
     @Test fun aPlaceholderIsDroppedWhenALevelHasItsVillager() {
-        val marco = UpcomingShop(Villager("tom", "Tom", Profession.CHEF), "Tom's Kitchen", "Menu")
-        val home = homeModel(levels, Progress(), listOf(marco) + Upcoming)
-        assertTrue(home.buildings.none { it.shop == "Tom's Kitchen" })
+        val marco = UpcomingShop(Villager("marco", "Marco", Profession.CHEF), "Marco's Kitchen", "Restaurant Menu")
+        val home = homeModel(levels, Progress(), listOf(marco))
+        assertTrue(home.buildings.none { it.state == ShopState.COMING_SOON })
         assertEquals("3 · Restaurant Menu", home.buildings[2].numbered)
     }
 }

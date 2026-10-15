@@ -49,7 +49,7 @@
 
 ## 8. The game
 
-- [ ] 8.1 Empty `Upcoming` in `Home.kt`, keeping `UpcomingShop` and the Coming soon state
+- [x] 8.1 Empty `Upcoming` in `Home.kt`, keeping `UpcomingShop` and the Coming soon state
 - [ ] 8.2 Last-level completion copy: "Main Street is complete! More of the village is coming soon." on the completion card and its welcome back form; "every shop on Main Street is open" on the pick-up card
 - [ ] 8.3 Check the Recompositions unlock tip opens on `003-contest-scoreboard` and the Console shows no tip there
 - [ ] 8.4 Check that the board, menu and timetable fit their viewports in the preview's sign frame, and that targets render at 800 × 520, 800 × 600 and 800 × 600 px
