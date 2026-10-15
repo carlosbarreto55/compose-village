@@ -4,6 +4,7 @@ import kotlinx.serialization.KSerializer
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
@@ -98,6 +99,7 @@ class LevelRepository(private val files: LevelFiles = LevelFiles.BUNDLED) {
             when {
                 obj == null -> { problems += "$name must be a JSON object"; null }
                 type !in CRITERION_TYPES -> { problems += "$name: unknown type '$type'; valid types are ${CRITERION_TYPES.joinToString()}"; null }
+                type == "all" -> decodeAll(name, obj, problems)
                 else -> decode(Criterion.serializer(), obj, problems, "$name: ")
             }
         }
@@ -139,6 +141,33 @@ class LevelRepository(private val files: LevelFiles = LevelFiles.BUNDLED) {
     }
 
     /**
+     * An `all` criterion (main-street-levels D5): its own fields, then each of its `checks` decoded as
+     * the criterion it names, with the id `<id>.<n>` and the group's description.
+     */
+    private fun decodeAll(name: String, obj: JsonObject, problems: MutableList<String>): Criterion.All? {
+        val group = decode(Criterion.serializer(), JsonObject(obj - "checks"), problems, "$name: ") as Criterion.All? ?: return null
+        val raw = obj["checks"] ?: run { problems += "$name: checks is missing; an 'all' criterion lists the checks it groups"; return null }
+        val elements = raw as? JsonArray ?: run { problems += "$name: checks must be a JSON array"; return null }
+        val checks = elements.mapIndexedNotNull { i, element ->
+            val check = "$name, check ${i + 1}"
+            val checkObj = element as? JsonObject ?: run { problems += "$check must be a JSON object"; return@mapIndexedNotNull null }
+            val type = (checkObj["type"] as? JsonPrimitive)?.contentOrNull
+            val own = OWN_FIELDS.filter { it in checkObj }
+            own.forEach { problems += "$check: grouped checks have no $it; they use the criterion's $it" }
+            when {
+                type !in CHECK_TYPES -> { problems += "$check: type '$type' can't be grouped; a grouped check is one of ${CHECK_TYPES.joinToString()}"; null }
+                own.isNotEmpty() -> null
+                else -> decode(
+                    Criterion.serializer(),
+                    JsonObject(checkObj + mapOf("id" to JsonPrimitive("${group.id}.${i + 1}"), "description" to JsonPrimitive(group.description))),
+                    problems, "$check: ",
+                )
+            }
+        }
+        return group.copy(checks = checks)
+    }
+
+    /**
      * Decodes [element], or adds the error to [problems] and returns null. Only the error's first line
      * is kept: the rest is kotlinx advice and a copy of the input.
      */
@@ -176,17 +205,26 @@ class LevelRepository(private val files: LevelFiles = LevelFiles.BUNDLED) {
             if (c.id.isBlank()) add("$name: id must not be blank")
             if (c.description.isBlank()) add("$name: description must not be blank")
             if (c.message?.isBlank() == true) add("$name: message must not be blank (leave it out instead)")
-            when (c) {
-                is Criterion.Exists -> {
-                    addAll(validate(name, "node", c.node))
-                    if (c.count != null && c.count < 1) add("$name: count must be at least 1 (use 'absent' for none)")
-                }
-                is Criterion.Absent -> addAll(validate(name, "node", c.node))
-                is Criterion.Order -> {
-                    addAll(validate(name, "a", c.a) + validate(name, "b", c.b))
-                    if (c.toleranceDp < 0) add("$name: toleranceDp must not be negative")
-                }
-                is Criterion.Prints -> if (c.text.isBlank()) add("$name: text must not be blank")
+            addAll(validateCheck(name, c))
+        }
+    }
+
+    /** What a criterion of [c]'s type needs, whether it stands alone or is grouped. */
+    private fun validateCheck(name: String, c: Criterion): List<String> = buildList {
+        when (c) {
+            is Criterion.Exists -> {
+                addAll(validate(name, "node", c.node))
+                if (c.count != null && c.count < 1) add("$name: count must be at least 1 (use 'absent' for none)")
+            }
+            is Criterion.Absent -> addAll(validate(name, "node", c.node))
+            is Criterion.Order -> {
+                addAll(validate(name, "a", c.a) + validate(name, "b", c.b))
+                if (c.toleranceDp < 0) add("$name: toleranceDp must not be negative")
+            }
+            is Criterion.Prints -> if (c.text.isBlank()) add("$name: text must not be blank")
+            is Criterion.All -> {
+                if (c.checks.size < 2) add("$name: an 'all' criterion needs at least two checks; use the check on its own instead")
+                c.checks.forEachIndexed { i, check -> addAll(validateCheck("$name, check ${i + 1}", check)) }
             }
         }
     }
@@ -241,8 +279,12 @@ class LevelRepository(private val files: LevelFiles = LevelFiles.BUNDLED) {
         private val VILLAGER_ID = Regex("^[a-z]+(-[a-z]+)*$")
         /** The longest dialogue line: three lines of 24 sp text in the narrowest dialogue box (talking-villagers D8). */
         const val MAX_LINE = 140
-        private val CRITERION_TYPES = listOf("exists", "absent", "above", "below", "leftOf", "rightOf", "prints")
+        private val CRITERION_TYPES = listOf("exists", "absent", "above", "below", "leftOf", "rightOf", "prints", "all")
         private val ACTION_TYPES = listOf("press", "enterText")
+        /** What an `all` criterion can group: checks on the screen, not on what was printed, and no groups in groups. */
+        private val CHECK_TYPES = listOf("exists", "absent", "above", "below", "leftOf", "rightOf")
+        /** Fields a grouped check takes from its criterion. */
+        private val OWN_FIELDS = listOf("id", "description", "message", "after")
 
         // Strict: unknown keys are errors (a typo must not silently drop a field). "type" picks the criterion.
         private val json = Json { ignoreUnknownKeys = false; classDiscriminator = "type" }

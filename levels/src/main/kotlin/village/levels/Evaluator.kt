@@ -71,6 +71,16 @@ sealed interface Failure {
             else "The customer couldn't find ${action.node.phrase()} to ${if (action is Action.Press) "press" else "type into"}."
     }
 
+    /**
+     * A criterion checked after a performed step failed (main-street-levels D6): the step left the
+     * screen as it was ([unchanged]), or [failure] is what's wrong with the screen after it.
+     */
+    data class AfterStep(val action: Action, val failure: Failure, val unchanged: Boolean) : Failure {
+        override val detail get() =
+            if (unchanged) "A customer ${action.did()}, but the screen didn't change."
+            else "After a customer ${action.did()}: ${failure.detail}"
+    }
+
     /** A `prints` criterion's moment printed no line matching [expected]: nothing, or [printed] first. [action] is null for the first frame. */
     data class NotPrinted(val action: Action?, val printed: String?, val expected: String) : Failure {
         override val detail get() = when {
@@ -118,7 +128,9 @@ object Evaluator {
         fun nodes(s: SemanticsSnapshot) = checked.getOrPut(s) { Nodes.of(s) }
         return Verdict.Evaluated(criteria.map { c ->
             val failure = when (val m = moment(c, attempt)) {
-                is Resolved -> if (c is Criterion.Prints) checkPrints(c, m) else nodes(m.moment.snapshot).check(c)
+                is Resolved -> if (c is Criterion.Prints) checkPrints(c, m) else nodes(m.moment.snapshot).check(c)?.let { f ->
+                    if (m.action == null) f else Failure.AfterStep(m.action, f, unchanged = sameScreen(m.before.snapshot, m.moment.snapshot))
+                }
                 is Blocked -> m.failure
             }
             CriterionResult(c.id, c.description, failure == null, failure?.detail, if (failure == null) null else c.message)
@@ -137,17 +149,31 @@ object Evaluator {
     /** [node] is null when no visible node matched; then [hidden] says whether an invisible one did. */
     class Target(val node: SnapshotNode?, val hidden: Boolean)
 
+    /**
+     * Whether two screens look the same to the criteria: the same visible nodes, in tree order, with the
+     * same texts, content descriptions, roles and bounds. Node ids don't count.
+     */
+    fun sameScreen(a: SemanticsSnapshot, b: SemanticsSnapshot): Boolean {
+        fun SemanticsSnapshot.look() = nodes().filter { it.isVisibleIn(this) }.map { listOf(it.texts, it.contentDescriptions, it.role, it.bounds) }.toList()
+        return a.viewport == b.viewport && a.look() == b.look()
+    }
+
     private sealed interface Resolution
-    /** [action] is null for the first frame. */
-    private class Resolved(val moment: Moment, val action: Action?) : Resolution
+    /** [action] is null for the first frame; [before] is the screen the step started from (the first frame for none). */
+    private class Resolved(val moment: Moment, val action: Action?, val before: Moment) : Resolution
     /** The step never happened: why the customer stopped. */
     private class Blocked(val failure: Failure) : Resolution
 
     private fun moment(c: Criterion, attempt: Attempt): Resolution {
-        val after = c.after ?: return Resolved(attempt.first, null)
-        val step = attempt.steps.firstOrNull { it.action.id == after }
+        val after = c.after ?: return Resolved(attempt.first, null, attempt.first)
+        val index = attempt.steps.indexOfFirst { it.action.id == after }
+        val step = attempt.steps.getOrNull(index)
         return when (val outcome = step?.outcome) {
-            is Outcome.Done -> Resolved(outcome.moment, step.action)
+            is Outcome.Done -> {
+                // The customer stops at the first step it can't perform, so every earlier step was done.
+                val before = (attempt.steps.getOrNull(index - 1)?.outcome as? Outcome.Done)?.moment ?: attempt.first
+                Resolved(outcome.moment, step.action, before)
+            }
             is Outcome.NotFound -> Blocked(Failure.TargetNotFound(step.action, outcome.hidden))
             // Not reached: the step that stopped the customer explains it.
             Outcome.NotReached -> {
@@ -187,6 +213,8 @@ object Evaluator {
             is Criterion.Absent -> if (matching(c.node).isEmpty()) null else Failure.Present(c.node)
             is Criterion.Order -> checkOrder(c)
             is Criterion.Prints -> error("prints is checked against the moment's output, not its nodes")
+            // The first failing check, in the order the author wrote them, explains the whole row.
+            is Criterion.All -> c.checks.firstNotNullOfOrNull { check(it) }
         }
 
         private fun checkOrder(c: Criterion.Order): Failure? {

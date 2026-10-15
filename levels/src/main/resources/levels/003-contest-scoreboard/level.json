@@ -1,0 +1,75 @@
+{
+  "formatVersion": 1,
+  "id": "003-contest-scoreboard",
+  "title": "Contest Scoreboard",
+  "villager": { "id": "lucia", "name": "Dona Lúcia", "profession": "teacher" },
+  "shop": "Dona Lúcia's School",
+  "concepts": ["remember", "mutableStateOf"],
+  "intro": [
+    "Good afternoon, dear. The school contest is tomorrow, and our scoreboard is still blank.",
+    "Each team needs its score and a “+1” button. And a “Reset” button, for when the contest starts over.",
+    "Careful: last year's board never changed when you pressed it. A scoreboard has to remember the score!",
+    "My sketch is up on the sign board. Press Run whenever you want me to take a look!"
+  ],
+  "celebration": [
+    "Blue two, Green one… and back to zero! Perfect, dear."
+  ],
+  "thanks": "The children will love it. Class dismissed — the school is open!",
+  "request": "Our scoreboard needs to count! Show \"Blue: 0\" and \"Green: 0\", a \"+1 Blue\" and a \"+1 Green\" button that add a point to their team, and a \"Reset\" button that puts both back to 0.",
+  "viewport": { "widthDp": 400, "heightDp": 300 },
+  "panels": ["console", "recompositions"],
+  "actions": [
+    { "id": "blue-1", "type": "press", "node": { "role": "Button", "text": "+1 Blue" } },
+    { "id": "blue-2", "type": "press", "node": { "role": "Button", "text": "+1 Blue" } },
+    { "id": "green-1", "type": "press", "node": { "role": "Button", "text": "+1 Green" } },
+    { "id": "reset", "type": "press", "node": { "role": "Button", "text": "Reset" } }
+  ],
+  "criteria": [
+    {
+      "type": "all",
+      "id": "board",
+      "description": "Both teams start at 0",
+      "checks": [
+        { "type": "exists", "node": { "text": "Blue: 0" } },
+        { "type": "exists", "node": { "text": "Green: 0" } }
+      ]
+    },
+    {
+      "type": "exists",
+      "id": "blue-point",
+      "description": "Pressing \"+1 Blue\" gives Blue a point",
+      "after": "blue-1",
+      "node": { "text": "Blue: 1" },
+      "message": "The children cheered, but the board didn't count it…"
+    },
+    {
+      "type": "exists",
+      "id": "counts-up",
+      "description": "Pressing it again makes it \"Blue: 2\"",
+      "after": "blue-2",
+      "node": { "text": "Blue: 2" }
+    },
+    {
+      "type": "all",
+      "id": "teams",
+      "description": "Green's point doesn't change Blue's score",
+      "after": "green-1",
+      "message": "Each team earns its own points, dear.",
+      "checks": [
+        { "type": "exists", "node": { "text": "Green: 1" } },
+        { "type": "exists", "node": { "text": "Blue: 2" } }
+      ]
+    },
+    {
+      "type": "all",
+      "id": "reset",
+      "description": "\"Reset\" puts both teams back to 0",
+      "after": "reset",
+      "message": "Tomorrow is a new contest. Reset should wipe the board clean!",
+      "checks": [
+        { "type": "exists", "node": { "text": "Blue: 0" } },
+        { "type": "exists", "node": { "text": "Green: 0" } }
+      ]
+    }
+  ]
+}

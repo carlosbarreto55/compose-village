@@ -6,7 +6,17 @@ A cozy desktop game for learning Jetpack Compose. The villagers of Main Street e
 
 ## Main Street
 
-The game opens on Main Street. Each building is a level; the Sandbox is at the end of the street. When you come back, the street shows the shops you've opened and who is still waiting, and **Continue** picks up where you left off. "Main Street" in a level's header takes you back.
+The game opens on Main Street. Each building is a level; the Sandbox is at the end of the street. Its five villagers ask for a little more each time:
+
+| | Level | Villager | New ideas |
+|---|---|---|---|
+| 1 | Hello Main Street | Rosa, the baker | `Text`, `Column` |
+| 2 | Open Sign | Tom, the florist | `Row`, `Button`, `onClick` |
+| 3 | Restaurant Menu | Marco, the chef | lists and `forEach` |
+| 4 | Contest Scoreboard | Dona Lúcia, the teacher | `remember`, `mutableStateOf` |
+| 5 | Ferry Times | Iara, the boat captain | `TextField`, `filter`, `if` |
+
+ When you come back, the street shows the shops you've opened and who is still waiting, and **Continue** picks up where you left off. "Main Street" in a level's header takes you back.
 
 ![Welcome back: Rosa's Bakery is lit, Tom's Flowers is up next with Continue, and Open shops lists Rosa's stats](docs/screenshots/home-welcome-back.png)
 
@@ -28,6 +38,10 @@ Every level is a villager with a request, starter code and a checklist.
 Some wishes are about what a button *does*. After each Run, a customer uses your screen, for example pressing Tom's Order button, and the Console and the checklist show what happened:
 
 ![Open Sign with an empty onClick: three wishes met, "A customer pressed Order, but nothing was printed", Tom's bell stayed quiet, and the Console shows the customer's press](docs/screenshots/customer-silent-bell.png)
+
+Later villagers ask for screens that remember things. Dona Lúcia's customer presses her scoreboard's buttons four times in a row, and Iara's types two searches into her timetable. When a press changes nothing, the checklist says so:
+
+![Contest Scoreboard with plain variables: the board still reads Blue: 0, and the checklist says "A customer pressed +1 Blue, but the screen didn't change."](docs/screenshots/scoreboard-unchanged.png)
 
 The **Sandbox**, at the end of the street, is a free editor with every panel. Compile errors, sandbox violations and runtime crashes point at the line that caused them:
 
@@ -73,7 +87,7 @@ Levels live in [`levels/src/main/resources/levels/`](levels/src/main/resources/l
 - the starter code;
 - the panels it uses;
 - what a customer does after the first frame, such as pressing a button or typing into a field;
-- its criteria, such as "this text exists", "this button is to the right of that text" or "pressing Order prints New order!".
+- its criteria, such as "this text exists", "this button is to the right of that text" or "pressing Order prints New order!". An `all` criterion groups several checks into one checklist row, such as "every dish is on the menu".
 
 Each level's reference solution sits in `levels/src/test/resources/levels/`. The build checks that the solution passes every criterion, and that the starter code compiles but doesn't pass yet.
 

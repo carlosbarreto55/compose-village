@@ -291,4 +291,119 @@ class EvaluatorTest {
         val failed = result(bell.copy(message = "My bell stayed quiet."), pressed(""))
         assertEquals("My bell stayed quiet.", failed.message)
     }
+
+    // ---- grouped criteria (main-street-levels) ----
+
+    private fun dishes(vararg names: String) = Criterion.All(
+        "dishes", "Every dish is on screen", message = "Where's my Tiramisu?",
+        checks = names.mapIndexed { i, n -> Criterion.Exists("dishes.${i + 1}", "Every dish is on screen", Selector(text = n)) },
+    )
+
+    private val menu = dishes("Spaghetti", "Lasagna", "Risotto", "Tiramisu")
+
+    @Test fun allPassesWhenEveryCheckPasses() {
+        val verdict = Evaluator.evaluate(listOf(menu), snapshot(text("Spaghetti", 0f), text("Lasagna", 20f), text("Risotto", 40f), text("Tiramisu", 60f)))
+        assertTrue(verdict.passed)
+        assertEquals(listOf("dishes"), verdict.results.map { it.id })
+    }
+
+    @Test fun allExplainsTheFirstFailingCheck() {
+        val row = Evaluator.evaluate(listOf(menu), snapshot(text("Spaghetti", 0f), text("Risotto", 40f))).results.single()
+        assertEquals("dishes" to "I can't find \"Lasagna\" on the screen.", row.id to row.detail)
+        assertEquals("Where's my Tiramisu?", row.message)
+    }
+
+    @Test fun allMixesCheckTypes() {
+        val coral = Criterion.All(
+            "coral", "d",
+            checks = listOf(
+                Criterion.Exists("coral.1", "d", Selector(text = "08:00", contains = true)),
+                Criterion.Absent("coral.2", "d", Selector(text = "10:30", contains = true)),
+            ),
+        )
+        assertTrue(passes(coral, snapshot(text("08:00 Coral Island", 0f))))
+        assertEquals(
+            "A text containing \"10:30\" should not be on the screen.",
+            detail(coral, snapshot(text("08:00 Coral Island", 0f), text("10:30 Lighthouse Point", 20f))),
+        )
+    }
+
+    @Test fun allIsCheckedAfterItsStep() {
+        val coral = Criterion.All(
+            "coral", "d", after = "name",
+            checks = listOf(Criterion.Exists("coral.1", "d", Selector(text = "08:00")), Criterion.Absent("coral.2", "d", Selector(text = "10:30"))),
+        )
+        val everything = snapshot(text("08:00", 0f), text("10:30", 20f))
+        val attempt = Attempt(Moment(everything, ""), listOf(Step(name, Outcome.Done(Moment(snapshot(text("08:00", 0f)), "")))))
+        assertTrue(result(coral, attempt).passed)
+        assertFalse(passes(coral.copy(after = null), everything))
+    }
+
+    // ---- details after a step (main-street-levels) ----
+
+    private val plusBlue = Action.Press("blue-1", Selector(text = "+1 Blue"))
+    private val plusGreen = Action.Press("green-1", Selector(text = "+1 Green"))
+    private fun board(blue: Int, green: Int) =
+        snapshot(text("Blue: $blue", 0f), text("+1 Blue", 0f, left = 120f, role = "Button"), text("Green: $green", 40f), text("+1 Green", 40f, left = 120f, role = "Button"))
+
+    @Test fun aPressThatChangesNothing() {
+        val attempt = Attempt(Moment(board(0, 0), ""), listOf(Step(plusBlue, Outcome.Done(Moment(board(0, 0), "")))))
+        val one = Criterion.Exists("blue-point", "d", Selector(text = "Blue: 1"), after = "blue-1")
+        assertEquals("A customer pressed \"+1 Blue\", but the screen didn't change.", result(one, attempt).detail)
+    }
+
+    @Test fun aPressThatChangesTheWrongThing() {
+        val attempt = Attempt(
+            Moment(board(0, 0), ""),
+            listOf(Step(plusBlue, Outcome.Done(Moment(board(1, 1), ""))), Step(plusGreen, Outcome.Done(Moment(board(2, 2), "")))),
+        )
+        val teams = Criterion.Exists("teams", "d", Selector(text = "Green: 1"), after = "green-1")
+        assertEquals("After a customer pressed \"+1 Green\": I can't find \"Green: 1\" on the screen.", result(teams, attempt).detail)
+    }
+
+    @Test fun theScreenBeforeAStepIsThePreviousStepsScreen() {
+        // The second press changes nothing compared with the first press's screen, though it differs from the first frame.
+        val attempt = Attempt(
+            Moment(board(0, 0), ""),
+            listOf(Step(plusBlue, Outcome.Done(Moment(board(1, 0), ""))), Step(plusGreen, Outcome.Done(Moment(board(1, 0), "")))),
+        )
+        val teams = Criterion.Exists("teams", "d", Selector(text = "Green: 1"), after = "green-1")
+        assertEquals("A customer pressed \"+1 Green\", but the screen didn't change.", result(teams, attempt).detail)
+    }
+
+    @Test fun typingIntoAnUnboundField() {
+        val where = Action.EnterText("coral", Selector(text = "Where to?"), "coral")
+        val screen = snapshot(text("Where to?", 0f), text("08:00", 60f), text("10:30", 80f))
+        val attempt = Attempt(Moment(screen, ""), listOf(Step(where, Outcome.Done(Moment(screen, "")))))
+        val coral = Criterion.Absent("coral", "d", Selector(text = "10:30"), after = "coral")
+        assertEquals("A customer typed \"coral\" into \"Where to?\", but the screen didn't change.", result(coral, attempt).detail)
+    }
+
+    @Test fun groupsGetTheStepWordingOnce() {
+        val attempt = Attempt(Moment(board(0, 0), ""), listOf(Step(plusBlue, Outcome.Done(Moment(board(1, 1), "")))))
+        val group = Criterion.All(
+            "g", "d", after = "blue-1",
+            checks = listOf(Criterion.Exists("g.1", "d", Selector(text = "Blue: 1")), Criterion.Exists("g.2", "d", Selector(text = "Green: 0"))),
+        )
+        assertEquals("After a customer pressed \"+1 Blue\": I can't find \"Green: 0\" on the screen.", result(group, attempt).detail)
+    }
+
+    @Test fun nodeIdsDoNotMakeAScreenDifferent() {
+        val a = snapshot(text("Blue: 0", 0f).copy(id = 1))
+        val b = snapshot(text("Blue: 0", 0f).copy(id = 7))
+        assertTrue(Evaluator.sameScreen(a, b))
+        assertFalse(Evaluator.sameScreen(a, snapshot(text("Blue: 0", 1f))))
+    }
+
+    @Test fun printsAndNotFoundDetailsAreUnchanged() {
+        assertEquals("A customer pressed \"Order\", but nothing was printed.", result(bell, pressed("")).detail)
+        val missing = Attempt(Moment(sign, ""), listOf(Step(order, Outcome.NotFound(hidden = false))))
+        val after = Criterion.Exists("x", "d", Selector(text = "Thanks!"), after = "order")
+        assertEquals("The customer couldn't find a button \"Order\" to press.", result(after, missing).detail)
+    }
+
+    @Test fun firstFrameDetailsDoNotMentionTheCustomer() {
+        val attempt = Attempt(Moment(board(0, 0), ""), listOf(Step(plusBlue, Outcome.Done(Moment(board(0, 0), "")))))
+        assertEquals("I can't find \"Blue: 1\" on the screen.", result(Criterion.Exists("x", "d", Selector(text = "Blue: 1")), attempt).detail)
+    }
 }

@@ -1,0 +1,64 @@
+{
+  "formatVersion": 1,
+  "id": "002-restaurant-menu",
+  "title": "Restaurant Menu",
+  "villager": { "id": "marco", "name": "Marco", "profession": "chef" },
+  "shop": "Marco's Kitchen",
+  "concepts": ["List", "forEach"],
+  "intro": [
+    "Benvenuto! My whole menu lives in my head. Can you help me put it up on the wall?",
+    "I wrote my dishes in your code, in a list called menu. Show every one, in that order, under “Marco's Kitchen”.",
+    "Put each price to the right of its dish. Nobody likes a surprise when the bill comes!",
+    "My sketch is up on the sign board. Press Run whenever you want me to take a look!"
+  ],
+  "celebration": [
+    "Bellissimo! Every dish, every price, all in a row."
+  ],
+  "thanks": "Now the whole village knows what's cooking. Grazie mille!",
+  "request": "Can you put my menu on the wall? Show \"Marco's Kitchen\" on top, then every dish from my menu list, in order, with its price to the right of it.",
+  "viewport": { "widthDp": 400, "heightDp": 260 },
+  "criteria": [
+    {
+      "type": "exists",
+      "id": "name",
+      "description": "The text \"Marco's Kitchen\" is on screen",
+      "node": { "text": "Marco's Kitchen" }
+    },
+    {
+      "type": "all",
+      "id": "dishes",
+      "description": "Every dish on the menu is on screen",
+      "message": "My menu has four dishes, and every one of them belongs on the wall!",
+      "checks": [
+        { "type": "exists", "node": { "text": "Spaghetti" } },
+        { "type": "exists", "node": { "text": "Lasagna" } },
+        { "type": "exists", "node": { "text": "Risotto" } },
+        { "type": "exists", "node": { "text": "Tiramisu" } }
+      ]
+    },
+    {
+      "type": "all",
+      "id": "order",
+      "description": "The dishes are in the menu's order, under \"Marco's Kitchen\"",
+      "message": "Dessert comes last, my friend!",
+      "checks": [
+        { "type": "below", "a": { "text": "Spaghetti" }, "b": { "text": "Marco's Kitchen" } },
+        { "type": "below", "a": { "text": "Lasagna" }, "b": { "text": "Spaghetti" } },
+        { "type": "below", "a": { "text": "Risotto" }, "b": { "text": "Lasagna" } },
+        { "type": "below", "a": { "text": "Tiramisu" }, "b": { "text": "Risotto" } }
+      ]
+    },
+    {
+      "type": "all",
+      "id": "prices",
+      "description": "Each price is to the right of its dish",
+      "message": "My customers need to see what each dish costs.",
+      "checks": [
+        { "type": "rightOf", "a": { "text": "€12" }, "b": { "text": "Spaghetti" } },
+        { "type": "rightOf", "a": { "text": "€14" }, "b": { "text": "Lasagna" } },
+        { "type": "rightOf", "a": { "text": "€15" }, "b": { "text": "Risotto" } },
+        { "type": "rightOf", "a": { "text": "€7" }, "b": { "text": "Tiramisu" } }
+      ]
+    }
+  ]
+}

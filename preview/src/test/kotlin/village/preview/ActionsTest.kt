@@ -81,6 +81,28 @@ class ActionsTest {
         assertTrue(after.nodes().any { it.id == field.id && "Rosa" in it.texts }, "the field shows Rosa: ${after.nodes().map { it.texts }.toList()}")
     }
 
+    @Test fun labelStaysInTheFieldAfterTyping() {
+        load {
+            var query by remember { mutableStateOf("") }
+            TextField(value = query, onValueChange = { query = it }, label = { Text("Where to?") })
+        }
+        val field = node { "Where to?" in it.texts }
+        val after = assertNotNull(engine.enterText(field.id, "coral").get(10, TimeUnit.SECONDS).snapshot)
+        assertTrue(after.nodes().any { "Where to?" in it.texts && "coral" in it.texts }, "${after.nodes().map { it.texts }.toList()}")
+        // A second search finds the field by its label again.
+        val again = after.nodes().first { "Where to?" in it.texts }
+        assertTrue(engine.enterText(again.id, "Moon Bay").get(10, TimeUnit.SECONDS).found)
+    }
+
+    @Test fun anUnboundFieldLeavesTheSameScreen() {
+        load { TextField(value = "", onValueChange = { }, label = { Text("Where to?") }) }
+        val before = assertNotNull(engine.snapshot().get(10, TimeUnit.SECONDS))
+        val field = before.nodes().first { "Where to?" in it.texts }
+        val after = assertNotNull(engine.enterText(field.id, "coral").get(10, TimeUnit.SECONDS).snapshot)
+        fun SemanticsSnapshot.shape() = nodes().map { Triple(it.texts, it.role, it.bounds) }.toList()
+        assertEquals(before.shape(), after.shape())
+    }
+
     @Test fun enterTextIntoPlainTextIsNotFound() {
         load { Text("Your name") }
         val result = engine.enterText(node { "Your name" in it.texts }.id, "Rosa").get(10, TimeUnit.SECONDS)

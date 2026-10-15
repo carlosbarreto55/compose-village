@@ -102,8 +102,6 @@ The game opens on Main Street instead of inside a level. The street is the menu:
 - **First launch:** "Welcome to Compose Village", Rosa's card with her request and **Start: 1 · Hello Main Street**, "How a level works" in three steps, and the Sandbox.
 - **With saved progress:** "Welcome back" and "N of M shops open" in the header. **Pick up where you left off** shows the current villager, "Your code is saved", their wish count and **Continue**. "Open shops" lists finished levels with their stats and **Visit**.
 
-Shops 3–5 use placeholder names (Marco's Kitchen, Dona Lúcia's School, Iara's Ferry) until those levels exist.
-
 ## Villager icons
 
 One glyph per villager profession, shown in a round badge: tint fill, 3 dp `wood` ring, glyph stroked in `woodDark`.

@@ -29,6 +29,9 @@ object Attempts {
         return Customer.visit(engine, level.actions)
     }
 
+    /** What the preview shows for the latest attempt, e.g. its recomposition counts. */
+    fun previewState() = engine.state.value
+
     /** Diagnostics of a failed compile, to explain test failures. */
     fun diagnostics(level: Level, source: String) = pipeline.run(source, level.entryFunction).diagnostics.joinToString("\n")
 }
