@@ -367,6 +367,8 @@ internal fun window(report: Report) = report.section("Spike window", Criterion.R
         fun level(id: String) = controller.levels.single { it.id == id }
         fun solution(id: String) = File("levels/src/test/resources/levels/$id/Solution.kt").readText()
         fun result(id: String) = (controller.verdict as? Verdict.Evaluated)?.results?.single { it.id == id }
+        fun previewSize() = controller.engine.state.value.frame?.let { it.width to it.height }
+        fun viewportOf(l: village.levels.Level) = l.viewport.widthDp.toInt() to l.viewport.heightDp.toInt()
 
         val marco = level("002-restaurant-menu")
         controller.open(marco)
@@ -382,8 +384,9 @@ internal fun window(report: Report) = report.section("Spike window", Criterion.R
         shot("15-menu-starter")
         runCode(solution(marco.id))
         readThrough("See Marco's Kitchen")
-        check("menu: the solution opens Marco's Kitchen and offers Dona Lúcia next",
-            onScreen("Marco's Kitchen is open!") && onScreen("Next: 4 · Contest Scoreboard") && onScreen("3 of 5 shops open")) { texts().joinToString(" | ") }
+        check("menu: the solution opens Marco's Kitchen and offers Dona Lúcia next, at the level's viewport",
+            onScreen("Marco's Kitchen is open!") && onScreen("Next: 4 · Contest Scoreboard") && onScreen("3 of 5 shops open") &&
+                previewSize() == viewportOf(marco)) { "${previewSize()} / ${texts().joinToString(" | ")}" }
         shot("15b-menu-complete")
 
         val lucia = level("003-contest-scoreboard")
