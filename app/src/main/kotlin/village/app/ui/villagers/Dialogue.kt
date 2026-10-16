@@ -261,7 +261,7 @@ private fun SparklesFor(height: Dp) {
 @Composable
 private fun ClosingButton(text: String, onClick: () -> Unit) {
     PrimaryButton(onClick = onClick, height = 48.dp) {
-        Text(text, style = Village.type.button, color = Color.White, maxLines = 1)
-        Chevron(Color.White, 18.dp)
+        Text(text, style = Village.type.button, color = Village.colors.onPrimary, maxLines = 1)
+        Chevron(Village.colors.onPrimary, 18.dp)
     }
 }

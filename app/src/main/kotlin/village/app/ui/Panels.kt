@@ -213,9 +213,9 @@ private fun MatchesBadge(name: String, modifier: Modifier) {
     ) {
         Canvas(Modifier.size(14.dp)) {
             val s = size.width / 14f
-            drawPath(Path().apply { moveTo(3f * s, 7.2f * s); lineTo(5.8f * s, 10f * s); lineTo(11f * s, 4.5f * s) }, Color.White, style = Stroke(2f * s))
+            drawPath(Path().apply { moveTo(3f * s, 7.2f * s); lineTo(5.8f * s, 10f * s); lineTo(11f * s, 4.5f * s) }, c.onPrimary, style = Stroke(2f * s))
         }
-        Text("Matches $name's sketch", style = Village.type.caption.copy(fontWeight = FontWeight.Bold), color = Color.White)
+        Text("Matches $name's sketch", style = Village.type.caption.copy(fontWeight = FontWeight.Bold), color = c.onPrimary)
     }
 }
 

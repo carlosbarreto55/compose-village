@@ -89,8 +89,8 @@ fun Header(controller: SpikeController) {
             val again = level != null && controller.runsThisVisit > 0 && !controller.complete
             PrimaryButton(onClick = controller::run, enabled = !controller.running) {
                 PlayGlyph()
-                Text(if (again) "Run again" else "Run", style = Village.type.button, color = Color.White, maxLines = 1)
-                Text("⌘↵", style = Village.type.codeSmall, color = Color.White.copy(alpha = 0.85f))
+                Text(if (again) "Run again" else "Run", style = Village.type.button, color = c.onPrimary, maxLines = 1)
+                Text("⌘↵", style = Village.type.codeSmall, color = c.onPrimary.copy(alpha = 0.85f))
             }
         }
         if (controller.running) {

@@ -242,8 +242,8 @@ private fun ActionRow(content: @Composable FlowRowScope.() -> Unit) {
 @Composable
 private fun BigButton(text: String, onClick: () -> Unit) {
     PrimaryButton(onClick = onClick, height = 52.dp) {
-        Text(text, style = Village.type.button.copy(fontSize = 19.sp), color = Color.White, maxLines = 1)
-        Chevron(Color.White, 18.dp)
+        Text(text, style = Village.type.button.copy(fontSize = 19.sp), color = Village.colors.onPrimary, maxLines = 1)
+        Chevron(Village.colors.onPrimary, 18.dp)
     }
 }
 

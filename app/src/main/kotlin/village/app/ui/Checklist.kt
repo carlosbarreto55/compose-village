@@ -197,7 +197,7 @@ fun CompletionCard(
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 if (next != null) {
                     PrimaryButton(onClick = onNext, modifier = Modifier.weight(1f), height = 52.dp) {
-                        Text("Next: $next", style = Village.type.button, color = Color.White, maxLines = 1)
+                        Text("Next: $next", style = Village.type.button, color = Village.colors.onPrimary, maxLines = 1)
                     }
                 } else {
                     Text(GameText.COMING_SOON, style = Village.type.body, color = c.inkMuted, modifier = Modifier.weight(1f))

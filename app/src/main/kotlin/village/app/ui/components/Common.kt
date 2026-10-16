@@ -155,13 +155,13 @@ fun StatusMark(mark: Mark, fill: Color, size: Dp = 20.dp) {
         }
         val partial = Path()
         PathMeasure().apply { setPath(path, false); getSegment(0f, length * stroke.value, partial, true) }
-        drawPath(if (mark == Mark.PASSED) partial else path, Color.White, style = Stroke(2.dp.toPx(), cap = StrokeCap.Round))
+        drawPath(if (mark == Mark.PASSED) partial else path, if (mark == Mark.PASSED) c.onPrimary else Color.White, style = Stroke(2.dp.toPx(), cap = StrokeCap.Round))
     }
 }
 
 /** A small filled triangle: the Run button's play glyph. */
 @Composable
-fun PlayGlyph(color: Color = Color.White) {
+fun PlayGlyph(color: Color = Village.colors.onPrimary) {
     Canvas(Modifier.size(16.dp)) {
         val s = size.width / 16f
         drawPath(Path().apply { moveTo(4f * s, 2.5f * s); lineTo(13f * s, 8f * s); lineTo(4f * s, 13.5f * s); close() }, color)
