@@ -39,7 +39,7 @@
 - [x] 7.1 Color literal test: scan `app/src/main/kotlin/village/app/ui/**` outside `ui/theme/` and `ui/villagers/cast/` for `Color(0x…)`, `Color.White` and `Color.Black`, failing with file and line; fix anything it finds
 - [x] 7.2 Add `CityThemes.Tracer`: dark, square corners, JetBrains Mono as the display family, loud colors that differ from every cozy token, crude rectangle `TracerScenery` and its badge colors; `CityThemes.shipped = [Cozy]` and `CityThemes.all = [Cozy, Tracer]`
 - [x] 7.3 Theme contrast test over `CityThemes.all`: `ink` and `inkMuted` on `surface` and `ground`, `onPrimary` on `primary`, `onErrorContainer` on `errorContainer`, and `editorText` on `editorBg` are all at least 4.5:1; a failure names the theme and the pair
-- [ ] 7.4 Window check `--theme <id>`, saving to `app/build/spike/window-<id>/`; run it with `tracer`, and fix every surface still drawn with cozy values until the tracer screenshots show none
+- [x] 7.4 Window check `--theme <id>`, saving to `app/build/spike/window-<id>/`; run it with `tracer`, and fix every surface still drawn with cozy values until the tracer screenshots show none
 - [ ] 7.5 Test that the game only uses shipped themes: `VillageTheme`'s default is Cozy, `CityThemes.shipped` holds only Cozy, and `Main.kt` passes no other theme
 
 ## 8. Docs and wrap-up

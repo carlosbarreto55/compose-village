@@ -39,9 +39,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.Stroke
@@ -71,6 +69,7 @@ import village.app.ui.components.PrimaryButton
 import village.app.ui.theme.LocalReducedMotion
 import village.app.ui.theme.Village
 import village.app.ui.theme.VillageFonts
+import village.app.ui.theme.drawThemeShape
 import village.levels.Villager
 
 /** The dialogue's line text: Atkinson Hyperlegible 24 sp, line height 1.5 (README "Dialogue box"). */
@@ -121,20 +120,13 @@ fun DialogueBox(villager: Villager, state: DialogueState, now: Long, glowing: Bo
         Column(
             Modifier.fillMaxWidth()
                 .drawBehind {
-                    val r = CornerRadius(22.dp.toPx())
-                    if (glowing) {
-                        val g = 10.dp.toPx()
-                        drawRoundRect(glow, Offset(-g, -g), Size(size.width + 2 * g, size.height + 2 * g), CornerRadius(r.x + g))
-                    }
-                    drawRoundRect(c.accentStrong, Offset(0f, 6.dp.toPx()), size, r) // the 6 dp bottom shadow
+                    if (glowing) drawThemeShape(shape, glow, grow = 10.dp.toPx())
+                    drawThemeShape(shape, c.accentStrong, offset = Offset(0f, 6.dp.toPx())) // the 6 dp bottom shadow
                 }
                 .clip(shape).background(c.surface).border(4.dp, c.accent, shape)
                 .drawBehind {
-                    val inset = 4.dp.toPx() + 5.dp.toPx()
-                    drawRoundRect(
-                        c.outline, Offset(inset, inset), Size(size.width - 2 * inset, size.height - 2 * inset),
-                        CornerRadius(14.dp.toPx()), style = Stroke(2.dp.toPx()),
-                    )
+                    // The inner ring, 5 dp inside the 4 dp border; cozy's corners there are 14 dp.
+                    drawThemeShape(shape, c.outline, grow = -9.dp.toPx(), radiusGrow = -8.dp.toPx(), style = Stroke(2.dp.toPx()))
                 }
                 .clickable(remember { MutableInteractionSource() }, indication = null, role = Role.Button, onClick = onAdvance)
                 .padding(start = 36.dp, end = 36.dp, top = 34.dp, bottom = 22.dp),

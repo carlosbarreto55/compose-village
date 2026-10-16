@@ -43,7 +43,6 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.FilterQuality
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.Path
@@ -65,6 +64,7 @@ import village.app.ui.components.TextAction
 import village.app.ui.components.VillageCard
 import village.app.ui.theme.LocalReducedMotion
 import village.app.ui.theme.Village
+import village.app.ui.theme.drawThemeShape
 import village.levels.Customer
 import village.levels.Panel
 import village.preview.PreviewEngine
@@ -180,26 +180,17 @@ fun PreviewCard(
 @Composable
 private fun SignFrame(glow: Float, modifier: Modifier = Modifier, content: @Composable () -> Unit) {
     val c = Village.colors
+    val sign = Village.shapes.sign
     Box(
         modifier
             .drawBehind {
                 if (glow <= 0f) return@drawBehind
-                val radius = 18.dp.toPx()
                 // A soft halo, kept within the card's padding so it doesn't tint the switch above.
-                for (k in 8 downTo 1) {
-                    val spread = k * 1.75.dp.toPx()
-                    drawRoundRect(
-                        c.glow.copy(alpha = 0.12f * glow), topLeft = Offset(-spread, -spread),
-                        size = Size(size.width + 2 * spread, size.height + 2 * spread), cornerRadius = CornerRadius(radius + spread),
-                    )
-                }
+                for (k in 8 downTo 1) drawThemeShape(sign, c.glow.copy(alpha = 0.12f * glow), grow = k * 1.75.dp.toPx())
                 val ring = 6.dp.toPx()
-                drawRoundRect(
-                    c.glowRing.copy(alpha = glow), topLeft = Offset(-ring / 2, -ring / 2), size = Size(size.width + ring, size.height + ring),
-                    cornerRadius = CornerRadius(radius + ring / 2), style = Stroke(ring),
-                )
+                drawThemeShape(sign, c.glowRing.copy(alpha = glow), grow = ring / 2, style = Stroke(ring))
             }
-            .clip(Village.shapes.sign).background(c.accent).padding(SIGN_BORDER),
+            .clip(sign).background(c.accent).padding(SIGN_BORDER),
     ) { content() }
 }
 

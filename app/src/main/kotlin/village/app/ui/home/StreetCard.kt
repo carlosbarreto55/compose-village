@@ -22,11 +22,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
-import androidx.compose.ui.geometry.CornerRadius
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.PathEffect
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
@@ -41,6 +40,7 @@ import village.app.GameText
 import village.app.HomeModel
 import village.app.ShopState
 import village.app.ui.theme.Village
+import village.app.ui.theme.drawThemeShape
 
 
 /**
@@ -111,7 +111,7 @@ private fun StreetBuilding(
     Column(
         modifier.heightIn(min = 44.dp).clip(shape)
             .background(if (current) c.groundRaised else Color.Transparent)
-            .drawBehind { if (current) dashedOutline(c.accent) }
+            .drawBehind { if (current) dashedOutline(shape, c.accent) }
             .clickable(enabled = enabled, role = Role.Button, onClick = onClick)
             .padding(start = 8.dp, end = 8.dp, top = 10.dp, bottom = 12.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -151,13 +151,10 @@ private fun Status(state: ShopState?) {
 }
 
 
-private fun DrawScope.dashedOutline(color: Color) {
+/** A dashed line just inside [shape]'s edge. */
+private fun DrawScope.dashedOutline(shape: Shape, color: Color) {
     val w = 2.dp.toPx()
-    drawRoundRect(
-        color, topLeft = Offset(w / 2, w / 2), size = size.copy(width = size.width - w, height = size.height - w),
-        cornerRadius = CornerRadius(17.dp.toPx()),
-        style = Stroke(w, pathEffect = PathEffect.dashPathEffect(floatArrayOf(6.dp.toPx(), 4.dp.toPx()))),
-    )
+    drawThemeShape(shape, color, grow = -w / 2, style = Stroke(w, pathEffect = PathEffect.dashPathEffect(floatArrayOf(6.dp.toPx(), 4.dp.toPx()))))
 }
 
 

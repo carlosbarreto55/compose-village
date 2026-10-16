@@ -22,6 +22,7 @@ import village.app.SpikeController
 import village.app.reactionFor
 import village.app.ui.offsetOf
 import village.app.ui.villagers.BIG_DIALOGUE_TAG
+import village.app.ui.theme.CityThemes
 import village.app.ui.theme.VillageTheme
 import village.compiler.Diagnostic
 import androidx.compose.ui.semantics.SemanticsActions
@@ -38,12 +39,13 @@ import java.io.File
  */
 @OptIn(ExperimentalComposeUiApi::class)
 internal fun window(report: Report, options: Options) = report.section("Spike window", Criterion.RENDERED) {
-    val out = File("app/build/spike/window").apply { mkdirs() }
+    val themed = options.theme != CityThemes.Cozy
+    val out = File(if (themed) "app/build/spike/window-${options.theme.id}" else "app/build/spike/window").apply { mkdirs() }
     // A fresh progress file per check, so the street starts dark (village-progress).
     val progressFile = File(out, "progress.json").apply { delete() }
     val controller = SpikeController(CoroutineScope(Dispatchers.Unconfined), density = 1f, ProgressStore(progressFile))
     fun newScene(width: Int, of: SpikeController = controller, reducedMotion: Boolean = true) = ImageComposeScene(width, 860, Density(1f)) {
-        VillageTheme(reducedMotion = reducedMotion) { GameScreens(of) }
+        VillageTheme(options.theme, reducedMotion = reducedMotion) { GameScreens(of) }
     }
     val scene = newScene(1280)
     // Frame times advance with the wall clock, so animations (fades, the checklist stagger) play out.
@@ -135,7 +137,7 @@ internal fun window(report: Report, options: Options) = report.section("Spike wi
     }
 
     try {
-        castSheet(File(out, "0-cast.png"))
+        castSheet(File(out, "0-cast.png"), options.theme)
         controller.warmUp()
         settle { !controller.warmingUp }
 
@@ -498,7 +500,7 @@ internal fun window(report: Report, options: Options) = report.section("Spike wi
             relaunchedScene.close()
             relaunched.close()
         }
-        text("Screenshots of each state: `app/build/spike/window/*.png` (not committed).")
+        text("Screenshots of each state, drawn with the ${options.theme.name} theme: `${out.path}/*.png` (not committed).")
     } finally {
         scene.close()
         controller.close()

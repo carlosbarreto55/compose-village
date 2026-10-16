@@ -16,6 +16,8 @@ import androidx.compose.ui.unit.dp
 import org.jetbrains.skia.EncodedImageFormat
 import village.app.Expression
 import village.app.ui.theme.Village
+import village.app.ui.theme.CityTheme
+import village.app.ui.theme.CityThemes
 import village.app.ui.theme.VillageTheme
 import village.app.ui.villagers.VillagerBust
 import village.app.ui.villagers.VillagerPortrait
@@ -37,9 +39,9 @@ internal val CAST = listOf(
  * as [file] for a side-by-side look with `design-docs/cozy/screens/villager-cast.html`.
  */
 @OptIn(ExperimentalComposeUiApi::class)
-internal fun castSheet(file: File) {
+internal fun castSheet(file: File, theme: CityTheme = CityThemes.Cozy) {
     val scene = ImageComposeScene(1180, 1080, Density(1f)) {
-        VillageTheme(reducedMotion = true) {
+        VillageTheme(theme, reducedMotion = true) {
             Column(
                 Modifier.fillMaxSize().background(Village.colors.ground).padding(24.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp),
@@ -49,7 +51,7 @@ internal fun castSheet(file: File) {
                         Text(villager.name, style = Village.type.name, color = Village.colors.ink, modifier = Modifier.padding(end = 8.dp))
                         for (expression in Expression.entries) VillagerBust(villager, expression, mouthOpen = false, height = 190.dp)
                         // Reduced motion closes the mouth, so the talking frame is drawn without it.
-                        VillageTheme(reducedMotion = false) { VillagerBust(villager, Expression.NEUTRAL, mouthOpen = true, height = 190.dp) }
+                        VillageTheme(theme, reducedMotion = false) { VillagerBust(villager, Expression.NEUTRAL, mouthOpen = true, height = 190.dp) }
                         VillagerPortrait(villager, 88.dp, Expression.PUZZLED)
                     }
                 }
