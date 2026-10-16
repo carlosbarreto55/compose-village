@@ -70,7 +70,7 @@ fun Header(controller: SpikeController) {
         ) {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 Image(BrandMark, contentDescription = null, Modifier.size(32.dp))
-                Text("Compose Village", style = Village.type.wordmark, color = c.woodDark, maxLines = 1)
+                Text("Compose Village", style = Village.type.wordmark, color = c.accentStrong, maxLines = 1)
             }
             Row(Modifier.weight(1f), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 StreetLink(onClick = controller::goHome, enabled = !controller.running)
@@ -129,7 +129,7 @@ private fun ProgressDots(controller: SpikeController) {
             val current = l == controller.level
             val color = when {
                 l.id in controller.litShops -> c.primary
-                current -> c.wood
+                current -> c.accent
                 else -> c.muted
             }
             Box(Modifier.size(16.dp), contentAlignment = Alignment.Center) {
@@ -219,7 +219,7 @@ private fun Shop(lit: Boolean, current: Boolean, enabled: Boolean, onClick: () -
                     if (current) {
                         val gap = 4.dp.toPx()
                         drawRoundRect(
-                            c.wood, topLeft = Offset(-gap, -gap), size = Size(size.width + 2 * gap, size.height + 2 * gap),
+                            c.accent, topLeft = Offset(-gap, -gap), size = Size(size.width + 2 * gap, size.height + 2 * gap),
                             cornerRadius = CornerRadius(8.dp.toPx()),
                             style = Stroke(2.dp.toPx(), pathEffect = PathEffect.dashPathEffect(floatArrayOf(4.dp.toPx(), 3.dp.toPx()))),
                         )

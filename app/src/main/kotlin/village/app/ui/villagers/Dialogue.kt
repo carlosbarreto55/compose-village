@@ -127,9 +127,9 @@ fun DialogueBox(villager: Villager, state: DialogueState, now: Long, glowing: Bo
                         val g = 10.dp.toPx()
                         drawRoundRect(glow, Offset(-g, -g), Size(size.width + 2 * g, size.height + 2 * g), CornerRadius(r.x + g))
                     }
-                    drawRoundRect(c.woodDark, Offset(0f, 6.dp.toPx()), size, r) // the 6 dp bottom shadow
+                    drawRoundRect(c.accentStrong, Offset(0f, 6.dp.toPx()), size, r) // the 6 dp bottom shadow
                 }
-                .clip(shape).background(c.surface).border(4.dp, c.wood, shape)
+                .clip(shape).background(c.surface).border(4.dp, c.accent, shape)
                 .drawBehind {
                     val inset = 4.dp.toPx() + 5.dp.toPx()
                     drawRoundRect(
@@ -157,12 +157,12 @@ fun DialogueBox(villager: Villager, state: DialogueState, now: Long, glowing: Bo
     }
 }
 
-/** The `wood` pill over the box's top edge: name in Fredoka 18, profession in `chip`. */
+/** The `accent` pill over the box's top edge: name in Fredoka 18, profession in `chip`. */
 @Composable
 private fun NameTab(villager: Villager, modifier: Modifier) {
     val c = Village.colors
     Row(
-        modifier.clip(RoundedCornerShape(percent = 50)).background(c.wood).padding(horizontal = 16.dp, vertical = 6.dp),
+        modifier.clip(RoundedCornerShape(percent = 50)).background(c.accent).padding(horizontal = 16.dp, vertical = 6.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
@@ -185,7 +185,7 @@ private fun ContinueHint() {
         Text("Click to continue", style = Village.type.small, color = c.inkMuted)
         Canvas(Modifier.size(18.dp, 14.dp)) {
             val s = size.width / 18f
-            drawPath(Path().apply { moveTo(2 * s, 2 * s); lineTo(16 * s, 2 * s); lineTo(9 * s, 12 * s); close() }, c.wood)
+            drawPath(Path().apply { moveTo(2 * s, 2 * s); lineTo(16 * s, 2 * s); lineTo(9 * s, 12 * s); close() }, c.accent)
         }
     }
 }
@@ -234,7 +234,7 @@ fun BigDialogueOverlay(villager: Villager, dialogue: BigDialogue, shop: String, 
                 if (intro) {
                     // Above the box at its right, as in 06-level-intro-dialogue.html.
                     Text(
-                        "Skip intro", style = Village.type.small.copy(fontWeight = FontWeight.Bold), color = c.woodDark,
+                        "Skip intro", style = Village.type.small.copy(fontWeight = FontWeight.Bold), color = c.accentStrong,
                         modifier = Modifier.align(Alignment.End).heightIn(min = 40.dp).clip(RoundedCornerShape(percent = 50)).background(c.surface)
                             .clickable(role = Role.Button, onClick = onClose).padding(horizontal = 16.dp, vertical = 10.dp),
                     )

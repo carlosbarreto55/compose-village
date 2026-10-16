@@ -108,10 +108,10 @@ private fun TalkTo(name: String, onTalk: (() -> Unit)?) {
         Canvas(Modifier.size(16.dp)) {
             // A small speech bubble.
             val s = size.width / 16f
-            drawRoundRect(c.wood, Offset(1 * s, 2 * s), Size(14 * s, 9 * s), CornerRadius(3 * s), style = Stroke(1.6f * s))
-            drawLine(c.wood, Offset(5 * s, 11 * s), Offset(4 * s, 14 * s), 1.6f * s)
+            drawRoundRect(c.accent, Offset(1 * s, 2 * s), Size(14 * s, 9 * s), CornerRadius(3 * s), style = Stroke(1.6f * s))
+            drawLine(c.accent, Offset(5 * s, 11 * s), Offset(4 * s, 14 * s), 1.6f * s)
         }
-        Text("Talk to $name", style = Village.type.small, color = c.woodDark)
+        Text("Talk to $name", style = Village.type.small, color = c.accentStrong)
     }
 }
 

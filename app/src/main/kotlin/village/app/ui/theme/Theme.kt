@@ -26,8 +26,10 @@ class VillageColors(
     val outline: Color = Color(0xFFE2D3BC),
     val ink: Color = Color(0xFF2B2118),
     val inkMuted: Color = Color(0xFF6B5A48),
-    val wood: Color = Color(0xFF7A4E2D),
-    val woodDark: Color = Color(0xFF5A3820),
+    /** Cozy's `wood`: the sign frame, badge rings, the current shop's dashed outline, the dialogue border. */
+    val accent: Color = Color(0xFF7A4E2D),
+    /** Cozy's `woodDark`: the wordmark, headings, glyphs on badges, the dialogue's shadow. */
+    val accentStrong: Color = Color(0xFF5A3820),
     val primary: Color = Color(0xFF2F6B45),
     /** Text and glyphs on `primary`. */
     val onPrimary: Color = Color(0xFFFFFFFF),
@@ -163,7 +165,7 @@ fun VillageTheme(theme: CityTheme = CityThemes.Cozy, reducedMotion: Boolean = Re
     val scheme = if (theme.dark) {
         darkColorScheme(
             primary = c.primary, onPrimary = c.onPrimary,
-            secondary = c.wood, onSecondary = c.ground,
+            secondary = c.accent, onSecondary = c.ground,
             tertiary = c.glow, onTertiary = c.ground,
             background = c.ground, onBackground = c.ink,
             surface = c.surface, onSurface = c.ink, surfaceVariant = c.chip, onSurfaceVariant = c.inkMuted,
@@ -173,7 +175,7 @@ fun VillageTheme(theme: CityTheme = CityThemes.Cozy, reducedMotion: Boolean = Re
     } else {
         lightColorScheme(
             primary = c.primary, onPrimary = c.onPrimary,
-            secondary = c.wood, onSecondary = Color.White,
+            secondary = c.accent, onSecondary = Color.White,
             tertiary = c.glow, onTertiary = c.ink,
             background = c.ground, onBackground = c.ink,
             surface = c.surface, onSurface = c.ink, surfaceVariant = c.chip, onSurfaceVariant = c.inkMuted,

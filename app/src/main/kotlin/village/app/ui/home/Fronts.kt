@@ -50,13 +50,13 @@ fun ShopFront(state: ShopState, profession: Profession) {
     Box(Modifier.size(BUILDING_SIZE)) {
         Canvas(Modifier.size(BUILDING_SIZE)) {
             val s = size.width / 150f
-            val line = if (lit) c.wood else DarkLine
+            val line = if (lit) c.accent else DarkLine
             if (lit) drawOval(c.glow.copy(alpha = 0.35f), Offset(0f, 42 * s), Size(150 * s, 108 * s))
             box(18, 50, 114, 98, 4, if (lit) c.surface else DarkWall, line, 3f, s)
             val roof = Path().apply { moveTo(8 * s, 54 * s); lineTo(75 * s, 14 * s); lineTo(142 * s, 54 * s); close() }
             drawPath(roof, if (lit) LitRoof else DarkRoof)
-            drawPath(roof, if (lit) c.woodDark else DarkLine, style = Stroke(3 * s, join = StrokeJoin.Round))
-            box(40, 58, 70, 18, 4, if (lit) c.glow else c.muted, if (lit) c.wood else null, 2f, s)
+            drawPath(roof, if (lit) c.accentStrong else DarkLine, style = Stroke(3 * s, join = StrokeJoin.Round))
+            box(40, 58, 70, 18, 4, if (lit) c.glow else c.muted, if (lit) c.accent else null, 2f, s)
             box(26, 82, 98, 12, 3, if (locked) LockedStripe else profession.tint, line, 2f, s)
             box(30, 102, 50, 34, 3, if (lit) c.glow else c.muted, line, 3f, s)
             drawLine(line, Offset(55 * s, 102 * s), Offset(55 * s, 136 * s), 2 * s)
@@ -77,8 +77,8 @@ fun SandboxFront() {
     Box(Modifier.size(BUILDING_SIZE)) {
         Canvas(Modifier.size(BUILDING_SIZE)) {
             val s = size.width / 150f
-            box(12, 44, 126, 16, 4, LitRoof, c.woodDark, 3f, s)
-            box(22, 58, 106, 90, 4, c.surface, c.wood, 3f, s)
+            box(12, 44, 126, 16, 4, LitRoof, c.accentStrong, 3f, s)
+            box(22, 58, 106, 90, 4, c.surface, c.accent, 3f, s)
             box(42, 76, 66, 72, 4, c.editorBg, null, 0f, s)
             val brace = Stroke(3 * s, cap = StrokeCap.Round)
             drawPath(Path().apply {
@@ -96,12 +96,12 @@ fun SandboxFront() {
     }
 }
 
-/** The Sandbox's round badge: `</>` on `chip`, with the badges' 3 dp `wood` ring. */
+/** The Sandbox's round badge: `</>` on `chip`, with the badges' 3 dp `accent` ring. */
 @Composable
 fun SandboxBadge(size: Dp = 40.dp) {
     val c = Village.colors
-    Box(Modifier.size(size).clip(CircleShape).background(c.chip).border(3.dp, c.wood, CircleShape), contentAlignment = Alignment.Center) {
-        CodeGlyph(c.woodDark, size * 0.6f)
+    Box(Modifier.size(size).clip(CircleShape).background(c.chip).border(3.dp, c.accent, CircleShape), contentAlignment = Alignment.Center) {
+        CodeGlyph(c.accentStrong, size * 0.6f)
     }
 }
 

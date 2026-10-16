@@ -133,7 +133,7 @@ fun HowALevelWorksCard(onSandbox: () -> Unit, modifier: Modifier = Modifier) {
             GameText.HOW_STEPS.forEachIndexed { i, (title, text) ->
                 Row(horizontalArrangement = Arrangement.spacedBy(14.dp)) {
                     Box(Modifier.size(32.dp).clip(VillageShapes.pill).background(c.chip), contentAlignment = Alignment.Center) {
-                        Text("${i + 1}", style = Village.type.title.copy(fontSize = 16.sp, fontWeight = FontWeight.Bold), color = c.woodDark)
+                        Text("${i + 1}", style = Village.type.title.copy(fontSize = 16.sp, fontWeight = FontWeight.Bold), color = c.accentStrong)
                     }
                     Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
                         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
@@ -149,13 +149,13 @@ fun HowALevelWorksCard(onSandbox: () -> Unit, modifier: Modifier = Modifier) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             Text(GameText.JUST_EXPERIMENT, style = Village.type.body, color = c.inkMuted, modifier = Modifier.weight(1f))
             Row(
-                Modifier.height(44.dp).clip(VillageShapes.pill).border(2.dp, c.wood, VillageShapes.pill)
+                Modifier.height(44.dp).clip(VillageShapes.pill).border(2.dp, c.accent, VillageShapes.pill)
                     .clickable(role = Role.Button, onClick = onSandbox).padding(horizontal = 18.dp),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
-                CodeGlyph(c.woodDark, 18.dp)
-                Text(GameText.OPEN_THE_SANDBOX, style = Village.type.title.copy(fontSize = 16.sp), color = c.woodDark)
+                CodeGlyph(c.accentStrong, 18.dp)
+                Text(GameText.OPEN_THE_SANDBOX, style = Village.type.title.copy(fontSize = 16.sp), color = c.accentStrong)
             }
         }
     }
@@ -225,7 +225,7 @@ private fun HomeCard(modifier: Modifier, gap: Dp, content: @Composable ColumnSco
 /** "YOUR FIRST VILLAGER": a card's small spaced caption. */
 @Composable
 private fun Caption(text: String) {
-    Text(text.uppercase(), style = Village.type.small.copy(fontWeight = FontWeight.Bold, letterSpacing = 0.06.em), color = Village.colors.wood)
+    Text(text.uppercase(), style = Village.type.small.copy(fontWeight = FontWeight.Bold, letterSpacing = 0.06.em), color = Village.colors.accent)
 }
 
 /** The primary action and its note, wrapping under each other when narrow. */
@@ -259,8 +259,8 @@ private fun VillagerPill(level: Level, modifier: Modifier = Modifier) {
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(6.dp),
     ) {
-        Icon(profession.icon, null, Modifier.size(20.dp), tint = c.woodDark)
-        Text("${level.villager.name}, ${profession.label.lowercase()}", style = Village.type.small, color = c.woodDark)
+        Icon(profession.icon, null, Modifier.size(20.dp), tint = c.accentStrong)
+        Text("${level.villager.name}, ${profession.label.lowercase()}", style = Village.type.small, color = c.accentStrong)
     }
 }
 

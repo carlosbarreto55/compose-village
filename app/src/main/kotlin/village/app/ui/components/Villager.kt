@@ -50,17 +50,17 @@ val Profession.tint: Color
         Profession.MAYOR -> Color(0xFFE3D9F0)
     }
 
-/** The round profession badge: tint fill, 3 dp wood ring, glyph in woodDark; [locked] drops the tint. */
+/** The round profession badge: tint fill, 3 dp accent ring, glyph in accentStrong; [locked] drops the tint. */
 @Composable
 fun VillagerBadge(profession: Profession, size: Dp = 72.dp, locked: Boolean = false, contentDescription: String? = null) {
     val c = Village.colors
     Box(
         Modifier.size(size).alpha(if (locked) 0.55f else 1f)
             .clip(CircleShape).background(if (locked) Color(0xFFE2D6C2) else profession.tint)
-            .border(3.dp, if (locked) Color(0xFFA8927A) else c.wood, CircleShape),
+            .border(3.dp, if (locked) Color(0xFFA8927A) else c.accent, CircleShape),
         contentAlignment = Alignment.Center,
     ) {
-        Icon(profession.icon, contentDescription, Modifier.size(size * 0.5f), tint = c.woodDark)
+        Icon(profession.icon, contentDescription, Modifier.size(size * 0.5f), tint = c.accentStrong)
     }
 }
 
@@ -73,7 +73,7 @@ fun ProfessionPill(profession: Profession) {
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(6.dp),
     ) {
-        Icon(profession.icon, null, Modifier.size(20.dp), tint = c.woodDark)
-        Text(profession.label, style = Village.type.small, color = c.woodDark)
+        Icon(profession.icon, null, Modifier.size(20.dp), tint = c.accentStrong)
+        Text(profession.label, style = Village.type.small, color = c.accentStrong)
     }
 }

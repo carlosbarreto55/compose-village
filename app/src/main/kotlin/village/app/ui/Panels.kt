@@ -74,7 +74,7 @@ import village.preview.PreviewState
 import village.preview.RuntimeError
 import village.preview.Viewport
 
-/** The sign frame's wood border; the preview card is this much wider than the viewport, plus its padding. */
+/** The sign frame's `accent` border; the preview card is this much wider than the viewport, plus its padding. */
 val SIGN_BORDER = 10.dp
 
 /**
@@ -107,7 +107,7 @@ fun PreviewCard(
                 ) {
                     Checkbox(
                         overlay, onCheckedChange = null, enabled = !showTarget,
-                        colors = CheckboxDefaults.colors(checkedColor = c.wood, uncheckedColor = c.inkMuted),
+                        colors = CheckboxDefaults.colors(checkedColor = c.accent, uncheckedColor = c.inkMuted),
                     )
                     Text("Overlay sketch", style = Village.type.small, color = c.inkMuted.copy(alpha = if (showTarget) 0.5f else 1f))
                 }
@@ -142,7 +142,7 @@ fun PreviewCard(
                             }
                         }
                     }
-                    .border(2.dp, c.woodDark, RoundedCornerShape(8.dp)),
+                    .border(2.dp, c.accentStrong, RoundedCornerShape(8.dp)),
             ) {
                 val frame = state.frame
                 when {
@@ -178,7 +178,7 @@ fun PreviewCard(
     }
 }
 
-/** The wooden sign: a 10 dp `wood` border; while [glow] > 0 a warm ring and halo light it up. */
+/** The wooden sign: a 10 dp `accent` border; while [glow] > 0 a warm ring and halo light it up. */
 @Composable
 private fun SignFrame(glow: Float, modifier: Modifier = Modifier, content: @Composable () -> Unit) {
     val c = Village.colors
@@ -201,7 +201,7 @@ private fun SignFrame(glow: Float, modifier: Modifier = Modifier, content: @Comp
                     cornerRadius = CornerRadius(radius + ring / 2), style = Stroke(ring),
                 )
             }
-            .clip(VillageShapes.sign).background(c.wood).padding(SIGN_BORDER),
+            .clip(VillageShapes.sign).background(c.accent).padding(SIGN_BORDER),
     ) { content() }
 }
 
@@ -384,7 +384,7 @@ fun Unlockable(panel: Panel, highlight: Boolean, onDismiss: () -> Unit, content:
                     .padding(horizontal = 16.dp, vertical = 12.dp),
                 verticalArrangement = Arrangement.spacedBy(4.dp),
             ) {
-                Text("New: $title", style = Village.type.title, color = c.woodDark)
+                Text("New: $title", style = Village.type.title, color = c.accentStrong)
                 Text(explanation, style = Village.type.small, color = c.ink)
                 Box(Modifier.align(Alignment.End)) { TextAction("Got it", onClick = onDismiss, bold = true) }
             }

@@ -68,11 +68,11 @@ fun StreetCard(home: HomeModel, enabled: Boolean, onOpen: (Building) -> Unit, on
             ) {
                 val caption = if (home.firstLaunch) GameText.HOME_TAGLINE else GameText.STREET
                 Text(
-                    caption.uppercase(), color = c.wood,
+                    caption.uppercase(), color = c.accent,
                     style = Village.type.small.copy(fontWeight = FontWeight.Bold, letterSpacing = 0.06.em),
                 )
                 Text(
-                    if (home.firstLaunch) GameText.WELCOME else GameText.WELCOME_BACK, color = c.woodDark, textAlign = TextAlign.Center,
+                    if (home.firstLaunch) GameText.WELCOME else GameText.WELCOME_BACK, color = c.accentStrong, textAlign = TextAlign.Center,
                     style = Village.type.celebration.copy(fontSize = 48.sp, lineHeight = 53.sp),
                 )
                 Text(
@@ -105,7 +105,7 @@ fun StreetCard(home: HomeModel, enabled: Boolean, onOpen: (Building) -> Unit, on
     }
 }
 
-/** A building as a button: drawing, shop name, number and title, status; dashed `wood` around the current one. */
+/** A building as a button: drawing, shop name, number and title, status; dashed `accent` around the current one. */
 @Composable
 private fun StreetBuilding(
     name: String, place: String, state: ShopState?, enabled: Boolean, onClick: () -> Unit,
@@ -117,7 +117,7 @@ private fun StreetBuilding(
     Column(
         modifier.heightIn(min = 44.dp).clip(shape)
             .background(if (current) c.groundRaised else Color.Transparent)
-            .drawBehind { if (current) dashedOutline(c.wood) }
+            .drawBehind { if (current) dashedOutline(c.accent) }
             .clickable(enabled = enabled, role = Role.Button, onClick = onClick)
             .padding(start = 8.dp, end = 8.dp, top = 10.dp, bottom = 12.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -135,7 +135,7 @@ private fun Status(state: ShopState?) {
     val c = Village.colors
     val bold = Village.type.caption.copy(fontWeight = FontWeight.Bold)
     when (state) {
-        null -> Text(GameText.SANDBOX_STATUS, style = bold, color = c.woodDark)
+        null -> Text(GameText.SANDBOX_STATUS, style = bold, color = c.accentStrong)
         ShopState.OPEN -> Row(verticalAlignment = Alignment.CenterVertically) {
             Canvas(Modifier.size(14.dp)) {
                 val s = size.width / 14f
@@ -149,7 +149,7 @@ private fun Status(state: ShopState?) {
         ShopState.START_HERE, ShopState.UP_NEXT -> Text(
             if (state == ShopState.START_HERE) GameText.STATUS_START_HERE else GameText.STATUS_UP_NEXT,
             style = bold, color = Color.White,
-            modifier = Modifier.clip(VillageShapes.pill).background(c.wood).padding(horizontal = 12.dp, vertical = 4.dp),
+            modifier = Modifier.clip(VillageShapes.pill).background(c.accent).padding(horizontal = 12.dp, vertical = 4.dp),
         )
         ShopState.NOT_YET -> Text(GameText.STATUS_NOT_YET, style = Village.type.caption, color = c.inkMuted)
         ShopState.COMING_SOON -> Text(GameText.STATUS_COMING_SOON, style = Village.type.caption, color = c.inkMuted)

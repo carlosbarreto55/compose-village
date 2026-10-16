@@ -108,7 +108,7 @@ private fun HomeHeader(controller: SpikeController, home: HomeModel) {
     ) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             Image(BrandMark, contentDescription = null, Modifier.size(32.dp))
-            Text("Compose Village", style = Village.type.wordmark, color = c.woodDark, maxLines = 1)
+            Text("Compose Village", style = Village.type.wordmark, color = c.accentStrong, maxLines = 1)
         }
         if (!home.firstLaunch) Text(GameText.shopsOpen(home.shopsOpen, home.shopsTotal), style = Village.type.small, color = c.inkMuted)
         Spacer(Modifier.weight(1f))

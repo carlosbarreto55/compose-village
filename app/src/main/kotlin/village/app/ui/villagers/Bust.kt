@@ -258,7 +258,7 @@ fun VillagerBust(villager: Villager, expression: Expression, mouthOpen: Boolean,
 
 /**
  * The villager's round portrait for cards (spec: Villager card): the bust's head and shoulders in a
- * tinted circle with the badges' 3 dp `wood` ring, or the profession badge when there is no bust.
+ * tinted circle with the badges' 3 dp `accent` ring, or the profession badge when there is no bust.
  */
 @Composable
 fun VillagerPortrait(villager: Villager, size: Dp, expression: Expression = Expression.NEUTRAL, mouthOpen: Boolean = false) {
@@ -273,7 +273,7 @@ fun VillagerPortrait(villager: Villager, size: Dp, expression: Expression = Expr
     val bob = bobFor(talking, 3.dp)
     val blinking = rememberBlinking(villager.id)
     Box(
-        Modifier.size(size).clip(CircleShape).background(villager.profession.tint).border(3.dp, c.wood, CircleShape)
+        Modifier.size(size).clip(CircleShape).background(villager.profession.tint).border(3.dp, c.accent, CircleShape)
             .semantics { contentDescription = description },
     ) {
         Canvas(Modifier.size(size).offset(y = bob)) {

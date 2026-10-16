@@ -99,13 +99,13 @@ fun SecondaryButton(text: String, onClick: () -> Unit, modifier: Modifier = Modi
             .clickable(role = Role.Button, onClick = onClick).padding(horizontal = 18.dp),
         contentAlignment = Alignment.Center,
     ) {
-        Text(text, style = Village.type.body, color = c.woodDark)
+        Text(text, style = Village.type.body, color = c.accentStrong)
     }
 }
 
 /** A text-only action with a 44 dp hit area ("Got it", "Sandbox"). */
 @Composable
-fun TextAction(text: String, onClick: () -> Unit, color: Color = Village.colors.woodDark, bold: Boolean = false, enabled: Boolean = true) {
+fun TextAction(text: String, onClick: () -> Unit, color: Color = Village.colors.accentStrong, bold: Boolean = false, enabled: Boolean = true) {
     Box(
         Modifier.heightIn(min = 44.dp).widthIn(min = 44.dp).clip(VillageShapes.pill)
             .clickable(enabled = enabled, role = Role.Button, onClick = onClick).padding(horizontal = 10.dp),
@@ -121,7 +121,7 @@ fun TextAction(text: String, onClick: () -> Unit, color: Color = Village.colors.
 fun ConceptChip(text: String) {
     val c = Village.colors
     Text(
-        text, style = Village.type.caption, color = c.woodDark,
+        text, style = Village.type.caption, color = c.accentStrong,
         modifier = Modifier.clip(VillageShapes.pill).background(c.chip).padding(horizontal = 10.dp, vertical = 4.dp),
     )
 }
