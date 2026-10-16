@@ -1,4 +1,4 @@
-package village.app.ui.icons
+package village.app.ui.theme.cozy
 
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
@@ -8,8 +8,8 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.graphics.vector.addPathNodes
 import androidx.compose.ui.unit.dp
 
-/** The header's little house (32 x 32), in its own colors: draw it untinted. */
-val BrandMark: ImageVector by lazy {
+/** Cozy's brand mark: a little wooden house (32 x 32), in its own colors, so it is drawn untinted. */
+internal val CozyBrandMark: ImageVector by lazy {
     val wood = SolidColor(Color(0xFF7A4E2D))
     ImageVector.Builder("brand", 32.dp, 32.dp, 32f, 32f).apply {
         addPath(addPathNodes("M4 14 L16 5 L28 14"), stroke = wood, strokeLineWidth = 2.5f, strokeLineCap = StrokeCap.Round, strokeLineJoin = StrokeJoin.Round)

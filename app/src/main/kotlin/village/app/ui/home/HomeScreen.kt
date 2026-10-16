@@ -29,7 +29,6 @@ import village.app.SpikeController
 import village.app.homeModel
 import village.app.ui.BuildStatusLabel
 import village.app.ui.TWO_COLUMNS_MIN_WIDTH
-import village.app.ui.icons.BrandMark
 import village.app.ui.numbered
 import village.app.ui.theme.Village
 import village.app.ui.theme.VillageSpacing
@@ -107,7 +106,7 @@ private fun HomeHeader(controller: SpikeController, home: HomeModel) {
         horizontalArrangement = Arrangement.spacedBy(24.dp),
     ) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            Image(BrandMark, contentDescription = null, Modifier.size(32.dp))
+            Image(Village.theme.brandMark, contentDescription = null, Modifier.size(32.dp))
             Text("Compose Village", style = Village.type.wordmark, color = c.accentStrong, maxLines = 1)
         }
         if (!home.firstLaunch) Text(GameText.shopsOpen(home.shopsOpen, home.shopsTotal), style = Village.type.small, color = c.inkMuted)

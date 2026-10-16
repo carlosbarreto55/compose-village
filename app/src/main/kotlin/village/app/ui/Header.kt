@@ -47,7 +47,6 @@ import village.app.ui.components.Dot
 import village.app.ui.components.PlayGlyph
 import village.app.ui.components.PrimaryButton
 import village.app.ui.components.TextAction
-import village.app.ui.icons.BrandMark
 import village.app.ui.theme.Village
 import village.app.ui.theme.VillageSpacing
 import village.levels.Level
@@ -69,7 +68,7 @@ fun Header(controller: SpikeController) {
             horizontalArrangement = Arrangement.spacedBy(24.dp),
         ) {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                Image(BrandMark, contentDescription = null, Modifier.size(32.dp))
+                Image(Village.theme.brandMark, contentDescription = null, Modifier.size(32.dp))
                 Text("Compose Village", style = Village.type.wordmark, color = c.accentStrong, maxLines = 1)
             }
             Row(Modifier.weight(1f), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {

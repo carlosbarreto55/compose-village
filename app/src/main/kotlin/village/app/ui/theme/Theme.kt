@@ -11,6 +11,7 @@ import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
@@ -18,6 +19,7 @@ import androidx.compose.ui.text.platform.Font
 import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import village.app.ui.theme.cozy.CozyBrandMark
 import village.levels.Profession
 
 /** The cozy palette (`design-docs/cozy/README.md`), plus the in-between shades the mockups use. Light only. */
@@ -198,6 +200,8 @@ class CityTheme(
     val display: FontFamily,
     val shapes: VillageShapes,
     val badges: BadgeColors,
+    /** The header's 32 × 32 mark beside "Compose Village", drawn untinted. */
+    val brandMark: ImageVector,
 ) {
     val type: VillageType = VillageType(display)
 
@@ -243,6 +247,7 @@ object CityThemes {
             lockedRing = Color(0xFFA8927A),
             lockedAlpha = 0.55f,
         ),
+        brandMark = CozyBrandMark,
     )
 }
 
