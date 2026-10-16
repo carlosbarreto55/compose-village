@@ -24,7 +24,6 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import village.app.ShopState
 import village.app.ui.components.VillagerBadge
-import village.app.ui.components.tint
 import village.app.ui.theme.Village
 import village.levels.Profession
 
@@ -45,6 +44,7 @@ private val LockedStripe = Color(0xFFE2D6C2)
 @Composable
 fun ShopFront(state: ShopState, profession: Profession) {
     val c = Village.colors
+    val tint = Village.badges.tint(profession)
     val lit = state == ShopState.OPEN
     val locked = state == ShopState.NOT_YET || state == ShopState.COMING_SOON
     Box(Modifier.size(BUILDING_SIZE)) {
@@ -57,7 +57,7 @@ fun ShopFront(state: ShopState, profession: Profession) {
             drawPath(roof, if (lit) LitRoof else DarkRoof)
             drawPath(roof, if (lit) c.accentStrong else DarkLine, style = Stroke(3 * s, join = StrokeJoin.Round))
             box(40, 58, 70, 18, 4, if (lit) c.glow else c.muted, if (lit) c.accent else null, 2f, s)
-            box(26, 82, 98, 12, 3, if (locked) LockedStripe else profession.tint, line, 2f, s)
+            box(26, 82, 98, 12, 3, if (locked) LockedStripe else tint, line, 2f, s)
             box(30, 102, 50, 34, 3, if (lit) c.glow else c.muted, line, 3f, s)
             drawLine(line, Offset(55 * s, 102 * s), Offset(55 * s, 136 * s), 2 * s)
             drawLine(line, Offset(30 * s, 119 * s), Offset(80 * s, 119 * s), 2 * s)

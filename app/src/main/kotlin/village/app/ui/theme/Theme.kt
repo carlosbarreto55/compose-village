@@ -18,6 +18,7 @@ import androidx.compose.ui.text.platform.Font
 import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import village.levels.Profession
 
 /** The cozy palette (`design-docs/cozy/README.md`), plus the in-between shades the mockups use. Light only. */
 @Immutable
@@ -157,6 +158,26 @@ class VillageShapes(
     val buttonShadow: DpOffset,
 )
 
+/**
+ * A theme's villager badges (visual-style: Villager profession icons): a tint per profession, the ring
+ * and glyph colors, and how a locked badge looks. The glyphs themselves are shared.
+ */
+@Immutable
+class BadgeColors(
+    private val tints: Map<Profession, Color>,
+    val ring: Color,
+    val glyph: Color,
+    val lockedFill: Color,
+    val lockedRing: Color,
+    val lockedAlpha: Float,
+) {
+    init {
+        require(tints.keys == Profession.entries.toSet()) { "badge tints must cover every profession; missing ${Profession.entries - tints.keys}" }
+    }
+
+    fun tint(profession: Profession): Color = tints.getValue(profession)
+}
+
 /** Page padding and gaps from the README: layout is the same in every city. */
 object VillageSpacing {
     val pagePaddingH = 28.dp
@@ -176,6 +197,7 @@ class CityTheme(
     /** Titles, names and buttons; body and code text are shared. */
     val display: FontFamily,
     val shapes: VillageShapes,
+    val badges: BadgeColors,
 ) {
     val type: VillageType = VillageType(display)
 
@@ -184,9 +206,11 @@ class CityTheme(
 
 object CityThemes {
     /** Main Street's look: parchment, wood and lamplight (`design-docs/cozy/README.md`). */
+    private val cozyColors = VillageColors()
+
     val Cozy = CityTheme(
         id = "cozy", name = "Cozy", dark = false,
-        colors = VillageColors(),
+        colors = cozyColors,
         display = VillageFonts.Fredoka,
         shapes = VillageShapes(
             card = RoundedCornerShape(22.dp),
@@ -201,6 +225,24 @@ object CityThemes {
             viewSwitch = RoundedCornerShape(percent = 50),
             buttonShadow = DpOffset(0.dp, 3.dp),
         ),
+        // The README's villager table.
+        badges = BadgeColors(
+            tints = mapOf(
+                Profession.BAKER to Color(0xFFF6DFB8),
+                Profession.FLORIST to Color(0xFFF7D3DA),
+                Profession.CHEF to Color(0xFFE9EBEE),
+                Profession.TEACHER to Color(0xFFD7E8D2),
+                Profession.BOAT_CAPTAIN to Color(0xFFCFE3F0),
+                Profession.FISHMONGER to Color(0xFFD3ECEA),
+                Profession.MAIL_CARRIER to Color(0xFFF1DCC8),
+                Profession.MAYOR to Color(0xFFE3D9F0),
+            ),
+            ring = cozyColors.accent,
+            glyph = cozyColors.accentStrong,
+            lockedFill = Color(0xFFE2D6C2),
+            lockedRing = Color(0xFFA8927A),
+            lockedAlpha = 0.55f,
+        ),
     )
 }
 
@@ -212,6 +254,7 @@ object Village {
     val colors: VillageColors @Composable get() = LocalCityTheme.current.colors
     val type: VillageType @Composable get() = LocalCityTheme.current.type
     val shapes: VillageShapes @Composable get() = LocalCityTheme.current.shapes
+    val badges: BadgeColors @Composable get() = LocalCityTheme.current.badges
 }
 
 /**

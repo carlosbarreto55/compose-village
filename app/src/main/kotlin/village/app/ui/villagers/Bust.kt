@@ -37,7 +37,6 @@ import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
 import village.app.Expression
 import village.app.ui.components.VillagerBadge
-import village.app.ui.components.tint
 import village.app.ui.theme.LocalReducedMotion
 import village.app.ui.theme.Village
 import village.levels.Villager
@@ -258,7 +257,7 @@ fun VillagerBust(villager: Villager, expression: Expression, mouthOpen: Boolean,
 
 /**
  * The villager's round portrait for cards (spec: Villager card): the bust's head and shoulders in a
- * tinted circle with the badges' 3 dp `accent` ring, or the profession badge when there is no bust.
+ * circle in the profession's badge tint with the badge ring, or the profession badge when there is no bust.
  */
 @Composable
 fun VillagerPortrait(villager: Villager, size: Dp, expression: Expression = Expression.NEUTRAL, mouthOpen: Boolean = false) {
@@ -273,7 +272,7 @@ fun VillagerPortrait(villager: Villager, size: Dp, expression: Expression = Expr
     val bob = bobFor(talking, 3.dp)
     val blinking = rememberBlinking(villager.id)
     Box(
-        Modifier.size(size).clip(CircleShape).background(villager.profession.tint).border(3.dp, c.accent, CircleShape)
+        Modifier.size(size).clip(CircleShape).background(Village.badges.tint(villager.profession)).border(3.dp, Village.badges.ring, CircleShape)
             .semantics { contentDescription = description },
     ) {
         Canvas(Modifier.size(size).offset(y = bob)) {

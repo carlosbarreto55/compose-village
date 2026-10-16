@@ -20,7 +20,7 @@
 
 - [x] 4.1 Replace `Color.White` on primary buttons, their glyphs and the passed-check marks with `onPrimary`
 - [x] 4.2 Add tokens for the remaining literal colors on screens (reaction bubble fill, selected view switch, "Matches sketch" badge, Sandbox card text and line), with cozy values equal to what is drawn today; compare with the baseline
-- [ ] 4.3 Add `BadgeColors` to the theme (tint per profession, ring, glyph, locked fill, locked ring, locked opacity) with the cozy values; `VillagerBadge` and `ProfessionPill` read `Village.badges`; remove `Profession.tint`; compare with the baseline
+- [x] 4.3 Add `BadgeColors` to the theme (tint per profession, ring, glyph, locked fill, locked ring, locked opacity) with the cozy values; `VillagerBadge` and `ProfessionPill` read `Village.badges`; remove `Profession.tint`; compare with the baseline
 - [ ] 4.4 Move the brand mark onto the theme (`CityThemes.Cozy.brandMark` is today's house); the header reads it from the theme
 
 ## 5. Scenery

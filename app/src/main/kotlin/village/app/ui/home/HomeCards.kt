@@ -42,7 +42,6 @@ import village.app.ui.components.ProfessionPill
 import village.app.ui.components.SecondaryButton
 import village.app.ui.components.VillagerBadge
 import village.app.ui.components.icon
-import village.app.ui.components.tint
 import village.app.ui.requestText
 import village.app.ui.theme.Village
 import village.app.ui.villagers.VillagerPortrait
@@ -246,15 +245,15 @@ private fun BigButton(text: String, onClick: () -> Unit) {
 /** "Tom, florist" in the villager's tint, with their glyph. */
 @Composable
 private fun VillagerPill(level: Level, modifier: Modifier = Modifier) {
-    val c = Village.colors
+    val b = Village.badges
     val profession = level.villager.profession
     Row(
-        modifier.clip(Village.shapes.chip).background(profession.tint).padding(start = 4.dp, end = 10.dp, top = 3.dp, bottom = 3.dp),
+        modifier.clip(Village.shapes.chip).background(b.tint(profession)).padding(start = 4.dp, end = 10.dp, top = 3.dp, bottom = 3.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(6.dp),
     ) {
-        Icon(profession.icon, null, Modifier.size(20.dp), tint = c.accentStrong)
-        Text("${level.villager.name}, ${profession.label.lowercase()}", style = Village.type.small, color = c.accentStrong)
+        Icon(profession.icon, null, Modifier.size(20.dp), tint = b.glyph)
+        Text("${level.villager.name}, ${profession.label.lowercase()}", style = Village.type.small, color = b.glyph)
     }
 }
 

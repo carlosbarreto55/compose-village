@@ -15,7 +15,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -36,43 +35,30 @@ val Profession.icon: ImageVector
         Profession.MAYOR -> VillagerIcons.mayor
     }
 
-/** Each profession's badge tint (README villager table). Visual, so kept out of level data. */
-val Profession.tint: Color
-    get() = when (this) {
-        Profession.BAKER -> Color(0xFFF6DFB8)
-        Profession.FLORIST -> Color(0xFFF7D3DA)
-        Profession.CHEF -> Color(0xFFE9EBEE)
-        Profession.TEACHER -> Color(0xFFD7E8D2)
-        Profession.BOAT_CAPTAIN -> Color(0xFFCFE3F0)
-        Profession.FISHMONGER -> Color(0xFFD3ECEA)
-        Profession.MAIL_CARRIER -> Color(0xFFF1DCC8)
-        Profession.MAYOR -> Color(0xFFE3D9F0)
-    }
-
-/** The round profession badge: tint fill, 3 dp accent ring, glyph in accentStrong; [locked] drops the tint. */
+/** The round profession badge in the theme's badge colors: tint fill, 3 dp ring, glyph; [locked] drops the tint. */
 @Composable
 fun VillagerBadge(profession: Profession, size: Dp = 72.dp, locked: Boolean = false, contentDescription: String? = null) {
-    val c = Village.colors
+    val b = Village.badges
     Box(
-        Modifier.size(size).alpha(if (locked) 0.55f else 1f)
-            .clip(CircleShape).background(if (locked) Color(0xFFE2D6C2) else profession.tint)
-            .border(3.dp, if (locked) Color(0xFFA8927A) else c.accent, CircleShape),
+        Modifier.size(size).alpha(if (locked) b.lockedAlpha else 1f)
+            .clip(CircleShape).background(if (locked) b.lockedFill else b.tint(profession))
+            .border(3.dp, if (locked) b.lockedRing else b.ring, CircleShape),
         contentAlignment = Alignment.Center,
     ) {
-        Icon(profession.icon, contentDescription, Modifier.size(size * 0.5f), tint = c.accentStrong)
+        Icon(profession.icon, contentDescription, Modifier.size(size * 0.5f), tint = b.glyph)
     }
 }
 
 /** "🌸 Florist": the profession's glyph and label in a tinted pill. */
 @Composable
 fun ProfessionPill(profession: Profession) {
-    val c = Village.colors
+    val b = Village.badges
     Row(
-        Modifier.clip(Village.shapes.chip).background(profession.tint).padding(start = 4.dp, end = 10.dp, top = 3.dp, bottom = 3.dp),
+        Modifier.clip(Village.shapes.chip).background(b.tint(profession)).padding(start = 4.dp, end = 10.dp, top = 3.dp, bottom = 3.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(6.dp),
     ) {
-        Icon(profession.icon, null, Modifier.size(20.dp), tint = c.accentStrong)
-        Text(profession.label, style = Village.type.small, color = c.accentStrong)
+        Icon(profession.icon, null, Modifier.size(20.dp), tint = b.glyph)
+        Text(profession.label, style = Village.type.small, color = b.glyph)
     }
 }
