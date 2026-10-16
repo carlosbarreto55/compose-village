@@ -3,6 +3,7 @@ package village.app.ui.theme
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Typography
+import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -28,6 +29,8 @@ class VillageColors(
     val wood: Color = Color(0xFF7A4E2D),
     val woodDark: Color = Color(0xFF5A3820),
     val primary: Color = Color(0xFF2F6B45),
+    /** Text and glyphs on `primary`. */
+    val onPrimary: Color = Color(0xFFFFFFFF),
     val primaryShadow: Color = Color(0xFF1E4A2F),
     val error: Color = Color(0xFFA3402A),
     val errorContainer: Color = Color(0xFFF8E3DC),
@@ -157,15 +160,27 @@ object Village {
 @Composable
 fun VillageTheme(theme: CityTheme = CityThemes.Cozy, reducedMotion: Boolean = ReducedMotion.system, content: @Composable () -> Unit) {
     val c = theme.colors
-    val scheme = lightColorScheme(
-        primary = c.primary, onPrimary = Color.White,
-        secondary = c.wood, onSecondary = Color.White,
-        tertiary = c.glow, onTertiary = c.ink,
-        background = c.ground, onBackground = c.ink,
-        surface = c.surface, onSurface = c.ink, surfaceVariant = c.chip, onSurfaceVariant = c.inkMuted,
-        outline = c.outline, outlineVariant = c.outline,
-        error = c.error, onError = Color.White, errorContainer = c.errorContainer, onErrorContainer = c.onErrorContainer,
-    )
+    val scheme = if (theme.dark) {
+        darkColorScheme(
+            primary = c.primary, onPrimary = c.onPrimary,
+            secondary = c.wood, onSecondary = c.ground,
+            tertiary = c.glow, onTertiary = c.ground,
+            background = c.ground, onBackground = c.ink,
+            surface = c.surface, onSurface = c.ink, surfaceVariant = c.chip, onSurfaceVariant = c.inkMuted,
+            outline = c.outline, outlineVariant = c.outline,
+            error = c.error, onError = c.ground, errorContainer = c.errorContainer, onErrorContainer = c.onErrorContainer,
+        )
+    } else {
+        lightColorScheme(
+            primary = c.primary, onPrimary = c.onPrimary,
+            secondary = c.wood, onSecondary = Color.White,
+            tertiary = c.glow, onTertiary = c.ink,
+            background = c.ground, onBackground = c.ink,
+            surface = c.surface, onSurface = c.ink, surfaceVariant = c.chip, onSurfaceVariant = c.inkMuted,
+            outline = c.outline, outlineVariant = c.outline,
+            error = c.error, onError = Color.White, errorContainer = c.errorContainer, onErrorContainer = c.onErrorContainer,
+        )
+    }
     val a = VillageFonts.Atkinson
     val f = VillageFonts.Fredoka
     val m3 = Typography().let { t ->
