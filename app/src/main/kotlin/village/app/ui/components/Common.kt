@@ -61,7 +61,7 @@ fun VillageCard(
 
 /**
  * The primary button: `primary` fill with a solid `primaryShadow` at the theme's offset (cozy: a 3 dp
- * bottom edge), Fredoka label, and an 80 ms press to 0.96 scale (storyboard moment 1).
+ * bottom edge), a display-font label, and an 80 ms press to 0.96 scale (storyboard moment 1).
  */
 @Composable
 fun PrimaryButton(

@@ -77,7 +77,10 @@ class VillageColors(
     val editorOk: Color = Color(0xFF8FBF8F),
 )
 
-/** The three bundled families (D2). Files and their license are in `resources/font/`. */
+/**
+ * The bundled families (D2): Fredoka is cozy's display family; Atkinson Hyperlegible and JetBrains Mono
+ * are shared by every theme. Files and their license are in `resources/font/`.
+ */
 object VillageFonts {
     val Fredoka = FontFamily(
         Font("font/Fredoka-SemiBold.ttf", FontWeight.SemiBold),
@@ -93,28 +96,31 @@ object VillageFonts {
     )
 }
 
-/** Text styles named by role. Sizes follow the mockups. */
+/**
+ * Text styles named by role, sizes from the mockups. Display roles (wordmark, titles, names, buttons) use
+ * the theme's [display] family; body and code are the same in every city (themeable-ui D4).
+ */
 @Immutable
-class VillageType(
-    val wordmark: TextStyle = TextStyle(fontFamily = VillageFonts.Fredoka, fontWeight = FontWeight.Bold, fontSize = 22.sp),
+class VillageType(display: FontFamily) {
+    val wordmark: TextStyle = TextStyle(fontFamily = display, fontWeight = FontWeight.Bold, fontSize = 22.sp)
     /** "Tom's Flowers is open!" */
-    val celebration: TextStyle = TextStyle(fontFamily = VillageFonts.Fredoka, fontWeight = FontWeight.Bold, fontSize = 24.sp),
+    val celebration: TextStyle = TextStyle(fontFamily = display, fontWeight = FontWeight.Bold, fontSize = 24.sp)
     /** Villager name, stat values. */
-    val name: TextStyle = TextStyle(fontFamily = VillageFonts.Fredoka, fontWeight = FontWeight.SemiBold, fontSize = 20.sp),
+    val name: TextStyle = TextStyle(fontFamily = display, fontWeight = FontWeight.SemiBold, fontSize = 20.sp)
     /** Card titles ("Tom's checklist") and buttons. */
-    val title: TextStyle = TextStyle(fontFamily = VillageFonts.Fredoka, fontWeight = FontWeight.SemiBold, fontSize = 18.sp),
-    val button: TextStyle = TextStyle(fontFamily = VillageFonts.Fredoka, fontWeight = FontWeight.SemiBold, fontSize = 18.sp),
+    val title: TextStyle = TextStyle(fontFamily = display, fontWeight = FontWeight.SemiBold, fontSize = 18.sp)
+    val button: TextStyle = TextStyle(fontFamily = display, fontWeight = FontWeight.SemiBold, fontSize = 18.sp)
     /** The villager's request. */
-    val request: TextStyle = TextStyle(fontFamily = VillageFonts.Atkinson, fontSize = 18.sp, lineHeight = 27.sp),
-    val bubble: TextStyle = TextStyle(fontFamily = VillageFonts.Atkinson, fontSize = 16.sp, lineHeight = 23.sp),
-    val body: TextStyle = TextStyle(fontFamily = VillageFonts.Atkinson, fontSize = 15.sp, lineHeight = 21.sp),
-    val small: TextStyle = TextStyle(fontFamily = VillageFonts.Atkinson, fontSize = 14.sp, lineHeight = 20.sp),
-    val caption: TextStyle = TextStyle(fontFamily = VillageFonts.Atkinson, fontSize = 13.sp, lineHeight = 18.sp),
+    val request: TextStyle = TextStyle(fontFamily = VillageFonts.Atkinson, fontSize = 18.sp, lineHeight = 27.sp)
+    val bubble: TextStyle = TextStyle(fontFamily = VillageFonts.Atkinson, fontSize = 16.sp, lineHeight = 23.sp)
+    val body: TextStyle = TextStyle(fontFamily = VillageFonts.Atkinson, fontSize = 15.sp, lineHeight = 21.sp)
+    val small: TextStyle = TextStyle(fontFamily = VillageFonts.Atkinson, fontSize = 14.sp, lineHeight = 20.sp)
+    val caption: TextStyle = TextStyle(fontFamily = VillageFonts.Atkinson, fontSize = 13.sp, lineHeight = 18.sp)
     /** "CONSOLE" over terminal panels. */
-    val panelLabel: TextStyle = TextStyle(fontFamily = VillageFonts.Atkinson, fontWeight = FontWeight.Bold, fontSize = 13.sp, letterSpacing = 0.5.sp),
-    val code: TextStyle = TextStyle(fontFamily = VillageFonts.JetBrainsMono, fontSize = 15.sp, lineHeight = 26.sp),
-    val codeSmall: TextStyle = TextStyle(fontFamily = VillageFonts.JetBrainsMono, fontSize = 13.sp, lineHeight = 20.sp),
-)
+    val panelLabel: TextStyle = TextStyle(fontFamily = VillageFonts.Atkinson, fontWeight = FontWeight.Bold, fontSize = 13.sp, letterSpacing = 0.5.sp)
+    val code: TextStyle = TextStyle(fontFamily = VillageFonts.JetBrainsMono, fontSize = 15.sp, lineHeight = 26.sp)
+    val codeSmall: TextStyle = TextStyle(fontFamily = VillageFonts.JetBrainsMono, fontSize = 13.sp, lineHeight = 20.sp)
+}
 
 /** A theme's corners, and where the primary button's solid `primaryShadow` sits (themeable-ui D5). */
 @Immutable
@@ -158,9 +164,11 @@ class CityTheme(
     /** Picks the Material 3 scheme; the system appearance never does. */
     val dark: Boolean,
     val colors: VillageColors,
+    /** Titles, names and buttons; body and code text are shared. */
+    val display: FontFamily,
     val shapes: VillageShapes,
 ) {
-    val type: VillageType = VillageType()
+    val type: VillageType = VillageType(display)
 
     override fun toString() = "CityTheme($id)"
 }
@@ -170,6 +178,7 @@ object CityThemes {
     val Cozy = CityTheme(
         id = "cozy", name = "Cozy", dark = false,
         colors = VillageColors(),
+        display = VillageFonts.Fredoka,
         shapes = VillageShapes(
             card = RoundedCornerShape(22.dp),
             editor = RoundedCornerShape(18.dp),
@@ -225,7 +234,7 @@ fun VillageTheme(theme: CityTheme = CityThemes.Cozy, reducedMotion: Boolean = Re
         )
     }
     val a = VillageFonts.Atkinson
-    val f = VillageFonts.Fredoka
+    val f = theme.display
     val m3 = Typography().let { t ->
         Typography(
             titleLarge = t.titleLarge.copy(fontFamily = f), titleMedium = t.titleMedium.copy(fontFamily = f), titleSmall = t.titleSmall.copy(fontFamily = f),

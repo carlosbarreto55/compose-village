@@ -156,7 +156,7 @@ fun DialogueBox(villager: Villager, state: DialogueState, now: Long, glowing: Bo
     }
 }
 
-/** The `accent` pill over the box's top edge: name in Fredoka 18, profession in `chip`. */
+/** The `accent` pill over the box's top edge: name in the display family at 18 sp, profession in `chip`. */
 @Composable
 private fun NameTab(villager: Villager, modifier: Modifier) {
     val c = Village.colors
