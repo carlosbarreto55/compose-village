@@ -76,7 +76,7 @@ Loading SHALL reject level data that is malformed or ambiguous, with an error th
 - unknown role names;
 - unknown professions;
 - a villager id that doesn't match its pattern;
-- selectors with no matching field set, in criteria and in steps;
+- selectors with no matching field set, in criteria, in grouped checks and in steps;
 - a non-positive viewport;
 - unknown or repeated panel names;
 - repeated or blank concepts;
@@ -88,7 +88,11 @@ Loading SHALL reject level data that is malformed or ambiguous, with an error th
 - an `enterText` step without `text`;
 - an `after` that names no step of the level;
 - a `prints` criterion with a blank `text`;
+- an `all` criterion with fewer than two checks;
+- a grouped check that has an `id`, `description`, `message` or `after`, or whose type is `all` or `prints`;
 - a missing starter file.
+
+Errors in a grouped check SHALL name the criterion and the check's position, e.g. `criterion 'dishes', check 2`.
 
 A level that fails validation SHALL NOT be playable.
 
@@ -128,6 +132,18 @@ A level that fails validation SHALL NOT be playable.
 - **WHEN** a step has `"type": "click"`
 - **THEN** loading fails, naming the step and listing the valid step types `press` and `enterText`
 
+#### Scenario: A group of one
+- **WHEN** an `all` criterion `dishes` has a single check
+- **THEN** loading fails, naming `dishes` and saying an `all` criterion needs at least two checks
+
+#### Scenario: A check with its own step
+- **WHEN** the second check of an `all` criterion `coral` has `"after": "coral"`
+- **THEN** loading fails, naming `criterion 'coral', check 2` and saying grouped checks use the criterion's `after`
+
+#### Scenario: Nested group
+- **WHEN** a grouped check has `"type": "all"`
+- **THEN** loading fails, naming the check and listing the types a grouped check can have
+
 ### Requirement: Starter code
 When a level is opened, the editor SHALL contain the level's starter code. The starter code SHALL compile, and SHALL NOT already satisfy all of the level's criteria.
 
@@ -162,42 +178,6 @@ A level that does not meet these checks SHALL fail the build.
 #### Scenario: Folder missing from the index
 - **WHEN** a level folder exists that `index.json` does not list
 - **THEN** `./gradlew test` fails, naming the folder
-
-### Requirement: Initial level content
-The game SHALL ship two levels, in this order:
-- `000-hello-main-street`, titled "Hello Main Street":
-  - Rosa the baker (villager id `rosa`, shop "Rosa's Bakery") asks for a sign with "Rosa's Bakery" on top and "Fresh bread daily" below it.
-  - It has two criteria: "Rosa's Bakery" is on screen, and "Fresh bread daily" appears below "Rosa's Bakery".
-  - It lists the concepts `Text` and `Column`, and no panels.
-  - Its intro has three lines: Rosa greets the player and smells the fresh bread, asks for the two texts, and says her sketch is on the sign board and to press Run whenever the player wants her to look.
-  - It has one celebration line before its thanks line.
-- `001-open-sign`, titled "Open Sign":
-  - Tom the florist (villager id `tom`, shop "Tom's Flowers") asks for "Tom's Flowers" with an "Order" button to its right, and to print a line when the button is pressed.
-  - Its customer presses the button "Order" once (step `order`).
-  - Its criteria check the text, the button (by role and text), that the button is to the right of the text, and that pressing it prints "New order!" (criterion `bell`, after `order`, with the message "The sign looks lovely! But a customer pressed Order and my bell stayed quiet…").
-  - It lists the concepts `Row`, `Button` and `onClick`, has a thanks line, and lists the `console` panel.
-  - Its intro is the four lines of `06-level-intro-dialogue.html`: Tom introduces himself as the florist next to Rosa's bakery, asks for the sign and the button, asks for "New order!" to be printed so he hears the bell, and says his sketch is on the sign board.
-  - It has one celebration line before its thanks line.
-
-#### Scenario: Solving the test level
-- **WHEN** the player writes a `PlayerScreen` that shows `Text("Rosa's Bakery")` above `Text("Fresh bread daily")` in a `Column`
-- **THEN** the verdict passes both criteria
-
-#### Scenario: Wrong order
-- **WHEN** the player shows both texts in a `Column` with "Fresh bread daily" first
-- **THEN** the verdict fails only the ordering criterion, with a detail saying "Fresh bread daily" is above "Rosa's Bakery"
-
-#### Scenario: Second level is data only
-- **WHEN** `001-open-sign` is added
-- **THEN** it needs only its folder (`level.json`, `Starter.kt`), its `Solution.kt` and an index entry, and no change to the loader, the evaluator or the screen
-
-#### Scenario: Tom's intro
-- **WHEN** `001-open-sign` is loaded
-- **THEN** it has four intro lines, the first starting "Oh, hi! You must be the new sign maker."
-
-#### Scenario: Silent bell
-- **WHEN** the player shows "Tom's Flowers" with an "Order" button to its right whose `onClick` is empty
-- **THEN** the verdict passes three criteria and fails `bell`, and Tom's reaction is "The sign looks lovely! But a customer pressed Order and my bell stayed quiet…"
 
 ### Requirement: Level targets
 For every level, the build SHALL render the level's reference solution through the real compile pipeline and preview engine, at the level's viewport and 2× density, and package the result as `target.png` in the level's folder among the game's resources. The rendered target SHALL be produced as a generated resource that is never committed, so it cannot drift from the solution. The build SHALL fail if a solution does not compile or crashes while rendering. Loading a level SHALL provide its target image if present.

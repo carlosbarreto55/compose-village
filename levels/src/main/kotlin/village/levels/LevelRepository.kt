@@ -60,7 +60,20 @@ class LevelRepository(private val files: LevelFiles = LevelFiles.BUNDLED) {
         return ids
     }
 
-    fun all(): List<Level> = ids().map(::load)
+    /**
+     * Every level in play order. Each must have its own villager (level-definition: Distinct villagers), so
+     * two levels with the same villager id are rejected, naming both folders.
+     */
+    fun all(): List<Level> {
+        val levels = ids().map(::load)
+        val shared = levels.groupBy { it.villager.id }.filterValues { it.size > 1 }
+        if (shared.isNotEmpty()) {
+            throw LevelLoadException(INDEX, shared.map { (villager, same) ->
+                "levels ${same.joinToString(" and ") { "'${it.id}'" }} share the villager '$villager'; each level needs its own villager"
+            })
+        }
+        return levels
+    }
 
     /** Each panel mapped to the first level, in play order, that lists it: that level unlocks it. */
     fun unlocks(): Map<Panel, String> = panelUnlocks(all())

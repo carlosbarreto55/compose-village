@@ -18,7 +18,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -28,12 +27,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
-import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.drawscope.translate
+import androidx.compose.ui.graphics.drawOutline
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
@@ -47,9 +47,8 @@ import village.app.ui.components.Dot
 import village.app.ui.components.PlayGlyph
 import village.app.ui.components.PrimaryButton
 import village.app.ui.components.TextAction
-import village.app.ui.icons.BrandMark
 import village.app.ui.theme.Village
-import village.app.ui.theme.VillageShapes
+import village.app.ui.theme.VillageSpacing
 import village.levels.Level
 
 /** `2 · Open Sign`: a level's number in play order and its title. */
@@ -64,13 +63,13 @@ fun Header(controller: SpikeController) {
         drawLine(c.outline, Offset(0f, size.height - 0.5f), Offset(size.width, size.height - 0.5f), 1.dp.toPx())
     }) {
         Row(
-            Modifier.fillMaxWidth().padding(horizontal = VillageShapes.pagePaddingH, vertical = 16.dp),
+            Modifier.fillMaxWidth().padding(horizontal = VillageSpacing.pagePaddingH, vertical = 16.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(24.dp),
         ) {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                Image(BrandMark, contentDescription = null, Modifier.size(32.dp))
-                Text("Compose Village", style = Village.type.wordmark, color = c.woodDark, maxLines = 1)
+                Image(Village.theme.brandMark, contentDescription = null, Modifier.size(32.dp))
+                Text("Compose Village", style = Village.type.wordmark, color = c.accentStrong, maxLines = 1)
             }
             Row(Modifier.weight(1f), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 StreetLink(onClick = controller::goHome, enabled = !controller.running)
@@ -89,8 +88,8 @@ fun Header(controller: SpikeController) {
             val again = level != null && controller.runsThisVisit > 0 && !controller.complete
             PrimaryButton(onClick = controller::run, enabled = !controller.running) {
                 PlayGlyph()
-                Text(if (again) "Run again" else "Run", style = Village.type.button, color = Color.White, maxLines = 1)
-                Text("⌘↵", style = Village.type.codeSmall, color = Color.White.copy(alpha = 0.85f))
+                Text(if (again) "Run again" else "Run", style = Village.type.button, color = c.onPrimary, maxLines = 1)
+                Text("⌘↵", style = Village.type.codeSmall, color = c.onPrimary.copy(alpha = 0.85f))
             }
         }
         if (controller.running) {
@@ -109,7 +108,7 @@ private fun StreetLink(onClick: () -> Unit, enabled: Boolean) {
     val interaction = remember { MutableInteractionSource() }
     val hovered by interaction.collectIsHoveredAsState()
     Box(
-        Modifier.heightIn(min = 44.dp).clip(RoundedCornerShape(8.dp))
+        Modifier.heightIn(min = 44.dp).clip(Village.shapes.small)
             .clickable(interaction, indication = null, enabled = enabled, role = Role.Button, onClick = onClick),
         contentAlignment = Alignment.Center,
     ) {
@@ -129,7 +128,7 @@ private fun ProgressDots(controller: SpikeController) {
             val current = l == controller.level
             val color = when {
                 l.id in controller.litShops -> c.primary
-                current -> c.wood
+                current -> c.accent
                 else -> c.muted
             }
             Box(Modifier.size(16.dp), contentAlignment = Alignment.Center) {
@@ -158,7 +157,7 @@ internal fun BuildStatusLabel(status: BuildStatus) {
             Text(
                 "compile ${timings.compileMs} ms · guard ${timings.guardMs} ms · load ${timings.loadMs} ms",
                 style = Village.type.caption, color = c.editorText,
-                modifier = Modifier.clip(RoundedCornerShape(8.dp)).background(c.editorBg).padding(horizontal = 10.dp, vertical = 6.dp),
+                modifier = Modifier.clip(Village.shapes.small).background(c.editorBg).padding(horizontal = 10.dp, vertical = 6.dp),
             )
         }
     }) {
@@ -178,7 +177,7 @@ fun StreetFooter(controller: SpikeController) {
     Row(
         Modifier.fillMaxWidth().background(c.groundRaised).drawBehind {
             drawLine(c.outline, Offset(0f, 0.5f), Offset(size.width, 0.5f), 1.dp.toPx())
-        }.padding(horizontal = VillageShapes.pagePaddingH, vertical = 4.dp),
+        }.padding(horizontal = VillageSpacing.pagePaddingH, vertical = 4.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(14.dp),
     ) {
@@ -188,7 +187,7 @@ fun StreetFooter(controller: SpikeController) {
                 TooltipArea(tooltip = {
                     Text(
                         numbered(controller.levels, level), style = Village.type.caption, color = c.editorText,
-                        modifier = Modifier.clip(RoundedCornerShape(8.dp)).background(c.editorBg).padding(horizontal = 10.dp, vertical = 6.dp),
+                        modifier = Modifier.clip(Village.shapes.small).background(c.editorBg).padding(horizontal = 10.dp, vertical = 6.dp),
                     )
                 }) {
                     Shop(
@@ -208,24 +207,27 @@ fun StreetFooter(controller: SpikeController) {
 @Composable
 private fun Shop(lit: Boolean, current: Boolean, enabled: Boolean, onClick: () -> Unit) {
     val c = Village.colors
+    val small = Village.shapes.small
     val color = animateColorAsState(if (lit) c.glow else c.muted, tween(300)).value
     Box(
-        Modifier.size(44.dp).clip(RoundedCornerShape(8.dp)).clickable(enabled = enabled, role = Role.Button, onClick = onClick),
+        Modifier.size(44.dp).clip(small).clickable(enabled = enabled, role = Role.Button, onClick = onClick),
         contentAlignment = Alignment.Center,
     ) {
         Box(
             Modifier.size(28.dp, 22.dp)
                 .drawBehind {
                     if (current) {
+                        // Dashed in the theme's small shape, 4 dp outside the shop.
                         val gap = 4.dp.toPx()
-                        drawRoundRect(
-                            c.wood, topLeft = Offset(-gap, -gap), size = Size(size.width + 2 * gap, size.height + 2 * gap),
-                            cornerRadius = CornerRadius(8.dp.toPx()),
-                            style = Stroke(2.dp.toPx(), pathEffect = PathEffect.dashPathEffect(floatArrayOf(4.dp.toPx(), 3.dp.toPx()))),
-                        )
+                        translate(-gap, -gap) {
+                            drawOutline(
+                                small.createOutline(Size(size.width + 2 * gap, size.height + 2 * gap), layoutDirection, this), c.accent,
+                                style = Stroke(2.dp.toPx(), pathEffect = PathEffect.dashPathEffect(floatArrayOf(4.dp.toPx(), 3.dp.toPx()))),
+                            )
+                        }
                     }
                 }
-                .clip(RoundedCornerShape(topStart = 6.dp, topEnd = 6.dp, bottomStart = 3.dp, bottomEnd = 3.dp))
+                .clip(Village.scenery.footerShop)
                 .background(color),
         )
     }

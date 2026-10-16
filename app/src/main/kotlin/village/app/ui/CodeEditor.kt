@@ -16,7 +16,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.verticalScroll
@@ -51,7 +50,6 @@ import village.app.GameText
 import village.app.ui.editor.KotlinHighlighting
 import village.app.ui.editor.SyntaxColors
 import village.app.ui.theme.Village
-import village.app.ui.theme.VillageShapes
 import village.compiler.Diagnostic
 import village.compiler.Severity
 
@@ -84,14 +82,14 @@ fun EditorCard(
         KotlinHighlighting(SyntaxColors(c.syntaxKeyword, c.syntaxString, c.syntaxComment, c.syntaxAnnotation, c.editorText, c.syntaxFunction))
     }
 
-    Column(modifier.clip(VillageShapes.editor).background(c.editorBg)) {
+    Column(modifier.clip(Village.shapes.editor).background(c.editorBg)) {
         Row(Modifier.fillMaxWidth().divider(c.editorDivider, top = false).padding(horizontal = 16.dp, vertical = 12.dp)) {
             Text(fileName, style = Village.type.codeSmall, color = c.editorText, modifier = Modifier.weight(1f))
             // Same style as the tab, so showing it doesn't change the row's height (village-progress D7).
             if (onStartOver != null) {
                 Text(
                     GameText.START_OVER, style = Village.type.codeSmall, color = c.lineNumber,
-                    modifier = Modifier.clip(VillageShapes.pill).clickable(role = Role.Button, onClick = onStartOver).padding(horizontal = 6.dp),
+                    modifier = Modifier.clip(Village.shapes.button).clickable(role = Role.Button, onClick = onStartOver).padding(horizontal = 6.dp),
                 )
             }
         }
@@ -171,11 +169,11 @@ private fun ProblemsList(diagnostics: List<Diagnostic>, onSelect: (Diagnostic) -
         for (d in diagnostics) {
             val color = if (d.severity == Severity.ERROR) c.editorErrorText else c.syntaxKeyword
             Row(
-                Modifier.fillMaxWidth().heightIn(min = 32.dp).clip(RoundedCornerShape(8.dp))
+                Modifier.fillMaxWidth().heightIn(min = 32.dp).clip(Village.shapes.small)
                     .clickable(enabled = d.line > 0) { onSelect(d) }.padding(horizontal = 8.dp, vertical = 5.dp),
                 horizontalArrangement = Arrangement.spacedBy(10.dp),
             ) {
-                Box(Modifier.padding(top = 6.dp).size(8.dp).clip(RoundedCornerShape(4.dp)).background(color))
+                Box(Modifier.padding(top = 6.dp).size(8.dp).clip(Village.shapes.chip).background(color))
                 Text(if (d.line > 0) "${d.line}:${d.column}" else "—", style = Village.type.codeSmall, color = c.lineNumber, modifier = Modifier.width(52.dp))
                 Text(d.message, style = Village.type.small, color = c.editorText)
             }

@@ -26,7 +26,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CheckboxDefaults
@@ -44,7 +43,6 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.FilterQuality
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.Path
@@ -66,7 +64,7 @@ import village.app.ui.components.TextAction
 import village.app.ui.components.VillageCard
 import village.app.ui.theme.LocalReducedMotion
 import village.app.ui.theme.Village
-import village.app.ui.theme.VillageShapes
+import village.app.ui.theme.drawThemeShape
 import village.levels.Customer
 import village.levels.Panel
 import village.preview.PreviewEngine
@@ -74,7 +72,7 @@ import village.preview.PreviewState
 import village.preview.RuntimeError
 import village.preview.Viewport
 
-/** The sign frame's wood border; the preview card is this much wider than the viewport, plus its padding. */
+/** The sign frame's `accent` border; the preview card is this much wider than the viewport, plus its padding. */
 val SIGN_BORDER = 10.dp
 
 /**
@@ -101,13 +99,13 @@ fun PreviewCard(
                 ViewSwitch(GameText.sketchTab(villagerName), showTarget, onShowTarget)
                 Spacer(Modifier.weight(1f))
                 Row(
-                    Modifier.heightIn(min = 44.dp).clip(VillageShapes.pill)
+                    Modifier.heightIn(min = 44.dp).clip(Village.shapes.button)
                         .clickable(enabled = !showTarget, role = Role.Checkbox) { onOverlay(!overlay) }.padding(end = 8.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Checkbox(
                         overlay, onCheckedChange = null, enabled = !showTarget,
-                        colors = CheckboxDefaults.colors(checkedColor = c.wood, uncheckedColor = c.inkMuted),
+                        colors = CheckboxDefaults.colors(checkedColor = c.accent, uncheckedColor = c.inkMuted),
                     )
                     Text("Overlay sketch", style = Village.type.small, color = c.inkMuted.copy(alpha = if (showTarget) 0.5f else 1f))
                 }
@@ -126,7 +124,7 @@ fun PreviewCard(
             val dim by animateFloatAsState(if (building) 0.55f else 1f, tween(200))
             Box(
                 Modifier.size(width, height)
-                    .clip(RoundedCornerShape(8.dp))
+                    .clip(Village.shapes.small)
                     .background(c.signBoard)
                     .pointerInput(engine, targetShown) {
                         awaitPointerEventScope {
@@ -142,7 +140,7 @@ fun PreviewCard(
                             }
                         }
                     }
-                    .border(2.dp, c.woodDark, RoundedCornerShape(8.dp)),
+                    .border(2.dp, c.accentStrong, Village.shapes.small),
             ) {
                 val frame = state.frame
                 when {
@@ -178,30 +176,21 @@ fun PreviewCard(
     }
 }
 
-/** The wooden sign: a 10 dp `wood` border; while [glow] > 0 a warm ring and halo light it up. */
+/** The wooden sign: a 10 dp `accent` border; while [glow] > 0 a warm ring and halo light it up. */
 @Composable
 private fun SignFrame(glow: Float, modifier: Modifier = Modifier, content: @Composable () -> Unit) {
     val c = Village.colors
+    val sign = Village.shapes.sign
     Box(
         modifier
             .drawBehind {
                 if (glow <= 0f) return@drawBehind
-                val radius = 18.dp.toPx()
                 // A soft halo, kept within the card's padding so it doesn't tint the switch above.
-                for (k in 8 downTo 1) {
-                    val spread = k * 1.75.dp.toPx()
-                    drawRoundRect(
-                        c.glow.copy(alpha = 0.12f * glow), topLeft = Offset(-spread, -spread),
-                        size = Size(size.width + 2 * spread, size.height + 2 * spread), cornerRadius = CornerRadius(radius + spread),
-                    )
-                }
+                for (k in 8 downTo 1) drawThemeShape(sign, c.glow.copy(alpha = 0.12f * glow), grow = k * 1.75.dp.toPx())
                 val ring = 6.dp.toPx()
-                drawRoundRect(
-                    c.glowRing.copy(alpha = glow), topLeft = Offset(-ring / 2, -ring / 2), size = Size(size.width + ring, size.height + ring),
-                    cornerRadius = CornerRadius(radius + ring / 2), style = Stroke(ring),
-                )
+                drawThemeShape(sign, c.glowRing.copy(alpha = glow), grow = ring / 2, style = Stroke(ring))
             }
-            .clip(VillageShapes.sign).background(c.wood).padding(SIGN_BORDER),
+            .clip(sign).background(c.accent).padding(SIGN_BORDER),
     ) { content() }
 }
 
@@ -210,14 +199,14 @@ private fun SignFrame(glow: Float, modifier: Modifier = Modifier, content: @Comp
 private fun MatchesBadge(name: String, modifier: Modifier) {
     val c = Village.colors
     Row(
-        modifier.clip(VillageShapes.pill).background(c.primary).padding(horizontal = 12.dp, vertical = 6.dp),
+        modifier.clip(Village.shapes.chip).background(c.primary).padding(horizontal = 12.dp, vertical = 6.dp),
         verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp),
     ) {
         Canvas(Modifier.size(14.dp)) {
             val s = size.width / 14f
-            drawPath(Path().apply { moveTo(3f * s, 7.2f * s); lineTo(5.8f * s, 10f * s); lineTo(11f * s, 4.5f * s) }, Color.White, style = Stroke(2f * s))
+            drawPath(Path().apply { moveTo(3f * s, 7.2f * s); lineTo(5.8f * s, 10f * s); lineTo(11f * s, 4.5f * s) }, c.onPrimary, style = Stroke(2f * s))
         }
-        Text("Matches $name's sketch", style = Village.type.caption.copy(fontWeight = FontWeight.Bold), color = Color.White)
+        Text("Matches $name's sketch", style = Village.type.caption.copy(fontWeight = FontWeight.Bold), color = c.onPrimary)
     }
 }
 
@@ -225,13 +214,13 @@ private fun MatchesBadge(name: String, modifier: Modifier) {
 @Composable
 private fun ViewSwitch(sketchLabel: String, showTarget: Boolean, onChange: (Boolean) -> Unit) {
     val c = Village.colors
-    Row(Modifier.clip(VillageShapes.pill).background(c.track).padding(4.dp)) {
+    Row(Modifier.clip(Village.shapes.viewSwitch).background(c.track).padding(4.dp)) {
         for ((label, target) in listOf("Your screen" to false, sketchLabel to true)) {
             val selected = showTarget == target
             Box(
                 Modifier.height(36.dp)
-                    .then(if (selected) Modifier.shadow(1.dp, VillageShapes.pill).background(Color.White, VillageShapes.pill) else Modifier)
-                    .clip(VillageShapes.pill)
+                    .then(if (selected) Modifier.shadow(1.dp, Village.shapes.viewSwitch).background(c.switchThumb, Village.shapes.viewSwitch) else Modifier)
+                    .clip(Village.shapes.viewSwitch)
                     .clickable(role = Role.Tab) { onChange(target) }
                     .padding(horizontal = 16.dp),
                 contentAlignment = Alignment.Center,
@@ -257,7 +246,7 @@ fun RuntimeErrorPanel(error: RuntimeError, onSelectLine: (Int) -> Unit) {
         RuntimeError.Kind.RESTARTED -> "Preview restarted"
     }
     Column(
-        Modifier.fillMaxWidth().clip(VillageShapes.card).background(c.errorContainer).border(1.dp, c.errorOutline, VillageShapes.card)
+        Modifier.fillMaxWidth().clip(Village.shapes.card).background(c.errorContainer).border(1.dp, c.errorOutline, Village.shapes.card)
             .padding(horizontal = 20.dp, vertical = 16.dp),
         verticalArrangement = Arrangement.spacedBy(6.dp),
     ) {
@@ -272,7 +261,7 @@ fun RuntimeErrorPanel(error: RuntimeError, onSelectLine: (Int) -> Unit) {
 private fun TerminalCard(label: String, content: @Composable () -> Unit) {
     val c = Village.colors
     Column(
-        Modifier.fillMaxWidth().clip(VillageShapes.editor).background(c.editorBg).padding(horizontal = 18.dp, vertical = 14.dp),
+        Modifier.fillMaxWidth().clip(Village.shapes.editor).background(c.editorBg).padding(horizontal = 18.dp, vertical = 14.dp),
         verticalArrangement = Arrangement.spacedBy(6.dp),
     ) {
         Text(label.uppercase(), style = Village.type.panelLabel, color = c.editorText)
@@ -340,7 +329,7 @@ fun RecompositionPanel(counts: Map<String, Int>) {
         for ((name, count) in counts.entries.sortedByDescending { it.value }) {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text(displayName(name), style = Village.type.codeSmall, color = c.editorText, modifier = Modifier.width(150.dp), maxLines = 1)
-                Box(Modifier.height(8.dp).width((120f * count / max).dp).clip(RoundedCornerShape(4.dp)).background(c.glow))
+                Box(Modifier.height(8.dp).width((120f * count / max).dp).clip(Village.shapes.chip).background(c.glow))
                 Text(count.toString(), style = Village.type.codeSmall, color = c.editorText)
             }
         }
@@ -380,11 +369,11 @@ fun Unlockable(panel: Panel, highlight: Boolean, onDismiss: () -> Unit, content:
     AnimatedVisibility(appear, enter = expandVertically(tween(250)) + fadeIn(tween(250))) {
         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Column(
-                Modifier.fillMaxWidth().clip(VillageShapes.row).background(c.chip).border(2.dp, c.glow, VillageShapes.row)
+                Modifier.fillMaxWidth().clip(Village.shapes.row).background(c.chip).border(2.dp, c.glow, Village.shapes.row)
                     .padding(horizontal = 16.dp, vertical = 12.dp),
                 verticalArrangement = Arrangement.spacedBy(4.dp),
             ) {
-                Text("New: $title", style = Village.type.title, color = c.woodDark)
+                Text("New: $title", style = Village.type.title, color = c.accentStrong)
                 Text(explanation, style = Village.type.small, color = c.ink)
                 Box(Modifier.align(Alignment.End)) { TextAction("Got it", onClick = onDismiss, bold = true) }
             }

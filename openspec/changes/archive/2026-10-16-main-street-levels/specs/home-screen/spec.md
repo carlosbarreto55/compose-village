@@ -34,6 +34,10 @@ While the five Main Street levels are bundled and no later chapter has been anno
 - **WHEN** the five Main Street levels are bundled
 - **THEN** the street shows the five level buildings and The Sandbox, and no building reads "Coming soon"
 
+#### Scenario: Placeholders after the bundled levels
+- **WHEN** the five Main Street levels are bundled and the upcoming list has two shops
+- **THEN** the street shows them as "6 · <title>" and "7 · <title>", Coming soon, after the five level buildings
+
 #### Scenario: A placeholder becomes a level
 - **WHEN** the upcoming list has a shop for Marco and a bundled level's villager is Marco
 - **THEN** the street shows that level's building and no Marco placeholder

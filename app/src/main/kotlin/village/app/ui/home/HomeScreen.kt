@@ -29,10 +29,9 @@ import village.app.SpikeController
 import village.app.homeModel
 import village.app.ui.BuildStatusLabel
 import village.app.ui.TWO_COLUMNS_MIN_WIDTH
-import village.app.ui.icons.BrandMark
 import village.app.ui.numbered
 import village.app.ui.theme.Village
-import village.app.ui.theme.VillageShapes
+import village.app.ui.theme.VillageSpacing
 
 /**
  * The home screen (spec: Home is the first screen): header, the street card, then the first-launch or
@@ -47,7 +46,7 @@ fun HomeScreen(controller: SpikeController) {
             val wide = maxWidth >= TWO_COLUMNS_MIN_WIDTH
             Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()), horizontalAlignment = Alignment.CenterHorizontally) {
                 Column(
-                    Modifier.widthIn(max = 1440.dp).fillMaxWidth().padding(horizontal = VillageShapes.pagePaddingH, vertical = VillageShapes.pagePaddingV),
+                    Modifier.widthIn(max = 1440.dp).fillMaxWidth().padding(horizontal = VillageSpacing.pagePaddingH, vertical = VillageSpacing.pagePaddingV),
                     verticalArrangement = Arrangement.spacedBy(24.dp),
                 ) {
                     StreetCard(
@@ -102,13 +101,13 @@ private fun HomeHeader(controller: SpikeController, home: HomeModel) {
     Row(
         Modifier.fillMaxWidth().background(c.groundRaised).drawBehind {
             drawLine(c.outline, Offset(0f, size.height - 0.5f), Offset(size.width, size.height - 0.5f), 1.dp.toPx())
-        }.padding(horizontal = VillageShapes.pagePaddingH, vertical = 16.dp),
+        }.padding(horizontal = VillageSpacing.pagePaddingH, vertical = 16.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(24.dp),
     ) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            Image(BrandMark, contentDescription = null, Modifier.size(32.dp))
-            Text("Compose Village", style = Village.type.wordmark, color = c.woodDark, maxLines = 1)
+            Image(Village.theme.brandMark, contentDescription = null, Modifier.size(32.dp))
+            Text("Compose Village", style = Village.type.wordmark, color = c.accentStrong, maxLines = 1)
         }
         if (!home.firstLaunch) Text(GameText.shopsOpen(home.shopsOpen, home.shopsTotal), style = Village.type.small, color = c.inkMuted)
         Spacer(Modifier.weight(1f))

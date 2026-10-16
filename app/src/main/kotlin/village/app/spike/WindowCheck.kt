@@ -22,6 +22,7 @@ import village.app.SpikeController
 import village.app.reactionFor
 import village.app.ui.offsetOf
 import village.app.ui.villagers.BIG_DIALOGUE_TAG
+import village.app.ui.theme.CityThemes
 import village.app.ui.theme.VillageTheme
 import village.compiler.Diagnostic
 import androidx.compose.ui.semantics.SemanticsActions
@@ -37,13 +38,14 @@ import java.io.File
  * to `app/build/spike/window/` for a visual review.
  */
 @OptIn(ExperimentalComposeUiApi::class)
-internal fun window(report: Report) = report.section("Spike window", Criterion.RENDERED) {
-    val out = File("app/build/spike/window").apply { mkdirs() }
+internal fun window(report: Report, options: Options) = report.section("Spike window", Criterion.RENDERED) {
+    val themed = options.theme != CityThemes.Cozy
+    val out = File(if (themed) "app/build/spike/window-${options.theme.id}" else "app/build/spike/window").apply { mkdirs() }
     // A fresh progress file per check, so the street starts dark (village-progress).
     val progressFile = File(out, "progress.json").apply { delete() }
     val controller = SpikeController(CoroutineScope(Dispatchers.Unconfined), density = 1f, ProgressStore(progressFile))
     fun newScene(width: Int, of: SpikeController = controller, reducedMotion: Boolean = true) = ImageComposeScene(width, 860, Density(1f)) {
-        VillageTheme(reducedMotion = reducedMotion) { GameScreens(of) }
+        VillageTheme(options.theme, reducedMotion = reducedMotion) { GameScreens(of) }
     }
     val scene = newScene(1280)
     // Frame times advance with the wall clock, so animations (fades, the checklist stagger) play out.
@@ -135,7 +137,7 @@ internal fun window(report: Report) = report.section("Spike window", Criterion.R
     }
 
     try {
-        castSheet(File(out, "0-cast.png"))
+        castSheet(File(out, "0-cast.png"), options.theme)
         controller.warmUp()
         settle { !controller.warmingUp }
 
@@ -498,9 +500,19 @@ internal fun window(report: Report) = report.section("Spike window", Criterion.R
             relaunchedScene.close()
             relaunched.close()
         }
-        text("Screenshots of each state: `app/build/spike/window/*.png` (not committed).")
+        text("Screenshots of each state, drawn with the ${options.theme.name} theme: `${out.path}/*.png` (not committed).")
     } finally {
         scene.close()
         controller.close()
+    }
+    options.baseline?.let { dir ->
+        val saved = saveBaseline(out, dir)
+        text("Baseline: $saved screenshots copied to `${dir.path}`.")
+    }
+    options.compare?.let { dir ->
+        val diffs = compareScreenshots(out, dir, File("app/build/spike/window-diff"))
+        val differing = diffs.filter { it.pixels != 0 }
+        text("Compared with `${dir.path}`: ${diffs.size} states, ${differing.size} differ. Diff images: `app/build/spike/window-diff/`.")
+        if (differing.isNotEmpty()) table(listOf("State", "Differing pixels", "Where"), differing.map { listOf(it.state, it.pixels.takeIf { p -> p >= 0 } ?: "missing", it.region) })
     }
 }

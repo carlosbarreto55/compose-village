@@ -2,10 +2,14 @@ package village.app.spike
 
 import village.compiler.PlayerClasspath
 import village.compiler.PlayerPipeline
+import village.app.ui.theme.CityTheme
+import village.app.ui.theme.CityThemes
 import java.io.File
 import kotlin.system.exitProcess
 
 // The headless spike harness: ./gradlew :app:spike [-Pargs="--only latency,memory --runs 30 --cycles 150"]
+// The window check also takes --baseline <dir> (save its screenshots there), --compare <dir> (diff against them)
+// and --theme <id> (draw with another theme, e.g. tracer; screenshots go to app/build/spike/window-<id>/).
 // Writes docs/spike/results.md and CSVs next to it (docs/spike/report.md is the written report); exits 1 if any check fails.
 
 internal class Options(
@@ -16,12 +20,20 @@ internal class Options(
     /** Reload cycles in the memory test. */
     val cycles: Int,
     val outDir: File,
+    /** Where the window check copies its screenshots, to compare later runs against. */
+    val baseline: File? = null,
+    /** Screenshots the window check compares its own against, state by state. */
+    val compare: File? = null,
+    /** The theme the window check draws with (themeable-ui D9); the game itself only ever uses shipped themes. */
+    val theme: CityTheme = CityThemes.Cozy,
 ) {
     companion object {
         fun parse(args: Array<String>): Options {
             val map = args.toList().chunked(2).associate { it[0].removePrefix("--") to it.getOrElse(1) { "" } }
-            val unknown = map.keys - setOf("only", "runs", "cycles", "out")
-            require(unknown.isEmpty()) { "unknown option(s) $unknown; known: --only <a,b>, --runs <n>, --cycles <n>, --out <dir>" }
+            val unknown = map.keys - setOf("only", "runs", "cycles", "out", "baseline", "compare", "theme")
+            require(unknown.isEmpty()) {
+                "unknown option(s) $unknown; known: --only <a,b>, --runs <n>, --cycles <n>, --out <dir>, --baseline <dir>, --compare <dir>, --theme <id>"
+            }
             val only = map["only"]?.split(",")?.map { it.trim() }?.toSet()
             only?.let { require(SECTIONS.containsAll(it)) { "unknown section(s) ${it - SECTIONS}; known: $SECTIONS" } }
             return Options(
@@ -30,6 +42,11 @@ internal class Options(
                 cycles = map["cycles"]?.toInt() ?: 150,
                 // A partial run must not overwrite the full report.
                 outDir = File(map["out"] ?: if (only == null) "docs/spike" else "app/build/spike"),
+                baseline = map["baseline"]?.let(::File),
+                compare = map["compare"]?.let(::File),
+                theme = map["theme"]?.let { id ->
+                    requireNotNull(CityThemes.byId(id)) { "unknown theme '$id'; known: ${CityThemes.all.joinToString { it.id }}" }
+                } ?: CityThemes.Cozy,
             )
         }
     }
@@ -52,7 +69,7 @@ fun main(args: Array<String>) {
     if (runs("crashes")) crashes(report, pipeline)
     if (runs("runaways")) runaways(report, pipeline)
     if (runs("heatmap")) heatmap(report, pipeline)
-    if (runs("window")) window(report)
+    if (runs("window")) window(report, options)
     if (runs("memory")) memory(report, options)
 
     val runtime = Runtime.getRuntime()

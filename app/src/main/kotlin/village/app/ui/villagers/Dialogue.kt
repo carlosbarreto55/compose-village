@@ -24,7 +24,6 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -40,9 +39,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.Stroke
@@ -72,6 +69,7 @@ import village.app.ui.components.PrimaryButton
 import village.app.ui.theme.LocalReducedMotion
 import village.app.ui.theme.Village
 import village.app.ui.theme.VillageFonts
+import village.app.ui.theme.drawThemeShape
 import village.levels.Villager
 
 /** The dialogue's line text: Atkinson Hyperlegible 24 sp, line height 1.5 (README "Dialogue box"). */
@@ -116,26 +114,19 @@ fun TypedText(line: String, shown: Int, style: TextStyle, color: Color, modifier
 @Composable
 fun DialogueBox(villager: Villager, state: DialogueState, now: Long, glowing: Boolean, onAdvance: () -> Unit, closing: @Composable () -> Unit) {
     val c = Village.colors
-    val shape = RoundedCornerShape(22.dp)
+    val shape = Village.shapes.card
     val glow = c.glow.copy(alpha = 0.45f)
     Box(Modifier.padding(top = 18.dp)) {
         Column(
             Modifier.fillMaxWidth()
                 .drawBehind {
-                    val r = CornerRadius(22.dp.toPx())
-                    if (glowing) {
-                        val g = 10.dp.toPx()
-                        drawRoundRect(glow, Offset(-g, -g), Size(size.width + 2 * g, size.height + 2 * g), CornerRadius(r.x + g))
-                    }
-                    drawRoundRect(c.woodDark, Offset(0f, 6.dp.toPx()), size, r) // the 6 dp bottom shadow
+                    if (glowing) drawThemeShape(shape, glow, grow = 10.dp.toPx())
+                    drawThemeShape(shape, c.accentStrong, offset = Offset(0f, 6.dp.toPx())) // the 6 dp bottom shadow
                 }
-                .clip(shape).background(c.surface).border(4.dp, c.wood, shape)
+                .clip(shape).background(c.surface).border(4.dp, c.accent, shape)
                 .drawBehind {
-                    val inset = 4.dp.toPx() + 5.dp.toPx()
-                    drawRoundRect(
-                        c.outline, Offset(inset, inset), Size(size.width - 2 * inset, size.height - 2 * inset),
-                        CornerRadius(14.dp.toPx()), style = Stroke(2.dp.toPx()),
-                    )
+                    // The inner ring, 5 dp inside the 4 dp border; cozy's corners there are 14 dp.
+                    drawThemeShape(shape, c.outline, grow = -9.dp.toPx(), radiusGrow = -8.dp.toPx(), style = Stroke(2.dp.toPx()))
                 }
                 .clickable(remember { MutableInteractionSource() }, indication = null, role = Role.Button, onClick = onAdvance)
                 .padding(start = 36.dp, end = 36.dp, top = 34.dp, bottom = 22.dp),
@@ -157,12 +148,12 @@ fun DialogueBox(villager: Villager, state: DialogueState, now: Long, glowing: Bo
     }
 }
 
-/** The `wood` pill over the box's top edge: name in Fredoka 18, profession in `chip`. */
+/** The `accent` pill over the box's top edge: name in the display family at 18 sp, profession in `chip`. */
 @Composable
 private fun NameTab(villager: Villager, modifier: Modifier) {
     val c = Village.colors
     Row(
-        modifier.clip(RoundedCornerShape(percent = 50)).background(c.wood).padding(horizontal = 16.dp, vertical = 6.dp),
+        modifier.clip(Village.shapes.chip).background(c.accent).padding(horizontal = 16.dp, vertical = 6.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
@@ -185,7 +176,7 @@ private fun ContinueHint() {
         Text("Click to continue", style = Village.type.small, color = c.inkMuted)
         Canvas(Modifier.size(18.dp, 14.dp)) {
             val s = size.width / 18f
-            drawPath(Path().apply { moveTo(2 * s, 2 * s); lineTo(16 * s, 2 * s); lineTo(9 * s, 12 * s); close() }, c.wood)
+            drawPath(Path().apply { moveTo(2 * s, 2 * s); lineTo(16 * s, 2 * s); lineTo(9 * s, 12 * s); close() }, c.accent)
         }
     }
 }
@@ -234,8 +225,8 @@ fun BigDialogueOverlay(villager: Villager, dialogue: BigDialogue, shop: String, 
                 if (intro) {
                     // Above the box at its right, as in 06-level-intro-dialogue.html.
                     Text(
-                        "Skip intro", style = Village.type.small.copy(fontWeight = FontWeight.Bold), color = c.woodDark,
-                        modifier = Modifier.align(Alignment.End).heightIn(min = 40.dp).clip(RoundedCornerShape(percent = 50)).background(c.surface)
+                        "Skip intro", style = Village.type.small.copy(fontWeight = FontWeight.Bold), color = c.accentStrong,
+                        modifier = Modifier.align(Alignment.End).heightIn(min = 40.dp).clip(Village.shapes.button).background(c.surface)
                             .clickable(role = Role.Button, onClick = onClose).padding(horizontal = 16.dp, vertical = 10.dp),
                     )
                 }
@@ -262,7 +253,7 @@ private fun SparklesFor(height: Dp) {
 @Composable
 private fun ClosingButton(text: String, onClick: () -> Unit) {
     PrimaryButton(onClick = onClick, height = 48.dp) {
-        Text(text, style = Village.type.button, color = Color.White, maxLines = 1)
-        Chevron(Color.White, 18.dp)
+        Text(text, style = Village.type.button, color = Village.colors.onPrimary, maxLines = 1)
+        Chevron(Village.colors.onPrimary, 18.dp)
     }
 }
