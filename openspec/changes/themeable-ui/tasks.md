@@ -13,7 +13,7 @@
 ## 3. Shapes and type
 
 - [x] 3.1 Turn `VillageShapes` into a class on the theme (card, editor, sign, row, button, chip, view switch, button shadow offset) with the cozy values, and move page padding and gaps into a shared `VillageSpacing`; replace direct `VillageShapes.` uses with `Village.shapes`; compare with the baseline
-- [ ] 3.2 Draw primary buttons' shadow from `Village.shapes.buttonShadow` in `primaryShadow` (Run, Start/Continue, Next, dialogue buttons); compare with the baseline
+- [x] 3.2 Draw primary buttons' shadow from `Village.shapes.buttonShadow` in `primaryShadow` (Run, Start/Continue, Next, dialogue buttons); compare with the baseline
 - [ ] 3.3 Build `VillageType` and the Material 3 typography from the theme's display family, keeping Atkinson Hyperlegible and JetBrains Mono shared; replace direct `VillageFonts.Fredoka` uses; compare with the baseline
 
 ## 4. Colors from the theme

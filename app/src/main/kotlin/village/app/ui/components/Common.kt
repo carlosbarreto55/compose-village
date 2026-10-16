@@ -60,8 +60,8 @@ fun VillageCard(
 }
 
 /**
- * The pill primary button: `primary` fill with a 3 dp `primaryShadow` bottom edge, Fredoka label, and an
- * 80 ms press to 0.96 scale (storyboard moment 1).
+ * The primary button: `primary` fill with a solid `primaryShadow` at the theme's offset (cozy: a 3 dp
+ * bottom edge), Fredoka label, and an 80 ms press to 0.96 scale (storyboard moment 1).
  */
 @Composable
 fun PrimaryButton(
@@ -77,9 +77,11 @@ fun PrimaryButton(
     val scale by animateFloatAsState(if (pressed) 0.96f else 1f, tween(80))
     // The parent's minimum width reaches the face, so a weighted button fills its slot and others wrap their label.
     Box(modifier.scale(scale).alpha(if (enabled) 1f else 0.55f), propagateMinConstraints = true) {
-        Box(Modifier.matchParentSize().padding(top = 3.dp).clip(Village.shapes.button).background(c.primaryShadow))
+        // The shadow is the face's shape moved by the theme's offset; the face leaves room for it.
+        val shadow = Village.shapes.buttonShadow
+        Box(Modifier.matchParentSize().padding(start = shadow.x, top = shadow.y).clip(Village.shapes.button).background(c.primaryShadow))
         Row(
-            Modifier.padding(bottom = 3.dp).height(height).clip(Village.shapes.button).background(c.primary)
+            Modifier.padding(end = shadow.x, bottom = shadow.y).height(height).clip(Village.shapes.button).background(c.primary)
                 .clickable(interaction, indication = null, enabled = enabled, role = Role.Button, onClick = onClick)
                 .padding(horizontal = 22.dp),
             verticalAlignment = Alignment.CenterVertically,
