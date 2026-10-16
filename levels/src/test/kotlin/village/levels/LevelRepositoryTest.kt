@@ -23,8 +23,8 @@ class LevelRepositoryTest {
 
     private val exists = """{ "type": "exists", "id": "title", "description": "The text \"Rosa's Bakery\" is on screen", "node": { "text": "Rosa's Bakery" } }"""
 
-    private fun minimal(id: String = "sign", criteria: String = exists, extra: String = "") =
-        """{ "formatVersion": 1, "id": "$id", "title": "Sign", "villager": { "id": "rosa", "name": "Rosa", "profession": "baker" }, "shop": "Rosa's Bakery", "request": "Make me a sign." $extra, "criteria": [ $criteria ] }"""
+    private fun minimal(id: String = "sign", criteria: String = exists, extra: String = "", villager: String = "rosa") =
+        """{ "formatVersion": 1, "id": "$id", "title": "Sign", "villager": { "id": "$villager", "name": "Rosa", "profession": "baker" }, "shop": "Rosa's Bakery", "request": "Make me a sign." $extra, "criteria": [ $criteria ] }"""
 
     @Test fun minimalLevelGetsDefaults() {
         val level = level("sign", minimal())
@@ -174,7 +174,7 @@ class LevelRepositoryTest {
     }
 
     @Test fun firstLevelListingAPanelUnlocksIt() {
-        fun lvl(id: String, panels: String) = "$id/level.json" to minimal(id, extra = """, "panels": $panels""")
+        fun lvl(id: String, panels: String) = "$id/level.json" to minimal(id, extra = """, "panels": $panels""", villager = "villager$id")
         val repo = repo(
             "index.json" to """["a", "b", "c", "d"]""",
             lvl("a", "[]"), "a/Starter.kt" to "",
@@ -222,6 +222,22 @@ class LevelRepositoryTest {
     @Test fun missingStarter() = assertContains(problems("sign", minimal(), starter = null), "starter file 'Starter.kt' not found")
 
     @Test fun badIdFormat() = assertContains(problems("Sign_1", minimal(id = "Sign_1")), "lowercase words and digits")
+
+    @Test fun twoLevelsWithTheSameVillager() {
+        val repo = repo(
+            "index.json" to """["hello-main-street", "second-bakery", "open-sign"]""",
+            "hello-main-street/level.json" to minimal("hello-main-street"), "hello-main-street/Starter.kt" to "",
+            "second-bakery/level.json" to minimal("second-bakery"), "second-bakery/Starter.kt" to "",
+            "open-sign/level.json" to minimal("open-sign", villager = "tom"), "open-sign/Starter.kt" to "",
+        )
+        val e = assertFailsWith<LevelLoadException> { repo.all() }
+        assertEquals("index.json", e.folder)
+        assertContains(e.message!!, "levels 'hello-main-street' and 'second-bakery' share the villager 'rosa'")
+    }
+
+    @Test fun bundledLevelsEachHaveTheirOwnVillager() {
+        assertEquals(listOf("rosa", "tom", "marco", "lucia", "iara"), LevelRepository().all().map { it.villager.id })
+    }
 
     @Test fun indexListsIdsInOrderAndRejectsDuplicates() {
         assertEquals(listOf("b", "a"), repo("index.json" to """["b", "a"]""").ids())
