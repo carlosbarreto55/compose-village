@@ -30,7 +30,7 @@
 
 ## 6. One villager, one bust
 
-- [ ] 6.1 Split `Bust.kt` into `ui/villagers/Rig.kt` (face, look, drawing, blink, bob, `VillagerBust`, `VillagerPortrait`) and `ui/villagers/cast/` (one file per villager, plus `Cast.kt` with `forId` and `ids`); compare with the baseline
+- [x] 6.1 Split `Bust.kt` into `ui/villagers/Rig.kt` (face, look, drawing, blink, bob, `VillagerBust`, `VillagerPortrait`) and `ui/villagers/cast/` (one file per villager, plus `Cast.kt` with `forId` and `ids`); compare with the baseline
 - [ ] 6.2 In `LevelRepository`, reject an index in which two levels share a villager id, with an error naming both folders and the id; loader tests for two levels with `rosa` and for the five bundled levels loading
 - [ ] 6.3 App test: every bundled level's villager has a bust in the cast (failing names the level and the id), and a non-bundled villager without a bust still gets their profession badge
 
