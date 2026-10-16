@@ -16,7 +16,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -46,7 +45,6 @@ import village.app.ui.components.icon
 import village.app.ui.components.tint
 import village.app.ui.requestText
 import village.app.ui.theme.Village
-import village.app.ui.theme.VillageShapes
 import village.app.ui.villagers.VillagerPortrait
 import village.levels.Level
 
@@ -132,7 +130,7 @@ fun HowALevelWorksCard(onSandbox: () -> Unit, modifier: Modifier = Modifier) {
         Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
             GameText.HOW_STEPS.forEachIndexed { i, (title, text) ->
                 Row(horizontalArrangement = Arrangement.spacedBy(14.dp)) {
-                    Box(Modifier.size(32.dp).clip(VillageShapes.pill).background(c.chip), contentAlignment = Alignment.Center) {
+                    Box(Modifier.size(32.dp).clip(Village.shapes.chip).background(c.chip), contentAlignment = Alignment.Center) {
                         Text("${i + 1}", style = Village.type.title.copy(fontSize = 16.sp, fontWeight = FontWeight.Bold), color = c.accentStrong)
                     }
                     Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
@@ -149,7 +147,7 @@ fun HowALevelWorksCard(onSandbox: () -> Unit, modifier: Modifier = Modifier) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             Text(GameText.JUST_EXPERIMENT, style = Village.type.body, color = c.inkMuted, modifier = Modifier.weight(1f))
             Row(
-                Modifier.height(44.dp).clip(VillageShapes.pill).border(2.dp, c.accent, VillageShapes.pill)
+                Modifier.height(44.dp).clip(Village.shapes.button).border(2.dp, c.accent, Village.shapes.button)
                     .clickable(role = Role.Button, onClick = onSandbox).padding(horizontal = 18.dp),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -166,7 +164,7 @@ fun HowALevelWorksCard(onSandbox: () -> Unit, modifier: Modifier = Modifier) {
 fun OpenShopsCard(shops: List<OpenShop>, onVisit: (Level) -> Unit, modifier: Modifier = Modifier) {
     val c = Village.colors
     Column(
-        modifier.fillMaxWidth().clip(VillageShapes.card).background(c.celebration).border(2.dp, c.glow, VillageShapes.card)
+        modifier.fillMaxWidth().clip(Village.shapes.card).background(c.celebration).border(2.dp, c.glow, Village.shapes.card)
             .padding(horizontal = 22.dp, vertical = 20.dp),
         verticalArrangement = Arrangement.spacedBy(14.dp),
     ) {
@@ -189,11 +187,11 @@ fun OpenShopsCard(shops: List<OpenShop>, onVisit: (Level) -> Unit, modifier: Mod
 fun SandboxCard(onOpen: () -> Unit, modifier: Modifier = Modifier) {
     val c = Village.colors
     Row(
-        modifier.fillMaxWidth().clip(RoundedCornerShape(18.dp)).background(c.editorBg).padding(horizontal = 22.dp, vertical = 18.dp),
+        modifier.fillMaxWidth().clip(Village.shapes.editor).background(c.editorBg).padding(horizontal = 22.dp, vertical = 18.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(14.dp),
     ) {
-        Box(Modifier.size(44.dp).clip(RoundedCornerShape(12.dp)).background(c.editorRaised), contentAlignment = Alignment.Center) {
+        Box(Modifier.size(44.dp).clip(Village.shapes.tile).background(c.editorRaised), contentAlignment = Alignment.Center) {
             CodeGlyph(c.syntaxKeyword, 24.dp)
         }
         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
@@ -201,7 +199,7 @@ fun SandboxCard(onOpen: () -> Unit, modifier: Modifier = Modifier) {
             Text(GameText.SANDBOX_BLURB, style = Village.type.small, color = SandboxText)
         }
         Box(
-            Modifier.height(44.dp).clip(VillageShapes.pill).border(1.dp, SandboxLine, VillageShapes.pill)
+            Modifier.height(44.dp).clip(Village.shapes.button).border(1.dp, SandboxLine, Village.shapes.button)
                 .clickable(role = Role.Button, onClick = onOpen).padding(horizontal = 18.dp),
             contentAlignment = Alignment.Center,
         ) {
@@ -215,7 +213,7 @@ fun SandboxCard(onOpen: () -> Unit, modifier: Modifier = Modifier) {
 private fun HomeCard(modifier: Modifier, gap: Dp, content: @Composable ColumnScope.() -> Unit) {
     val c = Village.colors
     Column(
-        modifier.fillMaxWidth().clip(VillageShapes.card).background(c.surface).border(1.dp, c.outline, VillageShapes.card)
+        modifier.fillMaxWidth().clip(Village.shapes.card).background(c.surface).border(1.dp, c.outline, Village.shapes.card)
             .padding(horizontal = 26.dp, vertical = 24.dp),
         verticalArrangement = Arrangement.spacedBy(gap),
         content = content,
@@ -255,7 +253,7 @@ private fun VillagerPill(level: Level, modifier: Modifier = Modifier) {
     val c = Village.colors
     val profession = level.villager.profession
     Row(
-        modifier.clip(VillageShapes.pill).background(profession.tint).padding(start = 4.dp, end = 10.dp, top = 3.dp, bottom = 3.dp),
+        modifier.clip(Village.shapes.chip).background(profession.tint).padding(start = 4.dp, end = 10.dp, top = 3.dp, bottom = 3.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(6.dp),
     ) {

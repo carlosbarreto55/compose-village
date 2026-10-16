@@ -49,7 +49,7 @@ import village.app.ui.components.PrimaryButton
 import village.app.ui.components.TextAction
 import village.app.ui.icons.BrandMark
 import village.app.ui.theme.Village
-import village.app.ui.theme.VillageShapes
+import village.app.ui.theme.VillageSpacing
 import village.levels.Level
 
 /** `2 · Open Sign`: a level's number in play order and its title. */
@@ -64,7 +64,7 @@ fun Header(controller: SpikeController) {
         drawLine(c.outline, Offset(0f, size.height - 0.5f), Offset(size.width, size.height - 0.5f), 1.dp.toPx())
     }) {
         Row(
-            Modifier.fillMaxWidth().padding(horizontal = VillageShapes.pagePaddingH, vertical = 16.dp),
+            Modifier.fillMaxWidth().padding(horizontal = VillageSpacing.pagePaddingH, vertical = 16.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(24.dp),
         ) {
@@ -109,7 +109,7 @@ private fun StreetLink(onClick: () -> Unit, enabled: Boolean) {
     val interaction = remember { MutableInteractionSource() }
     val hovered by interaction.collectIsHoveredAsState()
     Box(
-        Modifier.heightIn(min = 44.dp).clip(RoundedCornerShape(8.dp))
+        Modifier.heightIn(min = 44.dp).clip(Village.shapes.small)
             .clickable(interaction, indication = null, enabled = enabled, role = Role.Button, onClick = onClick),
         contentAlignment = Alignment.Center,
     ) {
@@ -158,7 +158,7 @@ internal fun BuildStatusLabel(status: BuildStatus) {
             Text(
                 "compile ${timings.compileMs} ms · guard ${timings.guardMs} ms · load ${timings.loadMs} ms",
                 style = Village.type.caption, color = c.editorText,
-                modifier = Modifier.clip(RoundedCornerShape(8.dp)).background(c.editorBg).padding(horizontal = 10.dp, vertical = 6.dp),
+                modifier = Modifier.clip(Village.shapes.small).background(c.editorBg).padding(horizontal = 10.dp, vertical = 6.dp),
             )
         }
     }) {
@@ -178,7 +178,7 @@ fun StreetFooter(controller: SpikeController) {
     Row(
         Modifier.fillMaxWidth().background(c.groundRaised).drawBehind {
             drawLine(c.outline, Offset(0f, 0.5f), Offset(size.width, 0.5f), 1.dp.toPx())
-        }.padding(horizontal = VillageShapes.pagePaddingH, vertical = 4.dp),
+        }.padding(horizontal = VillageSpacing.pagePaddingH, vertical = 4.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(14.dp),
     ) {
@@ -188,7 +188,7 @@ fun StreetFooter(controller: SpikeController) {
                 TooltipArea(tooltip = {
                     Text(
                         numbered(controller.levels, level), style = Village.type.caption, color = c.editorText,
-                        modifier = Modifier.clip(RoundedCornerShape(8.dp)).background(c.editorBg).padding(horizontal = 10.dp, vertical = 6.dp),
+                        modifier = Modifier.clip(Village.shapes.small).background(c.editorBg).padding(horizontal = 10.dp, vertical = 6.dp),
                     )
                 }) {
                     Shop(
@@ -210,7 +210,7 @@ private fun Shop(lit: Boolean, current: Boolean, enabled: Boolean, onClick: () -
     val c = Village.colors
     val color = animateColorAsState(if (lit) c.glow else c.muted, tween(300)).value
     Box(
-        Modifier.size(44.dp).clip(RoundedCornerShape(8.dp)).clickable(enabled = enabled, role = Role.Button, onClick = onClick),
+        Modifier.size(44.dp).clip(Village.shapes.small).clickable(enabled = enabled, role = Role.Button, onClick = onClick),
         contentAlignment = Alignment.Center,
     ) {
         Box(

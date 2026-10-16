@@ -10,10 +10,12 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.platform.Font
+import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
@@ -114,13 +116,34 @@ class VillageType(
     val codeSmall: TextStyle = TextStyle(fontFamily = VillageFonts.JetBrainsMono, fontSize = 13.sp, lineHeight = 20.sp),
 )
 
-/** Shapes and spacing from the README. */
-object VillageShapes {
-    val card = RoundedCornerShape(22.dp)
-    val editor = RoundedCornerShape(18.dp)
-    val sign = RoundedCornerShape(18.dp)
-    val row = RoundedCornerShape(14.dp)
-    val pill = RoundedCornerShape(percent = 50)
+/** A theme's corners, and where the primary button's solid `primaryShadow` sits (themeable-ui D5). */
+@Immutable
+class VillageShapes(
+    /** Cards, the dialogue box, the completion card. */
+    val card: Shape,
+    /** The editor, the terminal panels and the Sandbox card. */
+    val editor: Shape,
+    /** The sign frame and the street's buildings. */
+    val sign: Shape,
+    /** Checklist rows, stat tiles, the panel tip. */
+    val row: Shape,
+    /** Icon tiles, like the Sandbox card's. */
+    val tile: Shape,
+    /** Small controls and boxes: header buttons, timing chips, problem rows, the sign board. */
+    val small: Shape,
+    /** The reaction bubble, its tail at the bottom left. */
+    val bubble: Shape,
+    val button: Shape,
+    /** Chips, pills, progress bars and dots. */
+    val chip: Shape,
+    /** The "Your screen / sketch" switch and its thumb. */
+    val viewSwitch: Shape,
+    /** The primary button's shadow offset. */
+    val buttonShadow: DpOffset,
+)
+
+/** Page padding and gaps from the README: layout is the same in every city. */
+object VillageSpacing {
     val pagePaddingH = 28.dp
     val pagePaddingV = 24.dp
     val cardGap = 16.dp
@@ -135,6 +158,7 @@ class CityTheme(
     /** Picks the Material 3 scheme; the system appearance never does. */
     val dark: Boolean,
     val colors: VillageColors,
+    val shapes: VillageShapes,
 ) {
     val type: VillageType = VillageType()
 
@@ -143,7 +167,23 @@ class CityTheme(
 
 object CityThemes {
     /** Main Street's look: parchment, wood and lamplight (`design-docs/cozy/README.md`). */
-    val Cozy = CityTheme(id = "cozy", name = "Cozy", dark = false, colors = VillageColors())
+    val Cozy = CityTheme(
+        id = "cozy", name = "Cozy", dark = false,
+        colors = VillageColors(),
+        shapes = VillageShapes(
+            card = RoundedCornerShape(22.dp),
+            editor = RoundedCornerShape(18.dp),
+            sign = RoundedCornerShape(18.dp),
+            row = RoundedCornerShape(14.dp),
+            tile = RoundedCornerShape(12.dp),
+            small = RoundedCornerShape(8.dp),
+            bubble = RoundedCornerShape(topStart = 18.dp, topEnd = 18.dp, bottomEnd = 18.dp, bottomStart = 4.dp),
+            button = RoundedCornerShape(percent = 50),
+            chip = RoundedCornerShape(percent = 50),
+            viewSwitch = RoundedCornerShape(percent = 50),
+            buttonShadow = DpOffset(0.dp, 3.dp),
+        ),
+    )
 }
 
 val LocalCityTheme = staticCompositionLocalOf { CityThemes.Cozy }
@@ -153,6 +193,7 @@ object Village {
     val theme: CityTheme @Composable get() = LocalCityTheme.current
     val colors: VillageColors @Composable get() = LocalCityTheme.current.colors
     val type: VillageType @Composable get() = LocalCityTheme.current.type
+    val shapes: VillageShapes @Composable get() = LocalCityTheme.current.shapes
 }
 
 /**

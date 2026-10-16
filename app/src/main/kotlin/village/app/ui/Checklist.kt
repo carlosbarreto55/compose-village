@@ -51,7 +51,6 @@ import village.app.ui.components.VillagerBadge
 import village.app.ui.components.nudge
 import village.app.ui.theme.LocalReducedMotion
 import village.app.ui.theme.Village
-import village.app.ui.theme.VillageShapes
 import village.levels.CriterionResult
 import village.levels.Level
 import village.levels.Verdict
@@ -88,7 +87,7 @@ fun ChecklistCard(level: Level, verdict: Verdict?, reaction: Reaction?, runCount
         }
         if (complete) {
             Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                repeat(level.criteria.size) { Box(Modifier.weight(1f).height(8.dp).clip(VillageShapes.pill).background(c.primary)) }
+                repeat(level.criteria.size) { Box(Modifier.weight(1f).height(8.dp).clip(Village.shapes.chip).background(c.primary)) }
             }
             return@VillageCard
         }
@@ -129,7 +128,7 @@ private fun ChecklistRow(index: Int, description: String, result: CriterionResul
     val border by animateColorAsState(if (failed) c.errorOutline else Color.Transparent, tween(200))
     val pad by animateDpAsState(if (failed) 12.dp else 0.dp, tween(200))
     Column(
-        Modifier.fillMaxWidth().nudge(offset.value).clip(VillageShapes.row).background(background).border(1.dp, border, VillageShapes.row)
+        Modifier.fillMaxWidth().nudge(offset.value).clip(Village.shapes.row).background(background).border(1.dp, border, Village.shapes.row)
             .padding(horizontal = pad * 14 / 12, vertical = pad),
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
@@ -170,7 +169,7 @@ fun CompletionCard(
         exit = fadeOut(tween(150)),
     ) {
         Column(
-            Modifier.fillMaxWidth().clip(VillageShapes.card).background(c.celebration).border(2.dp, c.glow, VillageShapes.card).padding(22.dp),
+            Modifier.fillMaxWidth().clip(Village.shapes.card).background(c.celebration).border(2.dp, c.glow, Village.shapes.card).padding(22.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -187,7 +186,7 @@ fun CompletionCard(
                 val stats = welcomeBack?.let { listOf("Lines" to (it.lines ?: lines), "Tries" to it.tries) } ?: listOf("Lines" to lines, "Tries" to tries)
                 for ((label, value) in stats) {
                     Column(
-                        Modifier.weight(1f).clip(VillageShapes.row).background(c.statTile).padding(12.dp),
+                        Modifier.weight(1f).clip(Village.shapes.row).background(c.statTile).padding(12.dp),
                         verticalArrangement = Arrangement.spacedBy(2.dp),
                     ) {
                         Text(label, style = Village.type.caption, color = c.inkMuted)

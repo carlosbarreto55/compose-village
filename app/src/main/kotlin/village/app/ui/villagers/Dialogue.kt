@@ -24,7 +24,6 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -116,7 +115,7 @@ fun TypedText(line: String, shown: Int, style: TextStyle, color: Color, modifier
 @Composable
 fun DialogueBox(villager: Villager, state: DialogueState, now: Long, glowing: Boolean, onAdvance: () -> Unit, closing: @Composable () -> Unit) {
     val c = Village.colors
-    val shape = RoundedCornerShape(22.dp)
+    val shape = Village.shapes.card
     val glow = c.glow.copy(alpha = 0.45f)
     Box(Modifier.padding(top = 18.dp)) {
         Column(
@@ -162,7 +161,7 @@ fun DialogueBox(villager: Villager, state: DialogueState, now: Long, glowing: Bo
 private fun NameTab(villager: Villager, modifier: Modifier) {
     val c = Village.colors
     Row(
-        modifier.clip(RoundedCornerShape(percent = 50)).background(c.accent).padding(horizontal = 16.dp, vertical = 6.dp),
+        modifier.clip(Village.shapes.chip).background(c.accent).padding(horizontal = 16.dp, vertical = 6.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
@@ -235,7 +234,7 @@ fun BigDialogueOverlay(villager: Villager, dialogue: BigDialogue, shop: String, 
                     // Above the box at its right, as in 06-level-intro-dialogue.html.
                     Text(
                         "Skip intro", style = Village.type.small.copy(fontWeight = FontWeight.Bold), color = c.accentStrong,
-                        modifier = Modifier.align(Alignment.End).heightIn(min = 40.dp).clip(RoundedCornerShape(percent = 50)).background(c.surface)
+                        modifier = Modifier.align(Alignment.End).heightIn(min = 40.dp).clip(Village.shapes.button).background(c.surface)
                             .clickable(role = Role.Button, onClick = onClose).padding(horizontal = 16.dp, vertical = 10.dp),
                     )
                 }

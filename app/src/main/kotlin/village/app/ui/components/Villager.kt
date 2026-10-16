@@ -21,7 +21,6 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import village.app.ui.icons.VillagerIcons
 import village.app.ui.theme.Village
-import village.app.ui.theme.VillageShapes
 import village.levels.Profession
 
 /** Each profession's glyph. */
@@ -69,7 +68,7 @@ fun VillagerBadge(profession: Profession, size: Dp = 72.dp, locked: Boolean = fa
 fun ProfessionPill(profession: Profession) {
     val c = Village.colors
     Row(
-        Modifier.clip(VillageShapes.pill).background(profession.tint).padding(start = 4.dp, end = 10.dp, top = 3.dp, bottom = 3.dp),
+        Modifier.clip(Village.shapes.chip).background(profession.tint).padding(start = 4.dp, end = 10.dp, top = 3.dp, bottom = 3.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(6.dp),
     ) {

@@ -42,7 +42,6 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import village.app.ui.theme.Village
-import village.app.ui.theme.VillageShapes
 
 /** A parchment card as wide as its column: `surface` fill, 1 dp `outline` border, 22 dp corners. */
 @Composable
@@ -54,7 +53,7 @@ fun VillageCard(
 ) {
     val c = Village.colors
     Column(
-        modifier.fillMaxWidth().clip(VillageShapes.card).background(c.surface).border(1.dp, c.outline, VillageShapes.card).padding(padding),
+        modifier.fillMaxWidth().clip(Village.shapes.card).background(c.surface).border(1.dp, c.outline, Village.shapes.card).padding(padding),
         verticalArrangement = Arrangement.spacedBy(gap),
         content = content,
     )
@@ -78,9 +77,9 @@ fun PrimaryButton(
     val scale by animateFloatAsState(if (pressed) 0.96f else 1f, tween(80))
     // The parent's minimum width reaches the face, so a weighted button fills its slot and others wrap their label.
     Box(modifier.scale(scale).alpha(if (enabled) 1f else 0.55f), propagateMinConstraints = true) {
-        Box(Modifier.matchParentSize().padding(top = 3.dp).clip(VillageShapes.pill).background(c.primaryShadow))
+        Box(Modifier.matchParentSize().padding(top = 3.dp).clip(Village.shapes.button).background(c.primaryShadow))
         Row(
-            Modifier.padding(bottom = 3.dp).height(height).clip(VillageShapes.pill).background(c.primary)
+            Modifier.padding(bottom = 3.dp).height(height).clip(Village.shapes.button).background(c.primary)
                 .clickable(interaction, indication = null, enabled = enabled, role = Role.Button, onClick = onClick)
                 .padding(horizontal = 22.dp),
             verticalAlignment = Alignment.CenterVertically,
@@ -95,7 +94,7 @@ fun PrimaryButton(
 fun SecondaryButton(text: String, onClick: () -> Unit, modifier: Modifier = Modifier, height: Dp = 48.dp) {
     val c = Village.colors
     Box(
-        modifier.height(height).clip(VillageShapes.pill).border(1.dp, c.muted, VillageShapes.pill)
+        modifier.height(height).clip(Village.shapes.button).border(1.dp, c.muted, Village.shapes.button)
             .clickable(role = Role.Button, onClick = onClick).padding(horizontal = 18.dp),
         contentAlignment = Alignment.Center,
     ) {
@@ -107,7 +106,7 @@ fun SecondaryButton(text: String, onClick: () -> Unit, modifier: Modifier = Modi
 @Composable
 fun TextAction(text: String, onClick: () -> Unit, color: Color = Village.colors.accentStrong, bold: Boolean = false, enabled: Boolean = true) {
     Box(
-        Modifier.heightIn(min = 44.dp).widthIn(min = 44.dp).clip(VillageShapes.pill)
+        Modifier.heightIn(min = 44.dp).widthIn(min = 44.dp).clip(Village.shapes.button)
             .clickable(enabled = enabled, role = Role.Button, onClick = onClick).padding(horizontal = 10.dp),
         contentAlignment = Alignment.Center,
     ) {
@@ -122,7 +121,7 @@ fun ConceptChip(text: String) {
     val c = Village.colors
     Text(
         text, style = Village.type.caption, color = c.accentStrong,
-        modifier = Modifier.clip(VillageShapes.pill).background(c.chip).padding(horizontal = 10.dp, vertical = 4.dp),
+        modifier = Modifier.clip(Village.shapes.chip).background(c.chip).padding(horizontal = 10.dp, vertical = 4.dp),
     )
 }
 
@@ -182,7 +181,7 @@ fun Chevron(color: Color, size: Dp = 16.dp) {
 /** A small round dot, e.g. beside the build status. */
 @Composable
 fun Dot(color: Color, size: Dp = 8.dp, modifier: Modifier = Modifier) {
-    Box(modifier.size(size).clip(VillageShapes.pill).background(color))
+    Box(modifier.size(size).clip(Village.shapes.chip).background(color))
 }
 
 /** Offsets content horizontally by [dx] dp; used by the failure shake. */

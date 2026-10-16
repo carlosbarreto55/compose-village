@@ -17,7 +17,6 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -49,7 +48,6 @@ import village.app.ui.components.ProfessionPill
 import village.app.ui.components.VillageCard
 import village.app.ui.theme.LocalReducedMotion
 import village.app.ui.theme.Village
-import village.app.ui.theme.VillageShapes
 import village.app.ui.villagers.TypedText
 import village.app.ui.villagers.VillagerPortrait
 import village.app.ui.villagers.typingClock
@@ -99,7 +97,7 @@ private val AVATAR = 88.dp
 private fun TalkTo(name: String, onTalk: (() -> Unit)?) {
     val c = Village.colors
     Row(
-        Modifier.heightIn(min = 44.dp).clip(VillageShapes.pill).border(1.dp, c.muted, VillageShapes.pill)
+        Modifier.heightIn(min = 44.dp).clip(Village.shapes.button).border(1.dp, c.muted, Village.shapes.button)
             .clickable(enabled = onTalk != null, role = Role.Button) { onTalk?.invoke() }
             .padding(horizontal = 14.dp).alpha(if (onTalk != null) 1f else 0.5f),
         verticalAlignment = Alignment.CenterVertically,
@@ -123,7 +121,7 @@ private fun TalkTo(name: String, onTalk: (() -> Unit)?) {
 @Composable
 private fun Bubble(reaction: Reaction, shown: Int, onClick: () -> Unit) {
     val c = Village.colors
-    val shape = RoundedCornerShape(topStart = 18.dp, topEnd = 18.dp, bottomEnd = 18.dp, bottomStart = 4.dp)
+    val shape = Village.shapes.bubble
     val outline by animateColorAsState(if (reaction.happy) c.successOutline else c.outline, tween(250))
     TypedText(
         reaction.text, shown, Village.type.bubble, c.ink,

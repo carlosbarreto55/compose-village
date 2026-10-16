@@ -16,7 +16,6 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -42,7 +41,6 @@ import village.app.GameText
 import village.app.HomeModel
 import village.app.ShopState
 import village.app.ui.theme.Village
-import village.app.ui.theme.VillageShapes
 
 private val Sky = Color(0xFFF6E7CE)
 private val Hill = Color(0xFFEDDCBF)
@@ -58,7 +56,7 @@ private val Lead = Color(0xFF4A3B2D)
 @Composable
 fun StreetCard(home: HomeModel, enabled: Boolean, onOpen: (Building) -> Unit, onSandbox: () -> Unit) {
     val c = Village.colors
-    Column(Modifier.fillMaxWidth().clip(VillageShapes.card).background(Sky).border(1.dp, c.outline, VillageShapes.card)) {
+    Column(Modifier.fillMaxWidth().clip(Village.shapes.card).background(Sky).border(1.dp, c.outline, Village.shapes.card)) {
         Box(Modifier.fillMaxWidth()) {
             Canvas(Modifier.matchParentSize()) { drawClouds() }
             Column(
@@ -113,7 +111,7 @@ private fun StreetBuilding(
 ) {
     val c = Village.colors
     val current = state == ShopState.START_HERE || state == ShopState.UP_NEXT
-    val shape = RoundedCornerShape(18.dp)
+    val shape = Village.shapes.sign
     Column(
         modifier.heightIn(min = 44.dp).clip(shape)
             .background(if (current) c.groundRaised else Color.Transparent)
@@ -149,7 +147,7 @@ private fun Status(state: ShopState?) {
         ShopState.START_HERE, ShopState.UP_NEXT -> Text(
             if (state == ShopState.START_HERE) GameText.STATUS_START_HERE else GameText.STATUS_UP_NEXT,
             style = bold, color = Color.White,
-            modifier = Modifier.clip(VillageShapes.pill).background(c.accent).padding(horizontal = 12.dp, vertical = 4.dp),
+            modifier = Modifier.clip(Village.shapes.chip).background(c.accent).padding(horizontal = 12.dp, vertical = 4.dp),
         )
         ShopState.NOT_YET -> Text(GameText.STATUS_NOT_YET, style = Village.type.caption, color = c.inkMuted)
         ShopState.COMING_SOON -> Text(GameText.STATUS_COMING_SOON, style = Village.type.caption, color = c.inkMuted)

@@ -47,7 +47,7 @@ import village.app.countCodeLines
 import village.app.expressionFor
 import village.app.reactionFor
 import village.app.ui.theme.Village
-import village.app.ui.theme.VillageShapes
+import village.app.ui.theme.VillageSpacing
 import village.app.GameText
 import village.levels.Action
 import village.levels.Panel
@@ -98,16 +98,16 @@ fun SpikeScreen(controller: SpikeController) {
         ) {
             Header(controller)
             BoxWithConstraints(Modifier.weight(1f).fillMaxWidth()) {
-                val padding = Modifier.padding(horizontal = VillageShapes.pagePaddingH, vertical = VillageShapes.pagePaddingV)
+                val padding = Modifier.padding(horizontal = VillageSpacing.pagePaddingH, vertical = VillageSpacing.pagePaddingV)
                 val rightWidth = maxOf(460.dp, previewCardWidth(controller.level?.viewport?.widthDp ?: SpikeController.PREVIEW_WIDTH_DP.toFloat()))
                 if (maxWidth >= TWO_COLUMNS_MIN_WIDTH) {
-                    Row(padding.fillMaxSize(), horizontalArrangement = Arrangement.spacedBy(VillageShapes.columnGap)) {
-                        Column(Modifier.weight(1f).fillMaxHeight(), verticalArrangement = Arrangement.spacedBy(VillageShapes.cardGap)) {
+                    Row(padding.fillMaxSize(), horizontalArrangement = Arrangement.spacedBy(VillageSpacing.columnGap)) {
+                        Column(Modifier.weight(1f).fillMaxHeight(), verticalArrangement = Arrangement.spacedBy(VillageSpacing.cardGap)) {
                             LeftColumn(controller, editorFocus, ::moveCaret, editorHeight = null)
                         }
                         Column(
                             Modifier.width(rightWidth).fillMaxHeight().verticalScroll(rememberScrollState()),
-                            verticalArrangement = Arrangement.spacedBy(VillageShapes.cardGap),
+                            verticalArrangement = Arrangement.spacedBy(VillageSpacing.cardGap),
                         ) {
                             RightColumn(controller, completion, ::moveCaret)
                         }
@@ -115,7 +115,7 @@ fun SpikeScreen(controller: SpikeController) {
                 } else {
                     Column(
                         Modifier.fillMaxSize().verticalScroll(rememberScrollState()).then(padding),
-                        verticalArrangement = Arrangement.spacedBy(VillageShapes.cardGap),
+                        verticalArrangement = Arrangement.spacedBy(VillageSpacing.cardGap),
                     ) {
                         LeftColumn(controller, editorFocus, ::moveCaret, editorHeight = 460.dp)
                         RightColumn(controller, completion, ::moveCaret)
