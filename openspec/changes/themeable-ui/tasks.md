@@ -2,7 +2,7 @@
 
 - [x] 1.1 Archive `main-street-levels` (implemented, all tasks done, merged), so this change's `home-screen` and `level-screen` deltas apply to its versions; run `openspec validate themeable-ui`
 - [x] 1.2 Window check options `--baseline <dir>` (copy each state's PNG there) and `--compare <dir>` (per state, the number of differing pixels, plus a diff PNG for each state that differs); git-ignore `app/spike-baseline/`
-- [ ] 1.3 Capture the baseline from the untouched code into `app/spike-baseline/`, then compare a second run against it and record any noisy states (caret, animation frames) in the commit message
+- [x] 1.3 Capture the baseline from the untouched code into `app/spike-baseline/`, then compare a second run against it and record any noisy states (caret, animation frames) in the commit message
 
 ## 2. Theme core
 
