@@ -62,7 +62,10 @@ Options:
 - **`-Dvillage.reducedMotion=true`:** turns animations off. Otherwise the game follows the macOS *Reduce motion* setting.
 - **`-Dvillage.progress=<file>`:** saves progress somewhere other than `~/Library/Application Support/Compose Village/progress.json`. That default is for macOS; Windows uses `%APPDATA%`, Linux `$XDG_DATA_HOME`.
 
-The window check (`./gradlew :app:spike -Pargs="--only window"`) plays the whole street offscreen. It saves a screenshot of every state to `app/build/spike/window/`; the images above come from it.
+The window check (`./gradlew :app:spike -Pargs="--only window"`) plays the whole street offscreen. It saves a screenshot of every state to `app/build/spike/window/`; the images above come from it. It also takes:
+- `--baseline <dir>`: copies the screenshots to `<dir>`.
+- `--compare <dir>`: reports, for each state, how many pixels differ from the screenshots in `<dir>` and where, and writes diff images to `app/build/spike/window-diff/`. Use this to check that a refactor left the screens unchanged. Between two runs of the same code, only the build time and a few anti-aliased editor and bust edges differ.
+- `--theme tracer`: draws every state with the tracer theme, a loud, dark, square theme that is never shown to players. A surface that still looks cozy in `app/build/spike/window-tracer/` doesn't follow the theme yet.
 
 ## How it works
 
