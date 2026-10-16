@@ -78,7 +78,7 @@ When a Run completes a level for the first time, the big dialogue SHALL open fir
 
 Its last line SHALL offer **See <shop>** in place of the ▼, which closes it. The completion is saved when the Run finishes. The sign's glow, the completion card and the lit shop SHALL play once the dialogue closes. Later Runs that pass SHALL show the completion state without the big dialogue.
 
-The completion card SHALL offer **Next: <number> · <title>**, which opens the next level in `index.json` order, and **Keep tinkering**, which hides the card and keeps the level open. On the last level, the card SHALL say that more of Main Street is coming soon instead of offering Next. When a completed level is reopened, the card SHALL take its welcome back form until the player's next Run (see Revisiting a completed level).
+The completion card SHALL offer **Next: <number> · <title>**, which opens the next level in `index.json` order, and **Keep tinkering**, which hides the card and keeps the level open. On the last level, the card SHALL say "Main Street is complete! More of the village is coming soon." instead of offering Next. When a completed level is reopened, the card SHALL take its welcome back form until the player's next Run (see Revisiting a completed level).
 
 #### Scenario: Solving Hello Main Street
 - **WHEN** the player runs a correct solution for "Hello Main Street" for the first time
@@ -89,8 +89,8 @@ The completion card SHALL offer **Next: <number> · <title>**, which opens the n
 - **THEN** the completion card appears without the big dialogue
 
 #### Scenario: Last level
-- **WHEN** the player completes the last level in the index
-- **THEN** the completion card appears without Next and says more of Main Street is coming soon
+- **WHEN** the player completes `004-ferry-times`, the last level in the index
+- **THEN** the completion card appears without Next and says "Main Street is complete! More of the village is coming soon."
 
 #### Scenario: Keep tinkering
 - **WHEN** the player chooses Keep tinkering and edits the code
@@ -275,7 +275,7 @@ Opening a level SHALL put the player's saved code for it in the editor, or its s
 Opening a completed level SHALL restore the code that the player last had for it and run it once. That Run SHALL NOT count toward Tries. If that Run passes, the completion card SHALL appear in a welcome back form:
 - it reads "<shop> is open!" and "You finished this in N tries.", N being the level's saved tries;
 - its stats are the saved Lines and Tries of the first completion;
-- it offers **Next: <number> · <title>** (or says that more of Main Street is coming soon on the last level) and **Play again**, which does what Start over does.
+- it offers **Next: <number> · <title>** (or, on the last level, says "Main Street is complete! More of the village is coming soon.") and **Play again**, which does what Start over does.
 
 #### Scenario: Coming back to a finished shop
 - **WHEN** the player completes `000-hello-main-street`, opens `001-open-sign`, then clicks the first shop

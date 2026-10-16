@@ -34,11 +34,15 @@ Clicking a level's building SHALL open that level. Clicking the Sandbox building
 
 #### Scenario: First launch street
 - **WHEN** the player launches the game with no saved progress
-- **THEN** the street shows Rosa's Bakery, Tom's Flowers, the placeholder shops and The Sandbox, under "Welcome to Compose Village"
+- **THEN** the street shows Rosa's Bakery, Tom's Flowers, Marco's Kitchen, Dona Lúcia's School, Iara's Ferry and The Sandbox, under "Welcome to Compose Village", with no Coming soon shop
 
 #### Scenario: Opening a level from the street
 - **WHEN** the player clicks Tom's Flowers on the home screen
 - **THEN** `001-open-sign` opens with the player's saved code for it, or its starter code
+
+#### Scenario: Opening a new shop
+- **WHEN** the player clicks Iara's Ferry on the home screen
+- **THEN** `004-ferry-times` opens with the player's saved code for it, or its starter code
 
 ### Requirement: Shop states
 Each level's building SHALL be in one of these states:
@@ -61,14 +65,20 @@ A placeholder shop SHALL show a dark facade, a locked badge and the status "Comi
 - **THEN** `001-open-sign` opens
 
 ### Requirement: Placeholder shops
-The game SHALL keep an app-side list of upcoming shops, each with a villager name, profession, shop name and title: Marco's Kitchen (3 · Restaurant Menu), Dona Lúcia's School (4 · Contest Scoreboard) and Iara's Ferry (5 · Ferry Times). Their numbers SHALL continue after the last bundled level. A placeholder SHALL NOT be shown when a bundled level has a villager with the same name. Placeholders SHALL NOT count toward "N of M shops open", and SHALL NOT be level data.
+The game SHALL keep an app-side list of upcoming shops, each with a villager name, profession, shop name and title, for shops whose levels are not bundled yet. Their numbers SHALL continue after the last bundled level. A placeholder SHALL NOT be shown when a bundled level has a villager with the same name. Placeholders SHALL NOT count toward "N of M shops open", and SHALL NOT be level data.
+
+While the five Main Street levels are bundled and no later chapter has been announced, the list SHALL be empty.
+
+#### Scenario: Main Street has no placeholders
+- **WHEN** the five Main Street levels are bundled
+- **THEN** the street shows the five level buildings and The Sandbox, and no building reads "Coming soon"
 
 #### Scenario: Placeholders after the bundled levels
-- **WHEN** two levels are bundled
-- **THEN** the street shows "3 · Restaurant Menu", "4 · Contest Scoreboard" and "5 · Ferry Times" as Coming soon, after the two level buildings
+- **WHEN** the five Main Street levels are bundled and the upcoming list has two shops
+- **THEN** the street shows them as "6 · <title>" and "7 · <title>", Coming soon, after the five level buildings
 
 #### Scenario: A placeholder becomes a level
-- **WHEN** a bundled level's villager is Marco
+- **WHEN** the upcoming list has a shop for Marco and a bundled level's villager is Marco
 - **THEN** the street shows that level's building and no Marco placeholder
 
 ### Requirement: First-launch cards
@@ -93,11 +103,15 @@ When any level is completed or has saved code, the home screen SHALL show:
 - **Open shops**, listing each completed level in play order with its villager badge, shop name, "<lines> lines · <tries> tries" from saved progress, and **Visit**, which opens that level;
 - the **Sandbox** card, with **Open**.
 
-When every bundled level is completed, the pick-up card SHALL say that every shop on the street is open and offer **Open the Sandbox** instead of Continue. When no level is completed yet, Open shops SHALL NOT be shown.
+When every bundled level is completed, the pick-up card SHALL say that every shop on Main Street is open and offer **Open the Sandbox** instead of Continue. When no level is completed yet, Open shops SHALL NOT be shown.
 
 #### Scenario: Coming back after the first level
 - **WHEN** the player completed `000-hello-main-street` in 2 tries with 6 lines and launches the game again
-- **THEN** the header reads "1 of 2 shops open", the pick-up card shows "2 · Open Sign", "0 of 3 wishes" and "Continue: Open Sign", and Open shops lists Rosa's Bakery with "6 lines · 2 tries"
+- **THEN** the header reads "1 of 5 shops open", the pick-up card shows "2 · Open Sign", "0 of 4 wishes" and "Continue: Open Sign", and Open shops lists Rosa's Bakery with "6 lines · 2 tries"
+
+#### Scenario: Up next after Open Sign
+- **WHEN** the player completed the first two levels and launches the game again
+- **THEN** the pick-up card shows "3 · Restaurant Menu" with Marco's pill and "Continue: Restaurant Menu"
 
 #### Scenario: Saved code without a completion
 - **WHEN** the player edited `000-hello-main-street` without completing it and launches the game again
@@ -108,22 +122,22 @@ When every bundled level is completed, the pick-up card SHALL say that every sho
 - **THEN** `000-hello-main-street` opens in its welcome back form
 
 #### Scenario: Every shop open
-- **WHEN** every bundled level is completed
-- **THEN** the pick-up card says every shop is open and offers Open the Sandbox
+- **WHEN** all five Main Street levels are completed
+- **THEN** the header reads "5 of 5 shops open", the pick-up card says every shop on Main Street is open and offers Open the Sandbox, and Open shops lists all five shops
 
 ### Requirement: Shops open count
 With saved progress, the home header SHALL read "N of M shops open", N being the completed bundled levels and M the bundled levels.
 
 #### Scenario: Header count
-- **WHEN** one of two bundled levels is completed
-- **THEN** the home header reads "1 of 2 shops open"
+- **WHEN** one of the five bundled levels is completed
+- **THEN** the home header reads "1 of 5 shops open"
 
 ### Requirement: Returning home
 The level screen and the Sandbox SHALL offer a way back to the home screen through the header's "Main Street" link. Returning home SHALL save the open level's code, the same as switching levels. While a Run is in progress, the link SHALL do nothing. The home screen SHALL reflect progress made since it was last shown.
 
 #### Scenario: Back to the street after completing a level
-- **WHEN** the player completes `001-open-sign` and clicks "Main Street" in the header
-- **THEN** the home screen shows Tom's Flowers lit and "2 of 2 shops open"
+- **WHEN** the player completes the first two levels and clicks "Main Street" in the header
+- **THEN** the home screen shows Tom's Flowers lit, Marco's Kitchen as Up next, and "2 of 5 shops open"
 
 #### Scenario: Code survives a trip home
 - **WHEN** the player edits `001-open-sign`, goes home and chooses Continue
