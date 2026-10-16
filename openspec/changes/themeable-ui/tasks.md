@@ -46,4 +46,4 @@
 
 - [x] 8.1 Update `design-docs/cozy/README.md`: the `accent`, `accentStrong` and `onPrimary` token names, and a note that cozy is the first city theme, drawn through `CityTheme`
 - [x] 8.2 README: mention `--theme tracer` and `--compare` next to the window check
-- [ ] 8.3 Run `./gradlew build` and a final window-check comparison against the baseline (zero differing pixels, or every difference explained), then `openspec validate themeable-ui --strict`
+- [x] 8.3 Run `./gradlew build` and a final window-check comparison against the baseline (zero differing pixels, or every difference explained), then `openspec validate themeable-ui --strict`
