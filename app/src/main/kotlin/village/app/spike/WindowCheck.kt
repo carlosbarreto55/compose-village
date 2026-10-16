@@ -37,7 +37,7 @@ import java.io.File
  * to `app/build/spike/window/` for a visual review.
  */
 @OptIn(ExperimentalComposeUiApi::class)
-internal fun window(report: Report) = report.section("Spike window", Criterion.RENDERED) {
+internal fun window(report: Report, options: Options) = report.section("Spike window", Criterion.RENDERED) {
     val out = File("app/build/spike/window").apply { mkdirs() }
     // A fresh progress file per check, so the street starts dark (village-progress).
     val progressFile = File(out, "progress.json").apply { delete() }
@@ -502,5 +502,15 @@ internal fun window(report: Report) = report.section("Spike window", Criterion.R
     } finally {
         scene.close()
         controller.close()
+    }
+    options.baseline?.let { dir ->
+        val saved = saveBaseline(out, dir)
+        text("Baseline: $saved screenshots copied to `${dir.path}`.")
+    }
+    options.compare?.let { dir ->
+        val diffs = compareScreenshots(out, dir, File("app/build/spike/window-diff"))
+        val differing = diffs.filter { it.pixels != 0 }
+        text("Compared with `${dir.path}`: ${diffs.size} states, ${differing.size} differ. Diff images: `app/build/spike/window-diff/`.")
+        if (differing.isNotEmpty()) table(listOf("State", "Differing pixels"), differing.map { listOf(it.state, it.pixels.takeIf { p -> p >= 0 } ?: "missing") })
     }
 }

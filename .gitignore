@@ -7,3 +7,6 @@ build/
 local.properties
 .idea/
 .DS_Store
+
+# Window-check screenshots to compare against (themeable-ui)
+app/spike-baseline/
