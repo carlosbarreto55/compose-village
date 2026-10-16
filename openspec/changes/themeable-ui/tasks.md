@@ -6,7 +6,7 @@
 
 ## 2. Theme core
 
-- [ ] 2.1 Add `CityTheme` (id, name, dark, colors, display, shapes, scenery, badges, brand mark; start with today's values), `LocalCityTheme` and `CityThemes.Cozy`; `VillageTheme(theme = CityThemes.Cozy, reducedMotion)` provides it, and `Village.colors`/`Village.type` read from it; compare with the baseline
+- [x] 2.1 Add `CityTheme` (id, name, dark, colors, display, shapes, scenery, badges, brand mark; start with today's values), `LocalCityTheme` and `CityThemes.Cozy`; `VillageTheme(theme = CityThemes.Cozy, reducedMotion)` provides it, and `Village.colors`/`Village.type` read from it; compare with the baseline
 - [ ] 2.2 Build the Material 3 scheme from the theme: `darkColorScheme` when `theme.dark`, `lightColorScheme` otherwise; add the `onPrimary` token (cozy #FFFFFF) and map it
 - [ ] 2.3 Rename the `wood` and `woodDark` tokens to `accent` and `accentStrong` across `app`; compare with the baseline
 

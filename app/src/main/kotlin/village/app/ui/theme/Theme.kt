@@ -122,22 +122,41 @@ object VillageShapes {
     val columnGap = 24.dp
 }
 
-val LocalVillageColors = staticCompositionLocalOf { VillageColors() }
-val LocalVillageType = staticCompositionLocalOf { VillageType() }
+/** Everything that makes a city look like itself (city-themes, themeable-ui D1). */
+@Immutable
+class CityTheme(
+    val id: String,
+    val name: String,
+    /** Picks the Material 3 scheme; the system appearance never does. */
+    val dark: Boolean,
+    val colors: VillageColors,
+) {
+    val type: VillageType = VillageType()
 
-/** Shorthand for the current theme's tokens. */
+    override fun toString() = "CityTheme($id)"
+}
+
+object CityThemes {
+    /** Main Street's look: parchment, wood and lamplight (`design-docs/cozy/README.md`). */
+    val Cozy = CityTheme(id = "cozy", name = "Cozy", dark = false, colors = VillageColors())
+}
+
+val LocalCityTheme = staticCompositionLocalOf { CityThemes.Cozy }
+
+/** Shorthand for the current theme's parts. */
 object Village {
-    val colors: VillageColors @Composable get() = LocalVillageColors.current
-    val type: VillageType @Composable get() = LocalVillageType.current
+    val theme: CityTheme @Composable get() = LocalCityTheme.current
+    val colors: VillageColors @Composable get() = LocalCityTheme.current.colors
+    val type: VillageType @Composable get() = LocalCityTheme.current.type
 }
 
 /**
- * The cozy theme (design D1): the village tokens, plus a Material 3 light scheme built from them so
- * Material components (checkbox, tooltip, progress bar) match. Light only, whatever the system says.
+ * Draws [content] in [theme] (themeable-ui D1): its tokens, plus a Material 3 scheme built from them so
+ * Material components (checkbox, tooltip, progress bar) match.
  */
 @Composable
-fun VillageTheme(reducedMotion: Boolean = ReducedMotion.system, content: @Composable () -> Unit) {
-    val c = VillageColors()
+fun VillageTheme(theme: CityTheme = CityThemes.Cozy, reducedMotion: Boolean = ReducedMotion.system, content: @Composable () -> Unit) {
+    val c = theme.colors
     val scheme = lightColorScheme(
         primary = c.primary, onPrimary = Color.White,
         secondary = c.wood, onSecondary = Color.White,
@@ -157,8 +176,7 @@ fun VillageTheme(reducedMotion: Boolean = ReducedMotion.system, content: @Compos
         )
     }
     CompositionLocalProvider(
-        LocalVillageColors provides c,
-        LocalVillageType provides VillageType(),
+        LocalCityTheme provides theme,
         LocalReducedMotion provides reducedMotion,
     ) {
         MaterialTheme(colorScheme = scheme, typography = m3, content = content)
