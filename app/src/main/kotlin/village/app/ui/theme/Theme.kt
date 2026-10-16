@@ -20,6 +20,7 @@ import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import village.app.ui.theme.cozy.CozyBrandMark
+import village.app.ui.theme.cozy.CozyScenery
 import village.levels.Profession
 
 /** The cozy palette (`design-docs/cozy/README.md`), plus the in-between shades the mockups use. Light only. */
@@ -202,6 +203,8 @@ class CityTheme(
     val badges: BadgeColors,
     /** The header's 32 × 32 mark beside "Compose Village", drawn untinted. */
     val brandMark: ImageVector,
+    /** The street on the home screen. */
+    val scenery: Scenery,
 ) {
     val type: VillageType = VillageType(display)
 
@@ -248,6 +251,7 @@ object CityThemes {
             lockedAlpha = 0.55f,
         ),
         brandMark = CozyBrandMark,
+        scenery = CozyScenery,
     )
 }
 
@@ -260,6 +264,7 @@ object Village {
     val type: VillageType @Composable get() = LocalCityTheme.current.type
     val shapes: VillageShapes @Composable get() = LocalCityTheme.current.shapes
     val badges: BadgeColors @Composable get() = LocalCityTheme.current.badges
+    val scenery: Scenery @Composable get() = LocalCityTheme.current.scenery
 }
 
 /**

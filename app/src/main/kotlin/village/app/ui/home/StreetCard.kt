@@ -42,23 +42,19 @@ import village.app.HomeModel
 import village.app.ShopState
 import village.app.ui.theme.Village
 
-private val Sky = Color(0xFFF6E7CE)
-private val Hill = Color(0xFFEDDCBF)
-private val Road = Color(0xFFE3CDA9)
-private val RoadEdge = Color(0xFFD2B98F)
-private val Lead = Color(0xFF4A3B2D)
 
 /**
- * The street card (spec: Street card): sky with two clouds, the title block, one building per level and
- * placeholder, then the Sandbox, on a hill above the road. Buildings wrap rather than scroll.
+ * The street card (spec: Street card): the theme's scenery (sky, ground, road, buildings) around the title
+ * block, one building per level and placeholder, then the Sandbox. Buildings wrap rather than scroll.
  */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun StreetCard(home: HomeModel, enabled: Boolean, onOpen: (Building) -> Unit, onSandbox: () -> Unit) {
     val c = Village.colors
-    Column(Modifier.fillMaxWidth().clip(Village.shapes.card).background(Sky).border(1.dp, c.outline, Village.shapes.card)) {
+    val scenery = Village.scenery
+    Column(Modifier.fillMaxWidth().clip(Village.shapes.card).background(scenery.sky).border(1.dp, c.outline, Village.shapes.card)) {
         Box(Modifier.fillMaxWidth()) {
-            Canvas(Modifier.matchParentSize()) { drawClouds() }
+            Canvas(Modifier.matchParentSize()) { with(scenery) { drawSky() } }
             Column(
                 Modifier.fillMaxWidth().padding(start = 28.dp, end = 28.dp, top = 40.dp, bottom = 8.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
@@ -74,13 +70,13 @@ fun StreetCard(home: HomeModel, enabled: Boolean, onOpen: (Building) -> Unit, on
                     style = Village.type.celebration.copy(fontSize = 48.sp, lineHeight = 53.sp),
                 )
                 Text(
-                    if (home.firstLaunch) GameText.WELCOME_INTRO else home.welcomeLine, color = Lead, textAlign = TextAlign.Center,
+                    if (home.firstLaunch) GameText.WELCOME_INTRO else home.welcomeLine, color = scenery.onSky, textAlign = TextAlign.Center,
                     style = Village.type.request, modifier = Modifier.widthIn(max = 620.dp),
                 )
             }
         }
         Box(Modifier.fillMaxWidth()) {
-            Canvas(Modifier.align(Alignment.BottomCenter).fillMaxWidth().height(120.dp)) { drawHill() }
+            Canvas(Modifier.align(Alignment.BottomCenter).fillMaxWidth().height(120.dp)) { with(scenery) { drawGround() } }
             FlowRow(
                 Modifier.fillMaxWidth().padding(start = 28.dp, end = 28.dp, top = 28.dp),
                 horizontalArrangement = Arrangement.spacedBy(14.dp, Alignment.CenterHorizontally),
@@ -91,15 +87,15 @@ fun StreetCard(home: HomeModel, enabled: Boolean, onOpen: (Building) -> Unit, on
                         building.shop, building.numbered, building.state,
                         enabled = enabled && building.state != ShopState.COMING_SOON, onClick = { onOpen(building) },
                         modifier = Modifier.align(Alignment.Bottom),
-                    ) { ShopFront(building.state, building.villager.profession) }
+                    ) { scenery.ShopFront(building.state, building.villager.profession) }
                 }
                 StreetBuilding(
                     GameText.SANDBOX, GameText.SANDBOX_PLACE, state = null, enabled = enabled, onClick = onSandbox,
                     modifier = Modifier.align(Alignment.Bottom),
-                ) { SandboxFront() }
+                ) { scenery.SandboxFront() }
             }
         }
-        RoadStrip()
+        Canvas(Modifier.fillMaxWidth().height(44.dp)) { with(scenery) { drawRoad() } }
     }
 }
 
@@ -154,19 +150,6 @@ private fun Status(state: ShopState?) {
     }
 }
 
-/** The 44 dp road: a raised top edge and a dashed centre line. */
-@Composable
-private fun RoadStrip() {
-    Canvas(Modifier.fillMaxWidth().height(44.dp)) {
-        drawRect(Road)
-        drawLine(RoadEdge, Offset(0f, 1.5.dp.toPx()), Offset(size.width, 1.5.dp.toPx()), 3.dp.toPx())
-        val y = 3.dp.toPx() + (size.height - 3.dp.toPx()) / 2
-        drawLine(
-            Color(0xFFF3EADB).copy(alpha = 0.8f), Offset(28.dp.toPx(), y), Offset(size.width - 28.dp.toPx(), y), 3.dp.toPx(),
-            pathEffect = PathEffect.dashPathEffect(floatArrayOf(9.dp.toPx(), 9.dp.toPx())),
-        )
-    }
-}
 
 private fun DrawScope.dashedOutline(color: Color) {
     val w = 2.dp.toPx()
@@ -177,41 +160,5 @@ private fun DrawScope.dashedOutline(color: Color) {
     )
 }
 
-/** Two clouds: 120 × 44 at 7% from the left, 38 dp down; 96 × 36 at 9% from the right, 92 dp down. */
-private fun DrawScope.drawClouds() {
-    val cloud = Color(0xFFFBF4E8)
-    val d = 1.dp.toPx()
-    val x1 = size.width * 0.07f
-    val y1 = 38 * d
-    drawPath(Path().apply {
-        moveTo(x1 + 14 * d, y1 + 38 * d)
-        cubicTo(x1 + 2 * d, y1 + 38 * d, x1 + 2 * d, y1 + 22 * d, x1 + 16 * d, y1 + 22 * d)
-        cubicTo(x1 + 18 * d, y1 + 8 * d, x1 + 40 * d, y1 + 6 * d, x1 + 46 * d, y1 + 18 * d)
-        cubicTo(x1 + 54 * d, y1 + 6 * d, x1 + 78 * d, y1 + 8 * d, x1 + 80 * d, y1 + 22 * d)
-        cubicTo(x1 + 96 * d, y1 + 18 * d, x1 + 104 * d, y1 + 38 * d, x1 + 90 * d, y1 + 38 * d)
-        close()
-    }, cloud)
-    val x2 = size.width * 0.91f - 96 * d
-    val y2 = 92 * d
-    drawPath(Path().apply {
-        moveTo(x2 + 12 * d, y2 + 31 * d)
-        cubicTo(x2 + 2 * d, y2 + 31 * d, x2 + 2 * d, y2 + 18 * d, x2 + 14 * d, y2 + 18 * d)
-        cubicTo(x2 + 16 * d, y2 + 6 * d, x2 + 34 * d, y2 + 5 * d, x2 + 38 * d, y2 + 15 * d)
-        cubicTo(x2 + 44 * d, y2 + 5 * d, x2 + 62 * d, y2 + 7 * d, x2 + 64 * d, y2 + 18 * d)
-        cubicTo(x2 + 78 * d, y2 + 15 * d, x2 + 84 * d, y2 + 31 * d, x2 + 72 * d, y2 + 31 * d)
-        close()
-    }, cloud)
-}
 
-/** The hill behind the buildings, the mockup's 1400 × 120 path stretched to the card's width. */
-private fun DrawScope.drawHill() {
-    val sx = size.width / 1400f
-    val sy = size.height / 120f
-    drawPath(Path().apply {
-        moveTo(0f, 120 * sy); lineTo(0f, 70 * sy)
-        cubicTo(180 * sx, 20 * sy, 360 * sx, 30 * sy, 520 * sx, 62 * sy)
-        cubicTo(700 * sx, 96 * sy, 860 * sx, 24 * sy, 1040 * sx, 40 * sy)
-        cubicTo(1200 * sx, 54 * sy, 1300 * sx, 30 * sy, 1400 * sx, 46 * sy)
-        lineTo(1400 * sx, 120 * sy); close()
-    }, Hill)
-}
+
