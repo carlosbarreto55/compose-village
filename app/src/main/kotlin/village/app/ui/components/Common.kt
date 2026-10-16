@@ -155,7 +155,7 @@ fun StatusMark(mark: Mark, fill: Color, size: Dp = 20.dp) {
         }
         val partial = Path()
         PathMeasure().apply { setPath(path, false); getSegment(0f, length * stroke.value, partial, true) }
-        drawPath(if (mark == Mark.PASSED) partial else path, if (mark == Mark.PASSED) c.onPrimary else Color.White, style = Stroke(2.dp.toPx(), cap = StrokeCap.Round))
+        drawPath(if (mark == Mark.PASSED) partial else path, if (mark == Mark.PASSED) c.onPrimary else c.onError, style = Stroke(2.dp.toPx(), cap = StrokeCap.Round))
     }
 }
 

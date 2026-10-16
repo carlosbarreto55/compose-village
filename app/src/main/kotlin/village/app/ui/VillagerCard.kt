@@ -125,7 +125,7 @@ private fun Bubble(reaction: Reaction, shown: Int, onClick: () -> Unit) {
     val outline by animateColorAsState(if (reaction.happy) c.successOutline else c.outline, tween(250))
     TypedText(
         reaction.text, shown, Village.type.bubble, c.ink,
-        modifier = Modifier.padding(start = AVATAR + 18.dp).widthIn(max = 520.dp).clip(shape).background(Color.White).border(2.dp, outline, shape)
+        modifier = Modifier.padding(start = AVATAR + 18.dp).widthIn(max = 520.dp).clip(shape).background(Village.colors.bubble).border(2.dp, outline, shape)
             .clickable(remember { MutableInteractionSource() }, indication = null, onClick = onClick)
             .padding(horizontal = 16.dp, vertical = 10.dp),
     )

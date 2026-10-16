@@ -32,11 +32,15 @@ class VillageColors(
     val accent: Color = Color(0xFF7A4E2D),
     /** Cozy's `woodDark`: the wordmark, headings, glyphs on badges, the dialogue's shadow. */
     val accentStrong: Color = Color(0xFF5A3820),
+    /** Text on an `accent` fill: the street's "Start here" and "Up next" pills. */
+    val onAccent: Color = Color(0xFFFFFFFF),
     val primary: Color = Color(0xFF2F6B45),
     /** Text and glyphs on `primary`. */
     val onPrimary: Color = Color(0xFFFFFFFF),
     val primaryShadow: Color = Color(0xFF1E4A2F),
     val error: Color = Color(0xFFA3402A),
+    /** The cross on a failed check. */
+    val onError: Color = Color(0xFFFFFFFF),
     val errorContainer: Color = Color(0xFFF8E3DC),
     val onErrorContainer: Color = Color(0xFF7E2E1C),
     val glow: Color = Color(0xFFF2C46B),
@@ -46,8 +50,9 @@ class VillageColors(
     val muted: Color = Color(0xFFD8C7AE),
     /** The ring around the current level's progress dot. */
     val currentRing: Color = Color(0xFFEBCFA8),
-    /** The view switch's track. */
+    /** The view switch's track, and the selected side's thumb. */
     val track: Color = Color(0xFFF0E2CB),
+    val switchThumb: Color = Color(0xFFFFFFFF),
     /** The sign's inside, behind the player's frame. */
     val signBoard: Color = Color(0xFFFFFDF8),
     /** The glow's inner ring around a completed sign. */
@@ -58,12 +63,16 @@ class VillageColors(
     /** A failed checklist row's border and its detail text. */
     val errorOutline: Color = Color(0xFFE8BFB1),
     val errorDetail: Color = Color(0xFF5E2416),
-    /** The reaction bubble's border after a complete Run. */
+    /** The villager's reaction bubble, and its border after a complete Run. */
+    val bubble: Color = Color(0xFFFFFFFF),
     val successOutline: Color = Color(0xFFBFDCC6),
     // Editor and terminal panels (dark, warm).
     val editorBg: Color = Color(0xFF2A2320),
     val editorDivider: Color = Color(0xFF3A302B),
     val editorRaised: Color = Color(0xFF352C28),
+    /** Quiet text and outlines on the editor background, as on the Sandbox card. */
+    val editorMuted: Color = Color(0xFFC9B8A4),
+    val editorOutline: Color = Color(0xFF5A4A3E),
     val editorText: Color = Color(0xFFF1E6D6),
     val lineNumber: Color = Color(0xFF7D6C5B),
     val syntaxKeyword: Color = Color(0xFFE6A15C),
@@ -215,22 +224,22 @@ fun VillageTheme(theme: CityTheme = CityThemes.Cozy, reducedMotion: Boolean = Re
     val scheme = if (theme.dark) {
         darkColorScheme(
             primary = c.primary, onPrimary = c.onPrimary,
-            secondary = c.accent, onSecondary = c.ground,
+            secondary = c.accent, onSecondary = c.onAccent,
             tertiary = c.glow, onTertiary = c.ground,
             background = c.ground, onBackground = c.ink,
             surface = c.surface, onSurface = c.ink, surfaceVariant = c.chip, onSurfaceVariant = c.inkMuted,
             outline = c.outline, outlineVariant = c.outline,
-            error = c.error, onError = c.ground, errorContainer = c.errorContainer, onErrorContainer = c.onErrorContainer,
+            error = c.error, onError = c.onError, errorContainer = c.errorContainer, onErrorContainer = c.onErrorContainer,
         )
     } else {
         lightColorScheme(
             primary = c.primary, onPrimary = c.onPrimary,
-            secondary = c.accent, onSecondary = Color.White,
+            secondary = c.accent, onSecondary = c.onAccent,
             tertiary = c.glow, onTertiary = c.ink,
             background = c.ground, onBackground = c.ink,
             surface = c.surface, onSurface = c.ink, surfaceVariant = c.chip, onSurfaceVariant = c.inkMuted,
             outline = c.outline, outlineVariant = c.outline,
-            error = c.error, onError = Color.White, errorContainer = c.errorContainer, onErrorContainer = c.onErrorContainer,
+            error = c.error, onError = c.onError, errorContainer = c.errorContainer, onErrorContainer = c.onErrorContainer,
         )
     }
     val a = VillageFonts.Atkinson

@@ -228,7 +228,7 @@ private fun ViewSwitch(sketchLabel: String, showTarget: Boolean, onChange: (Bool
             val selected = showTarget == target
             Box(
                 Modifier.height(36.dp)
-                    .then(if (selected) Modifier.shadow(1.dp, Village.shapes.viewSwitch).background(Color.White, Village.shapes.viewSwitch) else Modifier)
+                    .then(if (selected) Modifier.shadow(1.dp, Village.shapes.viewSwitch).background(c.switchThumb, Village.shapes.viewSwitch) else Modifier)
                     .clip(Village.shapes.viewSwitch)
                     .clickable(role = Role.Tab) { onChange(target) }
                     .padding(horizontal = 16.dp),

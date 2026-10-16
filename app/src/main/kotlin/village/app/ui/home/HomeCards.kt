@@ -48,10 +48,6 @@ import village.app.ui.theme.Village
 import village.app.ui.villagers.VillagerPortrait
 import village.levels.Level
 
-/** The sandbox card's muted text, from the mockup. */
-private val SandboxText = Color(0xFFC9B8A4)
-private val SandboxLine = Color(0xFF5A4A3E)
-
 /** First launch: the first level's villager, their request and chips, and Start (spec: First-launch cards). */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -196,10 +192,10 @@ fun SandboxCard(onOpen: () -> Unit, modifier: Modifier = Modifier) {
         }
         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
             Text(GameText.SANDBOX, style = Village.type.body.copy(fontSize = 16.sp, fontWeight = FontWeight.Bold), color = c.editorText)
-            Text(GameText.SANDBOX_BLURB, style = Village.type.small, color = SandboxText)
+            Text(GameText.SANDBOX_BLURB, style = Village.type.small, color = c.editorMuted)
         }
         Box(
-            Modifier.height(44.dp).clip(Village.shapes.button).border(1.dp, SandboxLine, Village.shapes.button)
+            Modifier.height(44.dp).clip(Village.shapes.button).border(1.dp, c.editorOutline, Village.shapes.button)
                 .clickable(role = Role.Button, onClick = onOpen).padding(horizontal = 18.dp),
             contentAlignment = Alignment.Center,
         ) {

@@ -146,7 +146,7 @@ private fun Status(state: ShopState?) {
         }
         ShopState.START_HERE, ShopState.UP_NEXT -> Text(
             if (state == ShopState.START_HERE) GameText.STATUS_START_HERE else GameText.STATUS_UP_NEXT,
-            style = bold, color = Color.White,
+            style = bold, color = c.onAccent,
             modifier = Modifier.clip(Village.shapes.chip).background(c.accent).padding(horizontal = 12.dp, vertical = 4.dp),
         )
         ShopState.NOT_YET -> Text(GameText.STATUS_NOT_YET, style = Village.type.caption, color = c.inkMuted)
