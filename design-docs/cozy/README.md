@@ -4,6 +4,8 @@ The game should feel like a place: a small village whose shops light up as the p
 
 Live, editable source: the "Compose Village UI" canvas in Claude Design.
 
+Cozy is the first **city theme**. The game draws every screen through a `CityTheme` (`app/src/main/kotlin/village/app/ui/theme/`): tokens, display font, shapes, badge colors, brand mark and street scenery. Cozy's values live in `theme/cozy/`, and they are the ones below. A later city keeps the same layout, sizes, body and code fonts, and swaps everything else. The "Compose Village — City Themes" canvas in Claude Design explores what those cities could look like.
+
 ## Contents
 
 | Path | What it is |
@@ -33,9 +35,10 @@ Open the HTML files in a browser. Most are static mockups. The *animated* ones l
 | `outline` | `#E2D3BC` | Card borders, dividers |
 | `ink` | `#2B2118` | Primary text |
 | `inkMuted` | `#6B5A48` | Secondary text |
-| `wood` | `#7A4E2D` | Sign frame, icon badge rings, brand mark |
-| `woodDark` | `#5A3820` | Brand wordmark, glyph strokes on badges |
+| `accent` | `#7A4E2D` | Sign frame, icon badge rings, brand mark (was `wood`) |
+| `accentStrong` | `#5A3820` | Brand wordmark, glyph strokes on badges (was `woodDark`) |
 | `primary` | `#2F6B45` | Run button, passed requirements, progress |
+| `onPrimary` | `#FFFFFF` | Labels and glyphs on `primary` |
 | `primaryShadow` | `#1E4A2F` | 3 dp bottom shadow under primary buttons |
 | `error` | `#A3402A` | Failed requirement icon |
 | `errorContainer` | `#F8E3DC` | Failed requirement background |
@@ -97,14 +100,14 @@ The game opens on Main Street instead of inside a level. The street is the menu:
 - **Street card:** sky (`#F6E7CE`), two clouds, a hill (`#EDDCBF`) and a road (`#E3CDA9` with a dashed centre line). Each building is a button with the villager's badge on its roof, the shop name, the level, and a status.
 - **Shop states:**
   - Open: lit facade, `glow` window and sign, a soft glow behind it, "✓ Open".
-  - Current: dark facade with a dashed `wood` outline, "Start here" or "Up next" pill.
+  - Current: dark facade with a dashed `accent` outline, "Start here" or "Up next" pill.
   - Not yet: dark facade, locked badge, "Not open yet".
 - **First launch:** "Welcome to Compose Village", Rosa's card with her request and **Start: 1 · Hello Main Street**, "How a level works" in three steps, and the Sandbox.
 - **With saved progress:** "Welcome back" and "N of M shops open" in the header. **Pick up where you left off** shows the current villager, "Your code is saved", their wish count and **Continue**. "Open shops" lists finished levels with their stats and **Visit**.
 
 ## Villager icons
 
-One glyph per villager profession, shown in a round badge: tint fill, 3 dp `wood` ring, glyph stroked in `woodDark`.
+One glyph per villager profession, shown in a round badge: tint fill, 3 dp `accent` ring, glyph stroked in `accentStrong`.
 
 | Villager | Profession | Level | Icon | Badge tint |
 |---|---|---|---|---|
@@ -145,8 +148,8 @@ Villagers speak like characters in a classic RPG: a large bust beside a dialogue
 - **Level complete:** the big dialogue comes back with the villager delighted, sparkles around them and the dialogue box glowing. The last line offers **See <name>'s shop**, which closes it on the lit sign and the open shop.
 
 **Dialogue box**
-- `surface` fill, 4 dp `wood` border with an inner `outline` ring, 22 dp radius and a 6 dp `woodDark` bottom shadow.
-- A name tab (`wood` pill: name in Fredoka 18, profession in `chip`) overlaps the top edge.
+- `surface` fill, 4 dp `accent` border with an inner `outline` ring, 22 dp radius and a 6 dp `accentStrong` bottom shadow.
+- A name tab (`accent` pill: name in Fredoka 18, profession in `chip`) overlaps the top edge.
 - Text is Atkinson Hyperlegible 24 sp, line height 1.5, with room for three lines so the box never jumps.
 - Footer: "2 of 4" on the left. Once a line has finished typing, a blinking ▼ "Click to continue" appears on the right.
 - Clicking the box while text is typing shows the whole line; clicking again goes to the next line. In the game, Space and Enter should do the same.
