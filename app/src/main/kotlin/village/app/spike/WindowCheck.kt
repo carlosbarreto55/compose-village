@@ -511,6 +511,6 @@ internal fun window(report: Report, options: Options) = report.section("Spike wi
         val diffs = compareScreenshots(out, dir, File("app/build/spike/window-diff"))
         val differing = diffs.filter { it.pixels != 0 }
         text("Compared with `${dir.path}`: ${diffs.size} states, ${differing.size} differ. Diff images: `app/build/spike/window-diff/`.")
-        if (differing.isNotEmpty()) table(listOf("State", "Differing pixels"), differing.map { listOf(it.state, it.pixels.takeIf { p -> p >= 0 } ?: "missing") })
+        if (differing.isNotEmpty()) table(listOf("State", "Differing pixels", "Where"), differing.map { listOf(it.state, it.pixels.takeIf { p -> p >= 0 } ?: "missing", it.region) })
     }
 }

@@ -4,8 +4,12 @@ import java.awt.image.BufferedImage
 import java.io.File
 import javax.imageio.ImageIO
 
-/** One state's comparison: how many pixels differ from the baseline, or -1 when either side is missing or sized differently. */
-internal class ScreenshotDiff(val state: String, val pixels: Int)
+/**
+ * One state's comparison: how many pixels differ from the baseline (-1 when either side is missing or
+ * sized differently), and the box around them, so timing noise (the build time, editor glyph edges)
+ * can be told apart from a surface that changed.
+ */
+internal class ScreenshotDiff(val state: String, val pixels: Int, val region: String = "")
 
 /** Copies the window check's screenshots in [out] to [dir], replacing what was there. Returns how many it copied. */
 internal fun saveBaseline(out: File, dir: File): Int {
@@ -34,17 +38,19 @@ internal fun compareScreenshots(out: File, baseline: File, diffDir: File): List<
         }
         val diff = BufferedImage(now.width, now.height, BufferedImage.TYPE_INT_RGB)
         var pixels = 0
+        var left = Int.MAX_VALUE; var top = Int.MAX_VALUE; var right = -1; var bottom = -1
         for (y in 0 until now.height) for (x in 0 until now.width) {
             val a = before.getRGB(x, y)
             if (a != now.getRGB(x, y)) {
                 pixels++
+                left = minOf(left, x); top = minOf(top, y); right = maxOf(right, x); bottom = maxOf(bottom, y)
                 diff.setRGB(x, y, 0xFF0000)
             } else {
                 diff.setRGB(x, y, faded(a))
             }
         }
         if (pixels > 0) ImageIO.write(diff, "png", File(diffDir, name))
-        ScreenshotDiff(state, pixels)
+        ScreenshotDiff(state, pixels, if (pixels > 0) "x $left–$right, y $top–$bottom" else "")
     }
 }
 
