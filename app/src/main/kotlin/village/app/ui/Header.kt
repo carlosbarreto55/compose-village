@@ -18,7 +18,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -28,12 +27,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
-import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.drawscope.translate
+import androidx.compose.ui.graphics.drawOutline
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
@@ -207,24 +207,27 @@ fun StreetFooter(controller: SpikeController) {
 @Composable
 private fun Shop(lit: Boolean, current: Boolean, enabled: Boolean, onClick: () -> Unit) {
     val c = Village.colors
+    val small = Village.shapes.small
     val color = animateColorAsState(if (lit) c.glow else c.muted, tween(300)).value
     Box(
-        Modifier.size(44.dp).clip(Village.shapes.small).clickable(enabled = enabled, role = Role.Button, onClick = onClick),
+        Modifier.size(44.dp).clip(small).clickable(enabled = enabled, role = Role.Button, onClick = onClick),
         contentAlignment = Alignment.Center,
     ) {
         Box(
             Modifier.size(28.dp, 22.dp)
                 .drawBehind {
                     if (current) {
+                        // Dashed in the theme's small shape, 4 dp outside the shop.
                         val gap = 4.dp.toPx()
-                        drawRoundRect(
-                            c.accent, topLeft = Offset(-gap, -gap), size = Size(size.width + 2 * gap, size.height + 2 * gap),
-                            cornerRadius = CornerRadius(8.dp.toPx()),
-                            style = Stroke(2.dp.toPx(), pathEffect = PathEffect.dashPathEffect(floatArrayOf(4.dp.toPx(), 3.dp.toPx()))),
-                        )
+                        translate(-gap, -gap) {
+                            drawOutline(
+                                small.createOutline(Size(size.width + 2 * gap, size.height + 2 * gap), layoutDirection, this), c.accent,
+                                style = Stroke(2.dp.toPx(), pathEffect = PathEffect.dashPathEffect(floatArrayOf(4.dp.toPx(), 3.dp.toPx()))),
+                            )
+                        }
                     }
                 }
-                .clip(RoundedCornerShape(topStart = 6.dp, topEnd = 6.dp, bottomStart = 3.dp, bottomEnd = 3.dp))
+                .clip(Village.scenery.footerShop)
                 .background(color),
         )
     }

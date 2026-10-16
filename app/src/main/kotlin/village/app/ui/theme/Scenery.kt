@@ -2,6 +2,7 @@ package village.app.ui.theme
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.unit.dp
 import village.app.ShopState
@@ -38,4 +39,7 @@ interface Scenery {
     /** The Sandbox's building at the end of the street, [BUILDING_SIZE] square. */
     @Composable
     fun SandboxFront()
+
+    /** The outline of a 28 × 22 dp shop in the level screen's street footer, filled `glow` or `muted`. */
+    val footerShop: Shape
 }

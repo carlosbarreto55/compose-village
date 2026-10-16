@@ -26,7 +26,7 @@
 ## 5. Scenery
 
 - [x] 5.1 Add the `Scenery` interface (sky, ground, road, shop front per state, Sandbox front) and `CozyScenery`, moving the drawing and private colors from `StreetCard.kt` and `Fronts.kt`; `StreetCard` keeps the layout and asks `Village.scenery` to draw; compare with the baseline
-- [ ] 5.2 Move any street drawing left in the level screen's footer onto theme tokens or the scenery; compare with the baseline
+- [x] 5.2 Move any street drawing left in the level screen's footer onto theme tokens or the scenery; compare with the baseline
 
 ## 6. One villager, one bust
 

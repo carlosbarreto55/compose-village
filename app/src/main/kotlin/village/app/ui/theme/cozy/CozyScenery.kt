@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -50,6 +51,7 @@ private val LockedStripe = Color(0xFFE2D6C2)
 internal object CozyScenery : Scenery {
     override val sky = Sky
     override val onSky = Lead
+    override val footerShop = RoundedCornerShape(topStart = 6.dp, topEnd = 6.dp, bottomStart = 3.dp, bottomEnd = 3.dp)
 
     /** Two clouds: 120 × 44 at 7% from the left, 38 dp down; 96 × 36 at 9% from the right, 92 dp down. */
     override fun DrawScope.drawSky() {
